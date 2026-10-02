@@ -196,7 +196,7 @@
     margin-bottom:5px;
     font-weight:600;
   }
-  select, input[type=number]{
+  select, input[type=number], input[inputmode=numeric]{
     width:100%;
     padding:6px 8px;
     border-radius:8px;
@@ -492,7 +492,7 @@
   }
   .textpanel.open{display:block;}
   .ayah-line{
-    font-size:var(--quran-font-size,17px);
+    font-size:var(--quran-font-size,16px);
     line-height:2;
     text-align:center;
     padding:8px 6px;
@@ -507,7 +507,7 @@
     margin-inline-start:6px;
   }
   .ayah-line-list{
-    font-size:var(--quran-font-size,16.5px);
+    font-size:var(--quran-font-size,16px);
     line-height:2;
     text-align:center;
     padding:10px 8px;
@@ -711,8 +711,8 @@ body.dark .mark-row.active-row .rowtime {
       <button class="menuAction" id="clearSuraBtn" data-i18n="clearSuraBtn">سڕینەوەی لیستی نیشانەکراوەکان تەنها بۆ ئەم سورەتە</button>
       <button class="menuAction" id="clearAllBtn" data-i18n="clearAllBtn">سڕینەوەی لیستی نیشانەکراوەکان بۆ هەموو سورەتەکان</button>
       <div class="menuDivider"></div>
-      <div class="menuBox"><div class="settingsRow"><label for="stepMsInput" data-i18n="stepLabel" style="font-size:12px;">هەنگاوی گۆڕینی کات (1–1000 ms)</label><input id="stepMsInput" type="number" min="1" max="1000" step="1" value="50" style="width:92px;padding:6px;border:1px solid var(--line);border-radius:8px;direction:ltr;"></div></div>
-      <div class="menuBox"><div class="settingsRow"><label data-i18n="fontLabel" style="font-size:12px;">گەورە و بچووککردنی دەقی قورئان</label><div class="fontAdjust" style="display:flex;align-items:center;gap:6px;direction:ltr;"><button class="fontBtn" id="fontMinus" type="button">−</button><span id="fontSizeDisplay" style="min-width:34px;text-align:center;direction:ltr;">17</span><button class="fontBtn" id="fontPlus" type="button">+</button></div></div></div>
+      <div class="menuBox"><div class="settingsRow"><label for="stepMsInput" data-i18n="stepLabel" style="font-size:12px;">هەنگاوی گۆڕینی کات (1–1000 ms)</label><input id="stepMsInput" type="text" inputmode="numeric" pattern="[0-9]*" lang="en" maxlength="4" value="50" style="width:92px;padding:6px;border:1px solid var(--line);border-radius:8px;direction:ltr;"></div></div>
+      <div class="menuBox"><div class="settingsRow"><label data-i18n="fontLabel" style="font-size:12px;">گەورە و بچووککردنی دەقی قورئان</label><div class="fontAdjust" style="display:flex;align-items:center;gap:6px;direction:ltr;"><button class="fontBtn" id="fontMinus" type="button">−</button><span id="fontSizeDisplay" style="min-width:34px;text-align:center;direction:ltr;">16</span><button class="fontBtn" id="fontPlus" type="button">+</button></div></div></div>
     </div>
     <div class="filename" id="fname"></div>
     <audio id="player" controls controlslist="nodownload noplaybackrate nofullscreen" disablepictureinpicture disableremoteplayback playsinline style="display:none;"></audio>
@@ -955,17 +955,34 @@ function formatTime(ms){
   return `${m}:${rem.padStart(6,'0')}`;
 }
 
+
+// ---- Always English digits in number fields ----
+function toEnglishDigits(str){
+  return String(str)
+    .replace(/[\u0660-\u0669]/g, d=>String(d.charCodeAt(0)-0x0660))
+    .replace(/[\u06F0-\u06F9]/g, d=>String(d.charCodeAt(0)-0x06F0))
+    .replace(/[^0-9]/g, '');
+}
+document.addEventListener('input', (e)=>{
+  const el = e.target;
+  if(el && el.tagName==='INPUT' && el.getAttribute('inputmode')==='numeric'){
+    const clean = toEnglishDigits(el.value);
+    if(clean !== el.value) el.value = clean;
+  }
+});
 const stepMsInput = document.getElementById("stepMsInput");
-let quranFontSize = 17;
+let quranFontSize = 16;               // always starts at 16
 const fontSizeDisplay = document.getElementById("fontSizeDisplay");
 function setQuranFontSize(value){
-  quranFontSize = Math.min(32, Math.max(12, Math.round(Number(value) || 17)));
-  document.querySelectorAll('.ayah-line, .ayah-line-list').forEach(el=>el.style.fontSize = quranFontSize + 'px');
+  quranFontSize = Math.min(32, Math.max(12, Math.round(Number(value) || 16)));
+  document.documentElement.style.setProperty('--quran-font-size', quranFontSize + 'px');
   if(fontSizeDisplay) fontSizeDisplay.textContent = String(quranFontSize);
 }
 document.getElementById('fontMinus')?.addEventListener('click', ()=>setQuranFontSize(quranFontSize-1));
 document.getElementById('fontPlus')?.addEventListener('click', ()=>setQuranFontSize(quranFontSize+1));
-setQuranFontSize(17);
+setQuranFontSize(16);
+
+
 
 function getStepMs(){
   const value = Number(stepMsInput?.value);
@@ -1021,7 +1038,7 @@ function renderMarksList(){
         <button type="button" class="rowbtn" data-act="play">▶</button>
         <button type="button" class="rowbtn" data-act="plus">+</button>
         <button type="button" class="rowbtn" data-act="minus">−</button>
-        <input type="number" class="rowtime" data-act="edit" value="${m.timeMs}">
+        <input type="text" inputmode="numeric" pattern="[0-9]*" lang="en" dir="ltr" class="rowtime" data-act="edit" value="${m.timeMs}">
         <button type="button" class="rowbtn clearbtn" data-act="clear" title="سڕینەوەی کات">🧹</button>
         <button type="button" class="rowbtn clearbtn" data-act="del" title="سڕینەوەی نیشانە">🗑</button>
         <span class="rownum">${m.isTotal ? '999' : m.ayah}</span>`;
