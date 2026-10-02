@@ -23,54 +23,8 @@ jobs:
           distribution: temurin
           java-version: 17
 
-      - name: Install dependencies
-        run: npm install
-
-      - name: Prepare web files
-        run: |
-          mkdir -p www
-          cp index.html www/index.html
-          cp node_modules/sql.js/dist/sql-wasm.js www/
-          cp node_modules/sql.js/dist/sql-wasm.wasm www/
-
-      - name: Add Android platform
-        run: npx cap add android
-
-      - name: Keep screen awake and custom icon
-        run: |
-          PKG_DIR=android/app/src/main/java/com/idris/ayahmarker
-          mkdir -p "$PKG_DIR"
-          cat > "$PKG_DIR/MainActivity.java" <<'JAVA'
-          package com.idris.ayahmarker;
-
-          import android.os.Bundle;
-          import android.view.WindowManager;
-          import com.getcapacitor.BridgeActivity;
-
-          public class MainActivity extends BridgeActivity {
-              @Override
-              public void onCreate(Bundle savedInstanceState) {
-                  super.onCreate(savedInstanceState);
-                  getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-              }
-          }
-          JAVA
-          if [ -f icon-512.png ]; then
-            RES=android/app/src/main/res
-            rm -rf "$RES/mipmap-anydpi-v26"
-            for d in "$RES"/mipmap-*; do
-              cp icon-512.png "$d/ic_launcher.png"
-              cp icon-512.png "$d/ic_launcher_round.png"
-              cp icon-512.png "$d/ic_launcher_foreground.png"
-            done
-          fi
-
-      - name: Sync Capacitor
-        run: npx cap sync android
-
-      - name: Build debug APK
-        working-directory: android
-        run: ./gradlew assembleDebug --no-daemon
+      - name: Build APK
+        run: bash build-android.sh
 
       - name: Publish APK as a release
         uses: softprops/action-gh-release@v2
