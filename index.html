@@ -725,6 +725,12 @@ body.dark .mark-row.active-row .rowtime {
       <div class="chip" data-r="2.5">2.5x</div>
       <div class="chip" data-r="3">3x</div>
     </div>
+    <div id="latRow" style="display:none; margin-top:6px; align-items:center; justify-content:center; gap:8px; font-size:11px;">
+      <span>قەرەبووی دواکەوتنی دەست (ms)</span>
+      <button class="btn2" id="latMinus" style="padding:3px 10px;">−</button>
+      <b id="latVal" style="min-width:34px; text-align:center;">250</b>
+      <button class="btn2" id="latPlus" style="padding:3px 10px;">+</button>
+    </div>
     <div class="subactions" id="seekRow" style="display:none; margin-top:6px;">
       <button class="btn2" id="fwd1Btn" data-i18n="fwd1">١ چرکە پاش ⏩</button>
       <button class="btn2" id="back1Btn" data-i18n="back1">⏪ ١ چرکە پێش</button>
@@ -1121,6 +1127,7 @@ function loadAudioIntoPlayer(url, label){
   player.style.display='block';
   speedrow.style.display='flex';
   seekRow.style.display='flex';
+  document.getElementById('latRow').style.display='flex';
   fname.textContent = label;
   markBtn.disabled = false;
   if(marks.length===0){
@@ -1186,6 +1193,20 @@ fwd1Btn.addEventListener('click', ()=>{
 });
 
 // ---- Ayah text (fetched live, not stored in the app — needs internet) ----
+let quranLocalPromise = null;
+function loadLocalQuran(){
+  if(!quranLocalPromise){
+    quranLocalPromise = fetch('./quran-uthmani.json')
+      .then(r=>{ if(!r.ok) throw new Error('no local text'); return r.json(); })
+      .then(j=>{
+        const sr = j && j.data && j.data.surahs;
+        if(!sr || sr.length !== 114) throw new Error('bad local text');
+        return sr;
+      })
+      .catch(()=>null);
+  }
+  return quranLocalPromise;
+}
 async function fetchSurahText(sura){
   currentSurahAyahs = null;
   textPanel.innerHTML = '';
@@ -1194,10 +1215,16 @@ async function fetchSurahText(sura){
   statusEl.textContent = 'داواکردنی دەقی سورە...';
   textPanel.appendChild(statusEl);
   try{
-    const res = await fetch(`https://api.alquran.cloud/v1/surah/${sura}/quran-uthmani`);
-    if(!res.ok) throw new Error('bad response');
-    const json = await res.json();
-    currentSurahAyahs = json.data.ayahs;
+    let ayahs = null;
+    const local = await loadLocalQuran();           // bundled in the APK, works offline
+    if(local && local[sura-1]) ayahs = local[sura-1].ayahs;
+    if(!ayahs){
+      const res = await fetch(`https://api.alquran.cloud/v1/surah/${sura}/quran-uthmani`);
+      if(!res.ok) throw new Error('bad response');
+      const json = await res.json();
+      ayahs = json.data.ayahs;
+    }
+    currentSurahAyahs = ayahs;
     textLoadedForSura = sura;
     lastShownAyah = null;
     addTotalBtn.style.display = 'none';
@@ -1453,11 +1480,31 @@ player.addEventListener('ended', ()=>{
   }
 });
 
+// ---- Hand-delay compensation for marking at high speed ----
+// Between hearing an ayah start and tapping the button there is a roughly constant delay
+// (reaction time) in real seconds. At 3x that delay covers 3x more audio, so marks land late.
+// We subtract latency * (rate - 1): nothing changes at 1x, and the extra lag is removed above it.
+let markLatencyMs = 250;
+try{ const v = parseInt(localStorage.getItem('markLatencyMs')); if(!isNaN(v)) markLatencyMs = Math.min(1000, Math.max(0, v)); }catch(e){}
+function getMarkTimeMs(){
+  const rate = player.playbackRate || 1;
+  const comp = markLatencyMs * Math.max(0, rate - 1);
+  return Math.max(0, Math.round(player.currentTime*1000 - comp));
+}
+function setMarkLatency(v){
+  markLatencyMs = Math.min(1000, Math.max(0, v));
+  document.getElementById('latVal').textContent = markLatencyMs;
+  try{ localStorage.setItem('markLatencyMs', String(markLatencyMs)); }catch(e){}
+}
+document.getElementById('latMinus').addEventListener('click', ()=>setMarkLatency(markLatencyMs - 50));
+document.getElementById('latPlus').addEventListener('click', ()=>setMarkLatency(markLatencyMs + 50));
+document.getElementById('latVal').textContent = markLatencyMs;
+
 // ---- Marking ----
 function markCurrent(){
   if(player.style.display==='none') return;
   refreshNextAyah();
-  const timeMs = Math.round(player.currentTime*1000);
+  const timeMs = getMarkTimeMs();
   if(pendingTotal){
     marks = marks.filter(m=>!m.isTotal);
     marks.push({ayah:999, timeMs, isTotal:true, seq:seqCounter++});
@@ -1470,7 +1517,7 @@ function markCurrent(){
 markBtn.addEventListener('click', markCurrent);
 function markTotal(){
   if(player.style.display==='none') return;
-  const timeMs = Math.round(player.currentTime*1000);
+  const timeMs = getMarkTimeMs();
   marks = marks.filter(m=>!m.isTotal);
   marks.push({ayah:999, timeMs, isTotal:true, seq:seqCounter++});
   showToast(t('surahComplete'));
@@ -1513,12 +1560,23 @@ function blobToBase64(blob){
     r.readAsDataURL(blob);
   });
 }
+const _nativePlugins = {};
+function nativePlugin(name){
+  if(!_nativePlugins[name]) _nativePlugins[name] = window.Capacitor.registerPlugin(name);
+  return _nativePlugins[name];
+}
 async function saveBlob(blob, filename){
-  const P = window.Capacitor && window.Capacitor.Plugins;
-  if(IS_NATIVE && P && P.Filesystem && P.Share){
+  if(IS_NATIVE){
     const data = await blobToBase64(blob);
-    const written = await P.Filesystem.writeFile({path: filename, data, directory: 'CACHE'});
-    await P.Share.share({title: filename, dialogTitle: filename, url: written.uri});
+    try{
+      // 1) straight into the phone's Downloads folder
+      await nativePlugin('SaveFile').saveToDownloads({name: filename, data, mime: 'application/octet-stream'});
+      showToast('هەڵگیرا لە فۆڵدەری Downloads: ' + filename);
+      return;
+    }catch(e){ /* fall back to the share sheet */ }
+    // 2) share sheet (Files, WhatsApp, Telegram ...)
+    const written = await nativePlugin('Filesystem').writeFile({path: filename, data, directory: 'CACHE'});
+    await nativePlugin('Share').share({title: filename, dialogTitle: filename, url: written.uri});
     return;
   }
   const url = URL.createObjectURL(blob);
@@ -1559,7 +1617,7 @@ exportDb.addEventListener('click', async ()=>{
     const blob = new Blob([data], {type:'application/x-sqlite3'});
     await saveBlob(blob, 'quran_timings.db');
   }catch(err){
-    alert('نەتوانرا فایلی db دروستبکرێت — پێویستی بە ئینتەرنێتە بۆ ئامرازی DB.');
+    alert('نەتوانرا فایلی db هەڵبگیرێت: ' + (err && err.message ? err.message : err));
   }finally{
     exportDb.textContent = originalText;
     exportDb.disabled = false;
