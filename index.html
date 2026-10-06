@@ -913,6 +913,9 @@ const masterStatus = document.getElementById('masterStatus');
 const exportMasterBtn = document.getElementById('exportMasterBtn');
 let masterDb = null;
 let masterLoadedSura = null;
+let autoSig = '';          // marks as they were when last auto-saved
+let autoTimer = null;
+let autoDirty = false;
 let audioBySura = new Map();
 let autoPlayNextSura = false;
 const textPanel = document.getElementById('textPanel');
@@ -1020,12 +1023,18 @@ function renderMarksList(){
     emptyMsg.style.display='none';
     let displayList = sorted;
     if(!showAllMarks && marks.length>0){
-      let startIndex = 0;
-      if(focusedAyah!==null){
-        const focusedIndex = sorted.findIndex(m=>!m.isTotal && m.ayah===focusedAyah);
-        if(focusedIndex >= 0) startIndex = Math.min(focusedIndex, Math.max(0, sorted.length-2));
+      // Two rows that follow the ayah shown in the Quran text:
+      // the current ayah on top, the previous ayah below it (3/2, 4/3, 5/4 ...).
+      const anchor = (focusedAyah !== null) ? focusedAyah : lastShownAyah;
+      let idx = -1;                                  // the ayah's own row, or the closest one before it
+      if(anchor !== null && anchor !== undefined){
+        nonTotal.forEach((m, i)=>{ if(m.ayah <= anchor) idx = i; });
       }
-      displayList = sorted.slice(startIndex, startIndex + 2);
+      if(idx >= 1){
+        displayList = [nonTotal[idx], nonTotal[idx-1]];
+      } else {
+        displayList = sorted.slice(0, 2);            // first ayah (or nothing shown yet): 1 and 2
+      }
     }
     showAllBtn.style.display = sorted.length>1 ? 'block' : 'none';
     showAllBtn.textContent = showAllMarks ? t('hideAll') : `${t('showAll')} (${sorted.length})`;
@@ -1048,6 +1057,7 @@ function renderMarksList(){
   if(masterDb && masterLoadedSura!==null){
     flushSuraToMaster(masterLoadedSura);
   }
+  scheduleAutoSave();
 }
 function render(){
   refreshNextAyah();
@@ -1245,10 +1255,12 @@ function populateStartAyahOptions(sura){
   }
   startAyahInput.value = (prev && parseInt(prev)<=count) ? prev : '1';
 }
+let activeSura = parseInt(suraSelect.value);   // the surah the current marks belong to
 suraSelect.addEventListener('change', async ()=>{
   populateStartAyahOptions(parseInt(suraSelect.value));
-  await ensureWorkingDb();
-  loadSuraFromMaster(parseInt(suraSelect.value));
+  await ensureWorkingDb(activeSura);          // the old marks are saved under the OLD surah
+  loadSuraFromMaster(parseInt(suraSelect.value));   // the new surah starts with its own marks
+  activeSura = parseInt(suraSelect.value);
   const sura = parseInt(suraSelect.value);
   if(audioBySura.has(sura)){
     loadAudioIntoPlayer(audioBySura.get(sura).url, audioBySura.get(sura).name);
@@ -1259,7 +1271,7 @@ populateStartAyahOptions(parseInt(suraSelect.value));
 fetchSurahText(parseInt(suraSelect.value));
 
 // ---- Multi-surah master database ----
-async function ensureWorkingDb(){
+async function ensureWorkingDb(flushSura){
   if(masterDb) return masterDb;
   const SQL = await loadSqlJs();
   masterDb = new SQL.Database();
@@ -1275,7 +1287,7 @@ async function ensureWorkingDb(){
     stmt.run([s, 999, '']);
   }
   stmt.free();
-  masterLoadedSura = parseInt(suraSelect.value);
+  masterLoadedSura = flushSura || parseInt(suraSelect.value);
   flushSuraToMaster(masterLoadedSura);
   return masterDb;
 }
@@ -1305,6 +1317,7 @@ function loadSuraFromMaster(sura){
     }
   }catch(err){ /* sura not present in master db — leave marks empty */ }
   masterLoadedSura = sura;
+  autoSig = marksSignature();
   render();
 }
 function flushSuraToMaster(sura){
@@ -1638,6 +1651,44 @@ exportDb.addEventListener('click', async ()=>{
     exportDb.disabled = false;
   }
 });
+
+// ---- Automatic save when every ayah of the surah is marked ----
+// The whole working database is written to Downloads/quran_timings.db (replaced each time).
+function marksSignature(){
+  return marks.map(m=>m.ayah+':'+m.timeMs).sort().join(',');
+}
+function isSurahComplete(){
+  const total = AYAH_COUNTS[parseInt(suraSelect.value)-1];
+  if(!total || !marks.some(m=>m.isTotal)) return false;
+  const have = new Set(marks.filter(m=>!m.isTotal).map(m=>Number(m.ayah)));
+  for(let a=1; a<=total; a++){ if(!have.has(a)) return false; }
+  return true;
+}
+function scheduleAutoSave(){
+  if(!IS_NATIVE || !isSurahComplete()) return;
+  const sig = marksSignature();
+  if(sig === autoSig) return;                 // nothing changed since the last save
+  autoSig = sig;
+  autoDirty = true;
+  clearTimeout(autoTimer);
+  autoTimer = setTimeout(autoSaveNow, 1500);
+}
+async function autoSaveNow(){
+  clearTimeout(autoTimer);
+  if(!autoDirty) return;
+  autoDirty = false;
+  try{
+    if(!(window.AndroidSave && typeof window.AndroidSave.saveToDownloadsOverwrite === 'function')) return;
+    await ensureWorkingDb();
+    flushSuraToMaster(parseInt(suraSelect.value));
+    const data = masterDb.export();
+    const b64 = await blobToBase64(new Blob([data], {type:'application/x-sqlite3'}));
+    const r = String(window.AndroidSave.saveToDownloadsOverwrite('quran_timings.db', b64, 'application/octet-stream'));
+    if(r === 'ok') showToast('✅ داتابەیس بە خۆکاری هەڵگیرا (Downloads)');
+    else autoDirty = true;                    // try again at the next change
+  }catch(e){ autoDirty = true; }
+}
+document.addEventListener('visibilitychange', ()=>{ if(document.hidden) autoSaveNow(); });
 
 // ---- Import (resume previous session) ----
 function clearCurrentSuraMarks(){
