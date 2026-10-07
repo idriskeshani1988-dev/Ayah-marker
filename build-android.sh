@@ -10,27 +10,17 @@ cp index.html www/index.html
 cp node_modules/sql.js/dist/sql-wasm.js www/
 cp node_modules/sql.js/dist/sql-wasm.wasm www/
 
-echo "== Download Quran text (bundled for offline use)"
-curl -fsSL --retry 5 --retry-delay 5 \
-  "https://api.alquran.cloud/v1/quran/quran-uthmani" -o www/quran-uthmani.json
-python3 - <<'PY'
-import json
-d = json.load(open('www/quran-uthmani.json', encoding='utf-8'))
-s = d['data']['surahs']
-assert len(s) == 114, 'surah count %d' % len(s)
-n = sum(len(x['ayahs']) for x in s)
-assert n == 6236, 'ayah count %d' % n
-print('Quran text OK:', len(s), 'surahs,', n, 'ayahs')
+echo "== Quran text (bundled for offline use)"
+python3 fetch-quran.py
 
-# the same text as a script file: the app reads it with no network and no fetch
-out = [{'ayahs': x['ayahs']} for x in s]
-with open('www/quran-data.js', 'w', encoding='utf-8') as f:
-    f.write('window.QURAN_LOCAL=' + json.dumps(out, ensure_ascii=False) + ';')
-print('quran-data.js written')
-PY
-
-echo "== Embed Quran text + sql.js inside the page (fully offline)"
-python3 embed-offline.py
+# keep a copy of the text in the repo, so a later build never depends on the internet
+if [ -f quran-source.json ] && ! git ls-files --error-unmatch quran-source.json >/dev/null 2>&1; then
+  git config user.name "github-actions"
+  git config user.email "actions@users.noreply.github.com"
+  git add quran-source.json
+  git commit -m "Save Quran text copy for offline builds" || true
+  git push || echo "(could not save the copy, continuing)"
+fi
 
 echo "== Add Android platform"
 npx cap add android
