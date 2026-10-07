@@ -754,6 +754,7 @@ body.dark .mark-row.active-row .rowtime {
 
 <input type="file" id="masterDbInput">
 
+<script src="./quran-data.js"></script>
 <script>
 // ---- Surah names (Arabic) ----
 const SURA_NAMES = ["الفاتحة","البقرة","آل عمران","النساء","المائدة","الأنعام","الأعراف","الأنفال","التوبة","يونس",
@@ -1197,15 +1198,23 @@ fwd1Btn.addEventListener('click', ()=>{
 // ---- Ayah text (fetched live, not stored in the app — needs internet) ----
 let quranLocalPromise = null;
 function loadLocalQuran(){
+  // 1) the text built into the APK as a script (window.QURAN_LOCAL): no network and no fetch needed
+  if(window.QURAN_LOCAL && window.QURAN_LOCAL.length === 114){
+    return Promise.resolve(window.QURAN_LOCAL);
+  }
   if(!quranLocalPromise){
-    quranLocalPromise = fetch('./quran-uthmani.json')
-      .then(r=>{ if(!r.ok) throw new Error('no local text'); return r.json(); })
-      .then(j=>{
-        const sr = j && j.data && j.data.surahs;
-        if(!sr || sr.length !== 114) throw new Error('bad local text');
-        return sr;
-      })
-      .catch(()=>null);
+    if(Array.isArray(window.QURAN_LOCAL) && window.QURAN_LOCAL.length === 114){
+      quranLocalPromise = Promise.resolve(window.QURAN_LOCAL);      // embedded in the page: always offline
+    } else {
+      quranLocalPromise = fetch('./quran-uthmani.json')
+        .then(r=>{ if(!r.ok) throw new Error('no local text'); return r.json(); })
+        .then(j=>{
+          const sr = j && j.data && j.data.surahs;
+          if(!sr || sr.length !== 114) throw new Error('bad local text');
+          return sr;
+        })
+        .catch(()=>null);
+    }
   }
   return quranLocalPromise;
 }
@@ -1216,31 +1225,54 @@ async function fetchSurahText(sura){
   statusEl.className = 'textstatus';
   statusEl.textContent = 'داواکردنی دەقی سورە...';
   textPanel.appendChild(statusEl);
-  try{
-    let ayahs = null;
-    const local = await loadLocalQuran();           // bundled in the APK, works offline
-    if(local && local[sura-1]) ayahs = local[sura-1].ayahs;
-    if(!ayahs){
-      const res = await fetch(`https://api.alquran.cloud/v1/surah/${sura}/quran-uthmani`);
-      if(!res.ok) throw new Error('bad response');
-      const json = await res.json();
-      ayahs = json.data.ayahs;
-    }
-    currentSurahAyahs = ayahs;
-    textLoadedForSura = sura;
-    lastShownAyah = null;
-    addTotalBtn.style.display = 'none';
-    showAyahText();
-    render();
-  }catch(err){
+
+  const showError = (msg)=>{
     textPanel.innerHTML = '';
     const errEl = document.createElement('div');
     errEl.className = 'textstatus';
-    errEl.textContent = 'نەتوانرا دەقەکە بهێنرێت — پەیوەندیت بە ئینتەرنێتەوە بپشکنە';
+    errEl.textContent = msg;
     textPanel.appendChild(errEl);
     textLoadedForSura = null;
     addTotalBtn.style.display = 'block';
+  };
+
+  // 1) get the ayahs: bundled file (offline) -> internet -> copy saved on the phone
+  let ayahs = null, loadErr = null;
+  try{
+    const local = await loadLocalQuran();           // bundled in the APK, works offline
+    if(local && local[sura-1]) ayahs = local[sura-1].ayahs;
+  }catch(err){ loadErr = err; }
+  if(!ayahs){
+    try{
+      const res = await fetch(`https://api.alquran.cloud/v1/surah/${sura}/quran-uthmani`);
+      if(!res.ok) throw new Error('bad response ' + res.status);
+      const json = await res.json();
+      ayahs = json.data.ayahs;
+      try{ localStorage.setItem('quranText_' + sura, JSON.stringify(ayahs)); }catch(e){}   // keep a copy for offline
+    }catch(err){ loadErr = err; }
+  }
+  if(!ayahs){
+    try{
+      const saved = localStorage.getItem('quranText_' + sura);
+      if(saved) ayahs = JSON.parse(saved);
+    }catch(e){}
+  }
+  if(!ayahs){
+    showError('نەتوانرا دەقەکە بهێنرێت — پەیوەندیت بە ئینتەرنێتەوە بپشکنە' + (loadErr && loadErr.message ? ' (' + loadErr.message + ')' : ''));
     render();
+    return;
+  }
+
+  // 2) show it (an error here is reported as what it is, not as a network problem)
+  currentSurahAyahs = ayahs;
+  textLoadedForSura = sura;
+  lastShownAyah = null;
+  addTotalBtn.style.display = 'none';
+  try{
+    showAyahText();
+    render();
+  }catch(err){
+    showError('هەڵە لە پیشاندانی دەق: ' + (err && err.message ? err.message : err));
   }
 }
 function populateStartAyahOptions(sura){
@@ -1629,8 +1661,19 @@ function loadSqlJs(){
       script.onerror = ()=>{ script.remove(); onFail(new Error('script load failed')); };
       document.head.appendChild(script);
     };
-    // local copy first (bundled in the APK, works offline), then CDN
-    tryLoad('./', ()=>tryLoad(CDN, reject));
+    // separate files first (bundled in the APK), then the internet
+    const fromFiles = ()=>tryLoad('./', ()=>tryLoad(CDN, reject));
+    // best: sql.js and its wasm are embedded in this very page, nothing to download
+    if(typeof initSqlJs === 'function' && window.SQLJS_WASM_B64){
+      try{
+        const bin = atob(window.SQLJS_WASM_B64);
+        const bytes = new Uint8Array(bin.length);
+        for(let i=0; i<bin.length; i++) bytes[i] = bin.charCodeAt(i);
+        initSqlJs({wasmBinary: bytes}).then(resolve).catch(fromFiles);
+        return;
+      }catch(e){ /* fall through */ }
+    }
+    fromFiles();
   });
   return sqlJsPromise;
 }
@@ -1664,8 +1707,11 @@ function isSurahComplete(){
   for(let a=1; a<=total; a++){ if(!have.has(a)) return false; }
   return true;
 }
+function isNativeApp(){
+  return !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+}
 function scheduleAutoSave(){
-  if(!IS_NATIVE || !isSurahComplete()) return;
+  if(!isNativeApp() || !isSurahComplete()) return;
   const sig = marksSignature();
   if(sig === autoSig) return;                 // nothing changed since the last save
   autoSig = sig;

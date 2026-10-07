@@ -21,7 +21,16 @@ assert len(s) == 114, 'surah count %d' % len(s)
 n = sum(len(x['ayahs']) for x in s)
 assert n == 6236, 'ayah count %d' % n
 print('Quran text OK:', len(s), 'surahs,', n, 'ayahs')
+
+# the same text as a script file: the app reads it with no network and no fetch
+out = [{'ayahs': x['ayahs']} for x in s]
+with open('www/quran-data.js', 'w', encoding='utf-8') as f:
+    f.write('window.QURAN_LOCAL=' + json.dumps(out, ensure_ascii=False) + ';')
+print('quran-data.js written')
 PY
+
+echo "== Embed Quran text + sql.js inside the page (fully offline)"
+python3 embed-offline.py
 
 echo "== Add Android platform"
 npx cap add android
@@ -37,5 +46,15 @@ python3 make-icons.py
 
 echo "== Sync + build"
 npx cap sync android
+
+echo "== Check the offline files are inside the app"
+ASSETS=android/app/src/main/assets/public
+for f in quran-data.js quran-uthmani.json sql-wasm.js sql-wasm.wasm index.html; do
+  if [ ! -s "$ASSETS/$f" ]; then
+    echo "!! MISSING in the app: $f"
+    exit 1
+  fi
+  echo "ok: $f ($(wc -c < "$ASSETS/$f") bytes)"
+done
 cd android
 ./gradlew assembleDebug --no-daemon
