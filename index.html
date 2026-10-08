@@ -715,7 +715,6 @@ body.dark .mark-row.active-row .rowtime {
       <div class="menuBox"><div class="settingsRow"><label data-i18n="fontLabel" style="font-size:12px;">گەورە و بچووککردنی دەقی قورئان</label><div class="fontAdjust" style="display:flex;align-items:center;gap:6px;direction:ltr;"><button class="fontBtn" id="fontMinus" type="button">−</button><span id="fontSizeDisplay" style="min-width:34px;text-align:center;direction:ltr;">16</span><button class="fontBtn" id="fontPlus" type="button">+</button></div></div></div>
     </div>
     <div class="filename" id="fname"></div>
-    <div id="draftSaveStatus" aria-live="polite" style="display:none;margin:4px 0 2px;text-align:center;font-size:11px;font-weight:600;color:#4caf50;">✓ کاتەکان بەخۆکار هەڵگیراون</div>
     <audio id="player" controls controlslist="nodownload noplaybackrate nofullscreen" disablepictureinpicture disableremoteplayback playsinline style="display:none;"></audio>
     <div class="speedrow open" id="speedrow" style="margin-top:6px;display:none;">
       <div class="chip active" data-r="1">1x</div>
@@ -1126,6 +1125,22 @@ function renderMarksList(){
   const totals = marks.filter(m=>m.isTotal);
   const sorted = [...nonTotal, ...totals];
   marksList.innerHTML = '';
+
+  // Small manual-save button inside the marked-list panel.
+  const draftBtn = document.createElement('button');
+  draftBtn.type = 'button';
+  draftBtn.textContent = '💾 هەڵگرتنی کاتەکان';
+  draftBtn.setAttribute('aria-label', 'هەڵگرتنی کاتەکان');
+  draftBtn.style.cssText = 'display:block;margin:4px auto 7px;padding:4px 9px;border:1px solid rgba(76,175,80,.55);border-radius:8px;background:transparent;color:#4caf50;font-size:11px;font-weight:600;cursor:pointer;';
+  draftBtn.addEventListener('click', ()=>{
+    saveLocalDraft();
+    draftBtn.textContent = '✓ هەڵگیرا';
+    draftBtn.style.color = '#4caf50';
+    clearTimeout(draftBtn.__timer);
+    draftBtn.__timer = setTimeout(()=>{ draftBtn.textContent = '💾 هەڵگرتنی کاتەکان'; }, 1600);
+  });
+  marksList.appendChild(draftBtn);
+
   if(sorted.length===0){
     emptyMsg.style.display='block';
     showAllBtn.style.display='none';
