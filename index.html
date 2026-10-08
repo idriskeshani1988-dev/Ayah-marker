@@ -730,6 +730,17 @@ body.dark .mark-row.active-row .rowtime {
     </div>
     <input type="file" id="fileInput" accept="audio/*" multiple>
   </header>
+
+  <div class="card" id="resumeCard" style="display:none; background:#e8f5e9; border:2px solid #4caf50;">
+    <div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
+      <div>
+        <div style="font-weight:800; color:#2e7d32; font-size:13px;" id="resumeText">درێژەپێدان</div>
+        <div style="font-size:11px; color:#555;" id="resumeSub">داتای پێشوو هەیە</div>
+      </div>
+      <button id="resumeBtn" style="padding:8px 14px; background:#4caf50; color:#fff; border:none; border-radius:8px; font-weight:700; cursor:pointer;">بەردەوام بە ▶</button>
+    </div>
+  </div>
+
   <div class="card">
     <div class="textpanel open" id="textPanel">
       <div class="textstatus" id="textStatus" data-i18n="loadingText">داواکردنی دەقی سورە...</div>
@@ -896,6 +907,36 @@ const marksList = document.getElementById('marksList');
 const markCard = document.getElementById('markCard');
 const toast = document.getElementById('toast');
 let toastTimer = null;
+function updateProgressBanner(){
+  try{
+    const card = document.getElementById('resumeCard');
+    const txt = document.getElementById('resumeText');
+    const sub = document.getElementById('resumeSub');
+    if(!card) return;
+    const sura = parseInt(suraSelect.value);
+    const lastAyah = getLastAyahForSura(sura);
+    const totalInSura = AYAH_COUNTS[sura-1] || 0;
+    if(lastAyah>0 && marks.length>0){
+      const percent = Math.round((lastAyah/totalInSura)*100);
+      txt.textContent = `گەیشتیتە ئایەتی ${lastAyah} لە ${totalInSura} - ${percent}%`;
+      sub.textContent = `${marks.filter(m=>!m.isTotal).length} ئایەت دیاریکراوە - کلیک بکە بۆ درێژەپێدان`;
+      // Show banner only if we are at start and have progress
+      if(lastAyah < totalInSura){
+        // Don't show if already beyond
+      }
+    }
+    // Also check if there is any progress in other surahs to show last active
+    let all = {};
+    try{ all = JSON.parse(localStorage.getItem(LS_KEY) || '{}'); }catch(e){}
+    if(all.lastSura && all.lastSura != sura){
+      const lastSuraAyah = getLastAyahForSura(all.lastSura);
+      if(lastSuraAyah>0 && !card.dataset.shownOther){
+        // Show hint about other surah
+      }
+    }
+  }catch(e){}
+}
+
 function showToast(msg){
   toast.textContent = msg;
   toast.classList.add('show');
@@ -927,6 +968,45 @@ let lastShownAyah = null;
 
 let marks = []; // {ayah, timeMs, isTotal, seq}
 let seqCounter = 0;
+
+// ---- AUTO SAVE SYSTEM - بۆ هەلگرتنی خۆکاری ==== 
+const LS_KEY = 'quran_timings_progress_v2';
+function saveProgressToStorage(){
+  try{
+    const sura = parseInt(suraSelect ? suraSelect.value : activeSura);
+    if(!sura) return;
+    let all = {};
+    try{ all = JSON.parse(localStorage.getItem(LS_KEY) || '{}'); }catch(e){ all = {}; }
+    all['lastSura'] = sura;
+    all['lastUpdate'] = Date.now();
+    all['sura_'+sura] = { marks: marks, seqCounter: seqCounter, timestamp: Date.now() };
+    localStorage.setItem(LS_KEY, JSON.stringify(all));
+  }catch(e){}
+}
+function loadProgressFromStorage(sura){
+  try{
+    let all = JSON.parse(localStorage.getItem(LS_KEY) || '{}');
+    const data = all['sura_'+sura];
+    if(data && data.marks && data.marks.length>0){
+      marks = data.marks;
+      seqCounter = data.seqCounter || marks.length;
+      return true;
+    }
+  }catch(e){}
+  return false;
+}
+function getLastAyahForSura(sura){
+  try{
+    let all = JSON.parse(localStorage.getItem(LS_KEY) || '{}');
+    const data = all['sura_'+sura];
+    if(data && data.marks){
+      const filtered = data.marks.filter(m=>!m.isTotal);
+      if(filtered.length) return Math.max(...filtered.map(m=>m.ayah));
+    }
+  }catch(e){}
+  return 0;
+}
+
 let currentAyah = 1;
 let showAllMarks = false;
 
@@ -1059,6 +1139,8 @@ function renderMarksList(){
     flushSuraToMaster(masterLoadedSura);
   }
   scheduleAutoSave();
+  saveProgressToStorage();
+  updateProgressBanner();
 }
 function render(){
   refreshNextAyah();
@@ -1290,17 +1372,42 @@ function populateStartAyahOptions(sura){
 let activeSura = parseInt(suraSelect.value);   // the surah the current marks belong to
 suraSelect.addEventListener('change', async ()=>{
   populateStartAyahOptions(parseInt(suraSelect.value));
-  await ensureWorkingDb(activeSura);          // the old marks are saved under the OLD surah
-  loadSuraFromMaster(parseInt(suraSelect.value));   // the new surah starts with its own marks
-  activeSura = parseInt(suraSelect.value);
-  const sura = parseInt(suraSelect.value);
+  await ensureWorkingDb(activeSura);
+  // First try to load from localStorage, then from master DB
+  const suraNum = parseInt(suraSelect.value);
+  const loadedFromStorage = loadProgressFromStorage(suraNum);
+  if(!loadedFromStorage){
+    loadSuraFromMaster(suraNum);
+  } else {
+    masterLoadedSura = suraNum;
+    autoSig = marksSignature();
+    render();
+  }
+  activeSura = suraNum;
+  const sura = suraNum;
   if(audioBySura.has(sura)){
     loadAudioIntoPlayer(audioBySura.get(sura).url, audioBySura.get(sura).name);
   }
   fetchSurahText(sura);
+  updateProgressBanner();
 });
+
+// Restore last session
+try{
+  let all = JSON.parse(localStorage.getItem(LS_KEY) || '{}');
+  if(all.lastSura){
+    suraSelect.value = String(all.lastSura);
+    activeSura = all.lastSura;
+  }
+}catch(e){}
 populateStartAyahOptions(parseInt(suraSelect.value));
+// Try load saved progress for initial sura
+if(!loadProgressFromStorage(parseInt(suraSelect.value))){
+  // will be loaded from master later
+}
 fetchSurahText(parseInt(suraSelect.value));
+setTimeout(()=>{ render(); updateProgressBanner(); }, 300);
+
 
 // ---- Multi-surah master database ----
 async function ensureWorkingDb(flushSura){
@@ -1766,7 +1873,32 @@ async function autoSaveNow(){
     else autoDirty = true;                    // try again at the next change
   }catch(e){ autoDirty = true; }
 }
-document.addEventListener('visibilitychange', ()=>{ if(document.hidden) autoSaveNow(); });
+document.addEventListener('visibilitychange', ()=>{ if(document.hidden){ autoSaveNow(); saveProgressToStorage(); } });
+document.addEventListener('DOMContentLoaded', ()=>{
+  const btn = document.getElementById('resumeBtn');
+  if(btn){
+    btn.addEventListener('click', ()=>{
+      const lastAyah = getLastAyahForSura(parseInt(suraSelect.value));
+      if(lastAyah>0){
+        startAyahInput.value = String(lastAyah+1);
+        startAyahInput.dispatchEvent(new Event('change'));
+        showToast('✅ درێژە لە ئایەتی ' + (lastAyah+1));
+      }
+      document.getElementById('resumeCard').style.display='none';
+    });
+  }
+  // Show resume card if there is progress
+  setTimeout(()=>{
+    const sura = parseInt(suraSelect.value);
+    const lastAyah = getLastAyahForSura(sura);
+    const card = document.getElementById('resumeCard');
+    if(card && lastAyah>0){
+      card.style.display='block';
+    }
+  }, 800);
+});
+window.addEventListener('beforeunload', ()=>{ saveProgressToStorage(); });
+
 
 // ---- Import (resume previous session) ----
 function clearCurrentSuraMarks(){
