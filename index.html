@@ -927,6 +927,51 @@ let lastShownAyah = null;
 
 let marks = []; // {ayah, timeMs, isTotal, seq}
 let seqCounter = 0;
+
+// ---- Automatic local draft save (unfinished work stays inside the app) ----
+// This is separate from the DB: the existing Save Database (DB) command is unchanged.
+const LOCAL_DRAFT_PREFIX = 'quranTimingDraft_v1_';
+function draftKey(sura){
+  return LOCAL_DRAFT_PREFIX + String(sura);
+}
+function saveLocalDraft(){
+  try{
+    const sura = parseInt(suraSelect.value);
+    const payload = {
+      sura,
+      marks: marks.map(m=>({
+        ayah:Number(m.ayah),
+        timeMs:Number(m.timeMs)||0,
+        isTotal:!!m.isTotal,
+        seq:Number(m.seq)||0
+      })),
+      seqCounter:Number(seqCounter)||0,
+      savedAt:Date.now()
+    };
+    localStorage.setItem(draftKey(sura), JSON.stringify(payload));
+  }catch(e){}
+}
+function loadLocalDraft(sura){
+  try{
+    const raw = localStorage.getItem(draftKey(sura));
+    if(!raw) return false;
+    const payload = JSON.parse(raw);
+    if(!payload || Number(payload.sura)!==Number(sura) || !Array.isArray(payload.marks)) return false;
+    marks = payload.marks.map(m=>({
+      ayah:Number(m.ayah),
+      timeMs:Number(m.timeMs)||0,
+      isTotal:!!m.isTotal,
+      seq:Number(m.seq)||0
+    }));
+    seqCounter = Number(payload.seqCounter)||0;
+    if(marks.length) seqCounter = Math.max(seqCounter, ...marks.map(m=>m.seq+1));
+    return true;
+  }catch(e){ return false; }
+}
+function clearLocalDraft(sura){
+  try{ localStorage.removeItem(draftKey(sura)); }catch(e){}
+}
+
 let currentAyah = 1;
 let showAllMarks = false;
 
@@ -1065,6 +1110,7 @@ function render(){
   showAyahText();
   focusedAyah = null;
   renderMarksList();
+  saveLocalDraft();
 }
 
 marksList.addEventListener('click', (e)=>{
@@ -1292,6 +1338,8 @@ suraSelect.addEventListener('change', async ()=>{
   populateStartAyahOptions(parseInt(suraSelect.value));
   await ensureWorkingDb(activeSura);          // the old marks are saved under the OLD surah
   loadSuraFromMaster(parseInt(suraSelect.value));   // the new surah starts with its own marks
+  loadLocalDraft(parseInt(suraSelect.value));
+  render();
   activeSura = parseInt(suraSelect.value);
   const sura = parseInt(suraSelect.value);
   if(audioBySura.has(sura)){
@@ -1301,6 +1349,8 @@ suraSelect.addEventListener('change', async ()=>{
 });
 populateStartAyahOptions(parseInt(suraSelect.value));
 fetchSurahText(parseInt(suraSelect.value));
+loadLocalDraft(parseInt(suraSelect.value));
+render();
 
 // ---- Multi-surah master database ----
 async function ensureWorkingDb(flushSura){
@@ -1774,6 +1824,7 @@ function clearCurrentSuraMarks(){
   if(!confirm('دڵنیایت دەتەوێت هەموو نیشانەکانی ئەم سورەتە بسڕیتەوە؟')) return;
   marks = [];
   seqCounter = 0;
+  clearLocalDraft(sura);
   if(masterDb){
     try{ masterDb.run(`UPDATE timings SET time='' WHERE sura=${sura}`); }catch(err){}
   }
@@ -1786,6 +1837,9 @@ function clearAllSuraMarks(){
   if(!confirm('دڵنیایت دەتەوێت نیشانەکانی هەموو 114 سورەت بسڕیتەوە؟')) return;
   marks = [];
   seqCounter = 0;
+  try{
+    for(let s=1; s<=114; s++) localStorage.removeItem(draftKey(s));
+  }catch(err){}
   if(masterDb){
     try{ masterDb.run("UPDATE timings SET time=''"); }catch(err){}
   }
