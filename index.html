@@ -1286,21 +1286,12 @@ async function fetchSurahText(sura){
     addTotalBtn.style.display = 'block';
   };
 
-  // 1) get the ayahs: bundled file (offline) -> internet -> copy saved on the phone
+  // 100% ئوفلاین - بتنێ فایلێ ناڤخۆیی و localStorage
   let ayahs = null, loadErr = null;
   try{
-    const local = await loadLocalQuran();           // bundled in the APK, works offline
+    const local = await loadLocalQuran();           // bundled - 100% offline
     if(local && local[sura-1]) ayahs = local[sura-1].ayahs;
   }catch(err){ loadErr = err; }
-  if(!ayahs){
-    try{
-      const res = await fetch(`https://api.alquran.cloud/v1/surah/${sura}/quran-uthmani`);
-      if(!res.ok) throw new Error('bad response ' + res.status);
-      const json = await res.json();
-      ayahs = json.data.ayahs;
-      try{ localStorage.setItem('quranText_' + sura, JSON.stringify(ayahs)); }catch(e){}   // keep a copy for offline
-    }catch(err){ loadErr = err; }
-  }
   if(!ayahs){
     try{
       const saved = localStorage.getItem('quranText_' + sura);
@@ -1308,7 +1299,7 @@ async function fetchSurahText(sura){
     }catch(e){}
   }
   if(!ayahs){
-    showError('نەتوانرا دەقەکە بهێنرێت — پەیوەندیت بە ئینتەرنێتەوە بپشکنە' + (loadErr && loadErr.message ? ' (' + loadErr.message + ')' : ''));
+    showError('دەق نەهاتە دیتن - دڵنیابە فایلێ quran-data.js ل تەنیشت index.html هەیە');
     render();
     return;
   }
@@ -1357,14 +1348,28 @@ suraSelect.addEventListener('change', async ()=>{
   fetchSurahText(sura);
 });
 
+// گەڕانەوەی خۆکاری بۆ دوماهیک سورەت و کات - 100% ئوفلاین
+let restoredSura = null;
 try{
   const all = JSON.parse(localStorage.getItem(LS_KEY) || '{}');
-  if(all.lastSura){ suraSelect.value = String(all.lastSura); activeSura = all.lastSura; }
+  if(all.lastSura){ 
+    suraSelect.value = String(all.lastSura); 
+    activeSura = parseInt(all.lastSura);
+    restoredSura = activeSura;
+  }
 }catch(e){}
 populateStartAyahOptions(parseInt(suraSelect.value));
-loadMarks(parseInt(suraSelect.value));
+// بارکرنا کاتێن هەلگیراو
+const hasMarks = loadMarks(parseInt(suraSelect.value));
+// بارکرنا دەقێ قورئانێ
 fetchSurahText(parseInt(suraSelect.value));
-setTimeout(()=>{ render(); }, 300);
+// نیشاندانا کاتان بێی پێدڤی ب هەلبژارتنا دووبارە
+setTimeout(()=>{
+  if(hasMarks){
+    render();
+  }
+}, 500);
+
 
 
 // ---- Multi-surah master database ----
