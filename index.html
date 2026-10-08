@@ -1160,13 +1160,77 @@ function renderMarksList(){
     }
   }, 50);
 }
-function render(){
+function render(keepFocus = false){
   refreshNextAyah();
-  showAyahText();
-  focusedAyah = null;
-  renderMarksList();
+  if(!keepFocus){
+    showAyahText();
+    focusedAyah = null;
+  }
+  renderMarksList(keepFocus);
 }
 
+function renderMarksList(keepFocus = false){
+  const nonTotal = marks.filter(m=>!m.isTotal).sort((a,b)=>a.ayah-b.ayah);
+  const totals = marks.filter(m=>m.isTotal);
+  const sorted = [...nonTotal, ...totals];
+  marksList.innerHTML = '';
+  if(sorted.length===0){
+    emptyMsg.style.display='block';
+    showAllBtn.style.display='none';
+  } else {
+    emptyMsg.style.display='none';
+    let displayList = sorted;
+    if(!showAllMarks && !keepFocus && marks.length>0){
+      const anchor = (focusedAyah !== null) ? focusedAyah : lastShownAyah;
+      let idx = -1;
+      if(anchor !== null && anchor !== undefined){
+        nonTotal.forEach((m, i)=>{ if(m.ayah <= anchor) idx = i; });
+      }
+      if(idx >= 1){
+        displayList = [nonTotal[idx], nonTotal[idx-1]];
+      } else {
+        displayList = sorted.slice(0, 2);
+      }
+    }
+    showAllBtn.style.display = sorted.length>1 ? 'block' : 'none';
+    showAllBtn.textContent = showAllMarks ? t('hideAll') : `${t('showAll')} (${sorted.length})`;
+    displayList.forEach(m=>{
+      const row = document.createElement('div');
+      const isActive = !m.isTotal && m.ayah===lastShownAyah;
+      row.className = 'mark-row' + (m.isTotal ? ' total-row' : '') + (isActive ? ' active-row' : '');
+      row.dataset.seq = m.seq;
+      row.dataset.ayah = m.ayah;
+      row.innerHTML = `
+        <button type="button" class="rowbtn" data-act="play">▶</button>
+        <button type="button" class="rowbtn" data-act="plus">+</button>
+        <button type="button" class="rowbtn" data-act="minus">−</button>
+        <input type="text" inputmode="numeric" pattern="[0-9]*" lang="en" dir="ltr" class="rowtime" data-act="edit" value="${m.timeMs}">
+        <button type="button" class="rowbtn clearbtn" data-act="clear" title="سڕینەوەی کات">🧹</button>
+        <button type="button" class="rowbtn clearbtn" data-act="del" title="سڕینەوەی نیشانە">🗑</button>
+        <span class="rownum">${m.isTotal ? '999' : m.ayah}</span>`;
+      marksList.appendChild(row);
+    });
+  }
+  if(masterDb && masterLoadedSura!==null){
+    flushSuraToMaster(masterLoadedSura);
+  }
+  scheduleAutoSave();
+  saveMarks();
+  setTimeout(()=>{
+    const lastNum = getLastAyahNum();
+    if(lastNum>0){
+      document.querySelectorAll('.mark-row').forEach(r=>{
+        r.classList.remove('last-reached');
+        const numEl = r.querySelector('.rownum');
+        if(numEl && parseInt(numEl.textContent)===lastNum){
+          r.classList.add('last-reached');
+        }
+      });
+    }
+  }, 50);
+}
+
+// FIXED: دەستکاریکردن جێگای ئایەت ناگۆڕێت و لیستەکە لە سەرەوە دەمێنێتەوە
 marksList.addEventListener('click', (e)=>{
   const btn = e.target.closest('.rowbtn');
   if(!btn) return;
@@ -1177,18 +1241,50 @@ marksList.addEventListener('click', (e)=>{
   const act = btn.dataset.act;
   if(act==='del'){
     marks = marks.filter(m=>m.seq!==seq);
-    render();
+    render(true);
   } else if(act==='clear'){
     mark.timeMs = 0;
-    render();
+    // جێگیرکردنی ئایەتەکە لە دەقی قورئان بۆ دەستکاری
+    lastShownAyah = mark.ayah;
+    focusedAyah = mark.ayah;
+    showAllMarks = true;
+    renderAyahText(mark.ayah, true);
+    renderMarksList(true);
   } else if(act==='play'){
     startMarkedPlayback(mark);
   } else if(act==='plus'){
     mark.timeMs += getStepMs();
-    render();
+    lastShownAyah = mark.ayah;
+    focusedAyah = mark.ayah;
+    showAllMarks = true;
+    renderAyahText(mark.ayah, true);
+    renderMarksList(true);
   } else if(act==='minus'){
     mark.timeMs = Math.max(0, mark.timeMs - getStepMs());
-    render();
+    lastShownAyah = mark.ayah;
+    focusedAyah = mark.ayah;
+    showAllMarks = true;
+    renderAyahText(mark.ayah, true);
+    renderMarksList(true);
+  }
+});
+marksList.addEventListener('focusin', (e)=>{
+  if(e.target.dataset.act==='edit'){
+    const row = e.target.closest('.mark-row');
+    const seq = parseInt(row.dataset.seq);
+    const mark = marks.find(m=>m.seq===seq);
+    if(!mark) return;
+    // کاتێک دەست دەکەیت بە دەستکاری، ئایەتەکە لە سەرەوە پیشان بدە
+    lastShownAyah = mark.ayah;
+    focusedAyah = mark.ayah;
+    showAllMarks = true;
+    renderAyahText(mark.ayah, true);
+    renderMarksList(true);
+    // دووبارە فۆکەس بخەرەوە سەر inputەکە
+    setTimeout(()=>{
+      const input = document.querySelector(`.mark-row[data-seq="${seq}"] .rowtime`);
+      if(input) input.focus();
+    }, 50);
   }
 });
 marksList.addEventListener('change', (e)=>{
@@ -1199,7 +1295,12 @@ marksList.addEventListener('change', (e)=>{
     if(!mark) return;
     const val = parseInt(e.target.value);
     if(!isNaN(val) && val>=0) mark.timeMs = val;
-    render();
+    // گرنگ: جێگای ئایەت مەگۆڕە، لە سەرەوە بمێنەرەوە
+    lastShownAyah = mark.ayah;
+    focusedAyah = mark.ayah;
+    showAllMarks = true;
+    renderAyahText(mark.ayah, true);
+    renderMarksList(true);
   }
 });
 
@@ -1835,7 +1936,6 @@ let sqlJsPromise = null;
 function loadSqlJs(){
   if(sqlJsPromise) return sqlJsPromise;
   sqlJsPromise = new Promise((resolve,reject)=>{
-    const CDN = 'https://cdn.jsdelivr.net/npm/sql.js/dist/';
     const tryLoad = (base, onFail)=>{
       const script = document.createElement('script');
       script.src = base + 'sql-wasm.js';
@@ -1846,9 +1946,9 @@ function loadSqlJs(){
       script.onerror = ()=>{ script.remove(); onFail(new Error('script load failed')); };
       document.head.appendChild(script);
     };
-    // separate files first (bundled in the APK), then the internet
-    const fromFiles = ()=>tryLoad('./', ()=>tryLoad(CDN, reject));
-    // best: sql.js and its wasm are embedded in this very page, nothing to download
+    // 100% OFFLINE - تەنها فایلی ناوخۆیی، هیچ CDN نیە
+    const fromFiles = ()=>tryLoad('./', ()=>reject(new Error('sql.js نەدۆزرایەوە - دڵنیابە sql-wasm.js لە تەنیشت index.html هەیە یان WASM لەناو HTML جێگیر کراوە')));
+    // باشترین: sql.js و wasm لەناو خودی ئەم پەڕەیە جێگیر کراوە، هیچ دابەزاندنێکی ناوێت
     if(typeof initSqlJs === 'function' && window.SQLJS_WASM_B64){
       try{
         const bin = atob(window.SQLJS_WASM_B64);
