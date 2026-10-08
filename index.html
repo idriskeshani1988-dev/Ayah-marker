@@ -930,62 +930,111 @@ let marks = []; // {ayah, timeMs, isTotal, seq}
 let seqCounter = 0;
 
 // ---- Local draft save: unfinished timing work stays inside the app ----
-// This is separate from the DB. It is saved automatically after every change.
-const LOCAL_DRAFT_PREFIX = 'quranTimingDraft_v1_';
-function draftKey(sura){
-  return LOCAL_DRAFT_PREFIX + String(sura);
+// Saved separately from the DB. localStorage + IndexedDB are both used so the
+// unfinished work survives closing/reopening the Android WebView app.
+const LOCAL_DRAFT_PREFIX = 'quranTimingDraft_v2_';
+const LOCAL_DRAFT_IDB = 'quranTimingDraftDB_v1';
+const LOCAL_DRAFT_STORE = 'drafts';
+function draftKey(sura){ return LOCAL_DRAFT_PREFIX + String(sura); }
+function draftPayload(sura){
+  return {
+    sura:Number(sura),
+    marks:marks.map(m=>({ayah:Number(m.ayah),timeMs:Number(m.timeMs)||0,isTotal:!!m.isTotal,seq:Number(m.seq)||0})),
+    seqCounter:Number(seqCounter)||0,
+    savedAt:Date.now()
+  };
+}
+function openDraftDb(){
+  return new Promise((resolve,reject)=>{
+    try{
+      const req=indexedDB.open(LOCAL_DRAFT_IDB,1);
+      req.onupgradeneeded=()=>{
+        const db=req.result;
+        if(!db.objectStoreNames.contains(LOCAL_DRAFT_STORE)) db.createObjectStore(LOCAL_DRAFT_STORE,{keyPath:'sura'});
+      };
+      req.onsuccess=()=>resolve(req.result);
+      req.onerror=()=>reject(req.error||new Error('IndexedDB unavailable'));
+    }catch(e){ reject(e); }
+  });
+}
+async function saveDraftToIndexedDB(payload){
+  const db=await openDraftDb();
+  await new Promise((resolve,reject)=>{
+    const tx=db.transaction(LOCAL_DRAFT_STORE,'readwrite');
+    tx.objectStore(LOCAL_DRAFT_STORE).put(payload);
+    tx.oncomplete=resolve;
+    tx.onerror=()=>reject(tx.error||new Error('draft save failed'));
+    tx.onabort=()=>reject(tx.error||new Error('draft save aborted'));
+  });
+  db.close();
+}
+async function readDraftFromIndexedDB(sura){
+  const db=await openDraftDb();
+  const value=await new Promise((resolve,reject)=>{
+    const tx=db.transaction(LOCAL_DRAFT_STORE,'readonly');
+    const req=tx.objectStore(LOCAL_DRAFT_STORE).get(Number(sura));
+    req.onsuccess=()=>resolve(req.result||null);
+    req.onerror=()=>reject(req.error||new Error('draft read failed'));
+  });
+  db.close();
+  return value;
+}
+async function deleteDraftFromIndexedDB(sura){
+  try{
+    const db=await openDraftDb();
+    await new Promise((resolve,reject)=>{
+      const tx=db.transaction(LOCAL_DRAFT_STORE,'readwrite');
+      tx.objectStore(LOCAL_DRAFT_STORE).delete(Number(sura));
+      tx.oncomplete=resolve;
+      tx.onerror=()=>reject(tx.error);
+    });
+    db.close();
+  }catch(e){}
+}
+function applyDraftPayload(payload,sura){
+  if(!payload || Number(payload.sura)!==Number(sura) || !Array.isArray(payload.marks)) return false;
+  marks=payload.marks.map(m=>({ayah:Number(m.ayah),timeMs:Number(m.timeMs)||0,isTotal:!!m.isTotal,seq:Number(m.seq)||0}));
+  seqCounter=Number(payload.seqCounter)||0;
+  if(marks.length) seqCounter=Math.max(seqCounter,...marks.map(m=>m.seq+1));
+  return true;
+}
+function showDraftStatus(ok){
+  const status=document.getElementById('draftSaveStatus');
+  if(!status) return;
+  status.textContent=ok?'✓ کاتەکان بەخۆکار هەڵگیراون':'⚠ هەڵگرتنی خۆکار بەردەست نییە';
+  status.style.display='block';
+  status.style.color=ok?'#4caf50':'#d9534f';
+  clearTimeout(window.__draftStatusTimer);
+  window.__draftStatusTimer=setTimeout(()=>{ if(status) status.style.display='none'; },1800);
 }
 function saveLocalDraft(){
   try{
-    const sura = parseInt(suraSelect.value);
-    const payload = {
-      sura,
-      marks: marks.map(m=>({
-        ayah:Number(m.ayah),
-        timeMs:Number(m.timeMs)||0,
-        isTotal:!!m.isTotal,
-        seq:Number(m.seq)||0
-      })),
-      seqCounter:Number(seqCounter)||0,
-      savedAt:Date.now()
-    };
-    localStorage.setItem(draftKey(sura), JSON.stringify(payload));
-    const status = document.getElementById('draftSaveStatus');
-    if(status){
-      status.textContent = '✓ کاتەکان بەخۆکار هەڵگیراون';
-      status.style.display = 'block';
-      status.style.color = '#4caf50';
-      clearTimeout(window.__draftStatusTimer);
-      window.__draftStatusTimer = setTimeout(()=>{ if(status) status.style.display='none'; }, 1800);
-    }
-  }catch(e){
-    const status = document.getElementById('draftSaveStatus');
-    if(status){
-      status.textContent = '⚠ هەڵگرتنی خۆکار بەردەست نییە';
-      status.style.display = 'block';
-      status.style.color = '#d9534f';
-    }
-  }
+    const sura=parseInt(suraSelect.value);
+    const payload=draftPayload(sura);
+    let localOk=false;
+    try{ localStorage.setItem(draftKey(sura),JSON.stringify(payload)); localOk=true; }catch(e){}
+    // IndexedDB is the persistent fallback used by the installed app.
+    saveDraftToIndexedDB(payload).then(()=>showDraftStatus(true)).catch(()=>{ if(localOk) showDraftStatus(true); else showDraftStatus(false); });
+    if(!localOk) showDraftStatus(false);
+  }catch(e){ showDraftStatus(false); }
 }
-function loadLocalDraft(sura){
+async function loadLocalDraft(sura){
   try{
-    const raw = localStorage.getItem(draftKey(sura));
-    if(!raw) return false;
-    const payload = JSON.parse(raw);
-    if(!payload || Number(payload.sura)!==Number(sura) || !Array.isArray(payload.marks)) return false;
-    marks = payload.marks.map(m=>({
-      ayah:Number(m.ayah),
-      timeMs:Number(m.timeMs)||0,
-      isTotal:!!m.isTotal,
-      seq:Number(m.seq)||0
-    }));
-    seqCounter = Number(payload.seqCounter)||0;
-    if(marks.length) seqCounter = Math.max(seqCounter, ...marks.map(m=>m.seq+1));
-    return true;
+    let payload=null;
+    try{
+      const raw=localStorage.getItem(draftKey(sura));
+      if(raw) payload=JSON.parse(raw);
+    }catch(e){}
+    let idbPayload=null;
+    try{ idbPayload=await readDraftFromIndexedDB(sura); }catch(e){}
+    // Prefer the newest saved copy.
+    if(idbPayload && (!payload || Number(idbPayload.savedAt||0)>=Number(payload.savedAt||0))) payload=idbPayload;
+    return applyDraftPayload(payload,sura);
   }catch(e){ return false; }
 }
 function clearLocalDraft(sura){
   try{ localStorage.removeItem(draftKey(sura)); }catch(e){}
+  deleteDraftFromIndexedDB(sura);
 }
 let currentAyah = 1;
 let showAllMarks = false;
@@ -1353,7 +1402,7 @@ suraSelect.addEventListener('change', async ()=>{
   populateStartAyahOptions(parseInt(suraSelect.value));
   await ensureWorkingDb(activeSura);          // the old marks are saved under the OLD surah
   loadSuraFromMaster(parseInt(suraSelect.value));   // the new surah starts with its own marks
-  loadLocalDraft(parseInt(suraSelect.value));
+  await loadLocalDraft(parseInt(suraSelect.value));
   render();
   activeSura = parseInt(suraSelect.value);
   const sura = parseInt(suraSelect.value);
@@ -1362,9 +1411,9 @@ suraSelect.addEventListener('change', async ()=>{
   }
   fetchSurahText(sura);
 });
-populateStartAyahOptions(parseInt(suraSelect.value));
-loadLocalDraft(parseInt(suraSelect.value));
-fetchSurahText(parseInt(suraSelect.value));
+const initialSura = parseInt(suraSelect.value);
+populateStartAyahOptions(initialSura);
+(async()=>{ await loadLocalDraft(initialSura); render(); fetchSurahText(initialSura); })();
 
 // ---- Multi-surah master database ----
 async function ensureWorkingDb(flushSura){
@@ -1443,7 +1492,7 @@ masterDbInput.addEventListener('change', ()=>{
       masterStatus.textContent = `داتابەیس باركرا: ${rowCount} ڕیز. سورە هەڵبژێرە بۆ دەستپێکردن — گۆڕانکارییەکانت خۆکار هەڵدەگیرێن.`;
       const loadedSura = parseInt(suraSelect.value);
       loadSuraFromMaster(loadedSura);
-      if(loadLocalDraft(loadedSura)) render();
+      if(await loadLocalDraft(loadedSura)) render();
     }catch(err){
       alert('نەتوانرا داتابەیسەکە بخوێنرێتەوە: ' + (err && err.message ? err.message : err) + '\nدڵنیابەرەوە خشتەی timings تێدایە.');
     }
