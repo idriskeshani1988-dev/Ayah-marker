@@ -537,6 +537,14 @@
     text-align:center;
   }
   .toast.show{display:block;}
+
+  /* Auto-save progress UI */
+  .resumeCard{ background:#e8f5e9; border:2px solid #4caf50; border-radius:12px; padding:10px; margin-bottom:8px; display:none; }
+  .resumeCard.show{ display:block; }
+  .progressWrap{ background:#c8e6c9; border-radius:10px; height:8px; overflow:hidden; margin:6px 0; }
+  .progressBar{ height:100%; background:linear-gradient(90deg,#4caf50,#81c784); width:0%; transition:width .4s; }
+  .lastBadge{ background:#4caf50; color:#fff; font-size:10px; padding:2px 7px; border-radius:10px; margin-right:5px; }
+
 </style>
 <style>
 /* Dark mode: remove white surfaces while preserving audio and ayah-start button colors. */
@@ -731,13 +739,15 @@ body.dark .mark-row.active-row .rowtime {
     <input type="file" id="fileInput" accept="audio/*" multiple>
   </header>
 
-  <div class="card" id="resumeCard" style="display:none; background:#e8f5e9; border:2px solid #4caf50;">
-    <div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
-      <div>
-        <div style="font-weight:800; color:#2e7d32; font-size:13px;" id="resumeText">درێژەپێدان</div>
+  <div class="card resumeCard" id="resumeCard">
+    <div style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
+      <div style="flex:1;">
+        <div style="font-weight:800; color:#2e7d32; font-size:13px;" id="resumeTitle">گەڕاینەوە</div>
         <div style="font-size:11px; color:#555;" id="resumeSub">داتای پێشوو هەیە</div>
+        <div class="progressWrap"><div class="progressBar" id="progressBar"></div></div>
+        <div style="font-size:10px; color:#2e7d32;" id="progressText">0%</div>
       </div>
-      <button id="resumeBtn" style="padding:8px 14px; background:#4caf50; color:#fff; border:none; border-radius:8px; font-weight:700; cursor:pointer;">بەردەوام بە ▶</button>
+      <button id="resumeBtn" style="padding:10px 14px; background:#4caf50; color:#fff; border:none; border-radius:10px; font-weight:800; cursor:pointer; white-space:nowrap;">بەردەوام بە ▶</button>
     </div>
   </div>
 
@@ -907,36 +917,6 @@ const marksList = document.getElementById('marksList');
 const markCard = document.getElementById('markCard');
 const toast = document.getElementById('toast');
 let toastTimer = null;
-function updateProgressBanner(){
-  try{
-    const card = document.getElementById('resumeCard');
-    const txt = document.getElementById('resumeText');
-    const sub = document.getElementById('resumeSub');
-    if(!card) return;
-    const sura = parseInt(suraSelect.value);
-    const lastAyah = getLastAyahForSura(sura);
-    const totalInSura = AYAH_COUNTS[sura-1] || 0;
-    if(lastAyah>0 && marks.length>0){
-      const percent = Math.round((lastAyah/totalInSura)*100);
-      txt.textContent = `گەیشتیتە ئایەتی ${lastAyah} لە ${totalInSura} - ${percent}%`;
-      sub.textContent = `${marks.filter(m=>!m.isTotal).length} ئایەت دیاریکراوە - کلیک بکە بۆ درێژەپێدان`;
-      // Show banner only if we are at start and have progress
-      if(lastAyah < totalInSura){
-        // Don't show if already beyond
-      }
-    }
-    // Also check if there is any progress in other surahs to show last active
-    let all = {};
-    try{ all = JSON.parse(localStorage.getItem(LS_KEY) || '{}'); }catch(e){}
-    if(all.lastSura && all.lastSura != sura){
-      const lastSuraAyah = getLastAyahForSura(all.lastSura);
-      if(lastSuraAyah>0 && !card.dataset.shownOther){
-        // Show hint about other surah
-      }
-    }
-  }catch(e){}
-}
-
 function showToast(msg){
   toast.textContent = msg;
   toast.classList.add('show');
@@ -969,42 +949,65 @@ let lastShownAyah = null;
 let marks = []; // {ayah, timeMs, isTotal, seq}
 let seqCounter = 0;
 
-// ---- AUTO SAVE SYSTEM - بۆ هەلگرتنی خۆکاری ==== 
-const LS_KEY = 'quran_timings_progress_v2';
-function saveProgressToStorage(){
+// ===== AUTO-SAVE SYSTEM - هەلگرتنا خۆکاری =====
+const LS_PROGRESS_KEY = 'quran_auto_save_v1';
+function saveProgress(){
   try{
-    const sura = parseInt(suraSelect ? suraSelect.value : activeSura);
-    if(!sura) return;
+    const sura = parseInt(suraSelect.value);
     let all = {};
-    try{ all = JSON.parse(localStorage.getItem(LS_KEY) || '{}'); }catch(e){ all = {}; }
+    try{ all = JSON.parse(localStorage.getItem(LS_PROGRESS_KEY) || '{}'); }catch(e){ all={}; }
     all['lastSura'] = sura;
-    all['lastUpdate'] = Date.now();
-    all['sura_'+sura] = { marks: marks, seqCounter: seqCounter, timestamp: Date.now() };
-    localStorage.setItem(LS_KEY, JSON.stringify(all));
+    all['sura_'+sura] = { marks: marks, seqCounter: seqCounter, time: Date.now() };
+    localStorage.setItem(LS_PROGRESS_KEY, JSON.stringify(all));
   }catch(e){}
 }
-function loadProgressFromStorage(sura){
+function loadProgress(sura){
   try{
-    let all = JSON.parse(localStorage.getItem(LS_KEY) || '{}');
-    const data = all['sura_'+sura];
-    if(data && data.marks && data.marks.length>0){
-      marks = data.marks;
-      seqCounter = data.seqCounter || marks.length;
+    const all = JSON.parse(localStorage.getItem(LS_PROGRESS_KEY) || '{}');
+    const d = all['sura_'+sura];
+    if(d && d.marks && d.marks.length>0){
+      marks = d.marks;
+      seqCounter = d.seqCounter || marks.length;
       return true;
     }
   }catch(e){}
   return false;
 }
-function getLastAyahForSura(sura){
+function getLastAyah(sura){
   try{
-    let all = JSON.parse(localStorage.getItem(LS_KEY) || '{}');
-    const data = all['sura_'+sura];
-    if(data && data.marks){
-      const filtered = data.marks.filter(m=>!m.isTotal);
-      if(filtered.length) return Math.max(...filtered.map(m=>m.ayah));
+    const all = JSON.parse(localStorage.getItem(LS_PROGRESS_KEY) || '{}');
+    const d = all['sura_'+sura];
+    if(d && d.marks){
+      const f = d.marks.filter(m=>!m.isTotal);
+      if(f.length) return Math.max(...f.map(m=>m.ayah));
     }
   }catch(e){}
   return 0;
+}
+function updateResumeCard(){
+  try{
+    const card = document.getElementById('resumeCard');
+    const title = document.getElementById('resumeTitle');
+    const sub = document.getElementById('resumeSub');
+    const bar = document.getElementById('progressBar');
+    const txt = document.getElementById('progressText');
+    if(!card) return;
+    const sura = parseInt(suraSelect.value);
+    const lastAyah = getLastAyah(sura);
+    const total = AYAH_COUNTS[sura-1] || 1;
+    const markedCount = marks.filter(m=>!m.isTotal).length;
+    if(lastAyah>0 && markedCount>0){
+      const pct = Math.round((lastAyah/total)*100);
+      const remain = total - lastAyah;
+      title.innerHTML = `گەیشتیتە ئایەتی <b>${lastAyah}</b> ژ ${total} <span class="lastBadge">دوماهیک</span>`;
+      sub.textContent = `${markedCount} ئایەت دیاریکراوە - ${remain} مایە`;
+      bar.style.width = pct + '%';
+      txt.textContent = pct + '% تەمام بوو';
+      card.classList.add('show');
+    } else {
+      card.classList.remove('show');
+    }
+  }catch(e){}
 }
 
 let currentAyah = 1;
@@ -1139,8 +1142,8 @@ function renderMarksList(){
     flushSuraToMaster(masterLoadedSura);
   }
   scheduleAutoSave();
-  saveProgressToStorage();
-  updateProgressBanner();
+  saveProgress();
+  updateResumeCard();
 }
 function render(){
   refreshNextAyah();
@@ -1373,14 +1376,13 @@ let activeSura = parseInt(suraSelect.value);   // the surah the current marks be
 suraSelect.addEventListener('change', async ()=>{
   populateStartAyahOptions(parseInt(suraSelect.value));
   await ensureWorkingDb(activeSura);
-  // First try to load from localStorage, then from master DB
   const suraNum = parseInt(suraSelect.value);
-  const loadedFromStorage = loadProgressFromStorage(suraNum);
-  if(!loadedFromStorage){
+  // هەول بدە لە auto-save بار بکە، ئەگەر نەبوو لە master
+  if(!loadProgress(suraNum)){
     loadSuraFromMaster(suraNum);
   } else {
     masterLoadedSura = suraNum;
-    autoSig = marksSignature();
+    try{ autoSig = marksSignature(); }catch(e){}
     render();
   }
   activeSura = suraNum;
@@ -1389,24 +1391,22 @@ suraSelect.addEventListener('change', async ()=>{
     loadAudioIntoPlayer(audioBySura.get(sura).url, audioBySura.get(sura).name);
   }
   fetchSurahText(sura);
-  updateProgressBanner();
+  updateResumeCard();
 });
 
-// Restore last session
+// گەڕانەوە بۆ دوماهیک سورەت
 try{
-  let all = JSON.parse(localStorage.getItem(LS_KEY) || '{}');
+  const all = JSON.parse(localStorage.getItem(LS_PROGRESS_KEY) || '{}');
   if(all.lastSura){
     suraSelect.value = String(all.lastSura);
     activeSura = all.lastSura;
   }
 }catch(e){}
 populateStartAyahOptions(parseInt(suraSelect.value));
-// Try load saved progress for initial sura
-if(!loadProgressFromStorage(parseInt(suraSelect.value))){
-  // will be loaded from master later
-}
+// ئەگەر داتای هەلگیراو هەبێت بار بکە
+loadProgress(parseInt(suraSelect.value));
 fetchSurahText(parseInt(suraSelect.value));
-setTimeout(()=>{ render(); updateProgressBanner(); }, 300);
+setTimeout(()=>{ render(); updateResumeCard(); }, 400);
 
 
 // ---- Multi-surah master database ----
@@ -1873,31 +1873,26 @@ async function autoSaveNow(){
     else autoDirty = true;                    // try again at the next change
   }catch(e){ autoDirty = true; }
 }
-document.addEventListener('visibilitychange', ()=>{ if(document.hidden){ autoSaveNow(); saveProgressToStorage(); } });
+document.addEventListener('visibilitychange', ()=>{ if(document.hidden){ autoSaveNow(); saveProgress(); } });
+window.addEventListener('beforeunload', ()=>{ saveProgress(); });
 document.addEventListener('DOMContentLoaded', ()=>{
   const btn = document.getElementById('resumeBtn');
   if(btn){
     btn.addEventListener('click', ()=>{
-      const lastAyah = getLastAyahForSura(parseInt(suraSelect.value));
-      if(lastAyah>0){
-        startAyahInput.value = String(lastAyah+1);
-        startAyahInput.dispatchEvent(new Event('change'));
-        showToast('✅ درێژە لە ئایەتی ' + (lastAyah+1));
+      const last = getLastAyah(parseInt(suraSelect.value));
+      if(last>0){
+        const next = last + 1;
+        const total = AYAH_COUNTS[parseInt(suraSelect.value)-1] || 286;
+        if(next <= total){
+          startAyahInput.value = String(next);
+          startAyahInput.dispatchEvent(new Event('change'));
+          showToast('✅ درێژە لە ئایەتی ' + next);
+        }
       }
-      document.getElementById('resumeCard').style.display='none';
+      document.getElementById('resumeCard').classList.remove('show');
     });
   }
-  // Show resume card if there is progress
-  setTimeout(()=>{
-    const sura = parseInt(suraSelect.value);
-    const lastAyah = getLastAyahForSura(sura);
-    const card = document.getElementById('resumeCard');
-    if(card && lastAyah>0){
-      card.style.display='block';
-    }
-  }, 800);
 });
-window.addEventListener('beforeunload', ()=>{ saveProgressToStorage(); });
 
 
 // ---- Import (resume previous session) ----
