@@ -933,28 +933,45 @@ let lastShownAyah = null;
 let marks = []; // {ayah, timeMs, isTotal, seq}
 let seqCounter = 0;
 
-// هەلگرتنا خۆکاری - بتنێ کاتەکان دمینن
-const LS_KEY = 'quran_marks_autosave';
+// هەلگرتنا خۆکاری - بتنێ کاتەکان دمینن - 100% ئوفلاین
+const LS_KEY = 'quran_marks_autosave_v2';
+const LS_LAST_SURA = 'quran_last_sura_v2';
 function saveMarks(){
   try{
     const sura = parseInt(suraSelect.value);
+    if(!sura) return;
+    // هەلگرتنا دوماهیک سورەت ب جیا
+    localStorage.setItem(LS_LAST_SURA, String(sura));
+    // هەلگرتنا کاتان
+    localStorage.setItem(LS_KEY + '_sura_' + sura, JSON.stringify({ marks: marks, seqCounter: seqCounter }));
+    // هەلگرتنا لیستا هەمی سورەتان
     let all = {};
     try{ all = JSON.parse(localStorage.getItem(LS_KEY) || '{}'); }catch(e){ all={}; }
     all['lastSura'] = sura;
-    all['sura_'+sura] = { marks: marks, seqCounter: seqCounter };
+    all['sura_'+sura] = { count: marks.length, lastAyah: getLastAyahNum() };
     localStorage.setItem(LS_KEY, JSON.stringify(all));
-  }catch(e){}
+  }catch(e){ console.log('save error', e); }
 }
 function loadMarks(sura){
   try{
-    const all = JSON.parse(localStorage.getItem(LS_KEY) || '{}');
-    const d = all['sura_'+sura];
-    if(d && d.marks && d.marks.length>0){
-      marks = d.marks;
-      seqCounter = d.seqCounter || marks.length;
+    const raw = localStorage.getItem(LS_KEY + '_sura_' + sura);
+    if(raw){
+      const d = JSON.parse(raw);
+      if(d && d.marks && d.marks.length>0){
+        marks = d.marks;
+        seqCounter = d.seqCounter || marks.length;
+        return true;
+      }
+    }
+    // fallback old key
+    const all = JSON.parse(localStorage.getItem('quran_marks_autosave') || '{}');
+    const d2 = all['sura_'+sura];
+    if(d2 && d2.marks && d2.marks.length>0){
+      marks = d2.marks;
+      seqCounter = d2.seqCounter || marks.length;
       return true;
     }
-  }catch(e){}
+  }catch(e){ console.log('load error', e); }
   return false;
 }
 function getLastAyahNum(){
@@ -962,6 +979,18 @@ function getLastAyahNum(){
   if(f.length==0) return 0;
   return Math.max(...f.map(m=>m.ayah));
 }
+function getLastSura(){
+  try{
+    let s = localStorage.getItem(LS_LAST_SURA);
+    if(s) return parseInt(s);
+    let all = JSON.parse(localStorage.getItem(LS_KEY) || '{}');
+    if(all.lastSura) return parseInt(all.lastSura);
+    let allOld = JSON.parse(localStorage.getItem('quran_marks_autosave') || '{}');
+    if(allOld.lastSura) return parseInt(allOld.lastSura);
+  }catch(e){}
+  return null;
+}
+
 
 let currentAyah = 1;
 let showAllMarks = false;
@@ -1348,27 +1377,33 @@ suraSelect.addEventListener('change', async ()=>{
   fetchSurahText(sura);
 });
 
-// گەڕانەوەی خۆکاری بۆ دوماهیک سورەت و کات - 100% ئوفلاین
+// گەڕانەوەی خۆکاری بۆ دوماهیک سورەت و کات - 100% ئوفلاین - چاککراو
 let restoredSura = null;
-try{
-  const all = JSON.parse(localStorage.getItem(LS_KEY) || '{}');
-  if(all.lastSura){ 
-    suraSelect.value = String(all.lastSura); 
-    activeSura = parseInt(all.lastSura);
-    restoredSura = activeSura;
-  }
-}catch(e){}
+let lastSavedSura = getLastSura();
+if(lastSavedSura && lastSavedSura>=1 && lastSavedSura<=114){
+  suraSelect.value = String(lastSavedSura);
+  activeSura = lastSavedSura;
+  restoredSura = lastSavedSura;
+}
 populateStartAyahOptions(parseInt(suraSelect.value));
-// بارکرنا کاتێن هەلگیراو
-const hasMarks = loadMarks(parseInt(suraSelect.value));
+// بارکرنا کاتێن هەلگیراو بەرێ
+let hasMarks = false;
+try{
+  hasMarks = loadMarks(parseInt(suraSelect.value));
+}catch(e){}
 // بارکرنا دەقێ قورئانێ
 fetchSurahText(parseInt(suraSelect.value));
-// نیشاندانا کاتان بێی پێدڤی ب هەلبژارتنا دووبارە
+// نیشاندانا کاتان بێی پێدڤی ب هەلبژارتنا دووبارە - دوای بارکرنا دەق
 setTimeout(()=>{
-  if(hasMarks){
-    render();
-  }
-}, 500);
+  try{
+    const suraNow = parseInt(suraSelect.value);
+    const reloaded = loadMarks(suraNow);
+    if(reloaded || hasMarks){
+      render();
+    }
+  }catch(e){}
+}, 700);
+
 
 
 
@@ -1838,6 +1873,9 @@ async function autoSaveNow(){
 }
 document.addEventListener('visibilitychange', ()=>{ if(document.hidden){ autoSaveNow(); saveMarks(); } });
 window.addEventListener('beforeunload', ()=>{ saveMarks(); });
+window.addEventListener('pagehide', ()=>{ saveMarks(); });
+// هەلگرتن هەر 2 چرکە جارەکێ
+setInterval(()=>{ if(marks.length>0) saveMarks(); }, 2000);
 
 // ---- Import (resume previous session) ----
 function clearCurrentSuraMarks(){
