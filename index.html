@@ -928,8 +928,8 @@ let lastShownAyah = null;
 let marks = []; // {ayah, timeMs, isTotal, seq}
 let seqCounter = 0;
 
-// ---- Automatic local draft save (unfinished work stays inside the app) ----
-// This is separate from the DB: the existing Save Database (DB) command is unchanged.
+// ---- Local draft save: unfinished timing work stays inside the app ----
+// This is separate from the DB. It is saved automatically after every change.
 const LOCAL_DRAFT_PREFIX = 'quranTimingDraft_v1_';
 function draftKey(sura){
   return LOCAL_DRAFT_PREFIX + String(sura);
@@ -971,7 +971,6 @@ function loadLocalDraft(sura){
 function clearLocalDraft(sura){
   try{ localStorage.removeItem(draftKey(sura)); }catch(e){}
 }
-
 let currentAyah = 1;
 let showAllMarks = false;
 
@@ -1348,9 +1347,8 @@ suraSelect.addEventListener('change', async ()=>{
   fetchSurahText(sura);
 });
 populateStartAyahOptions(parseInt(suraSelect.value));
-fetchSurahText(parseInt(suraSelect.value));
 loadLocalDraft(parseInt(suraSelect.value));
-render();
+fetchSurahText(parseInt(suraSelect.value));
 
 // ---- Multi-surah master database ----
 async function ensureWorkingDb(flushSura){
