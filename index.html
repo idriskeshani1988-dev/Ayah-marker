@@ -715,6 +715,7 @@ body.dark .mark-row.active-row .rowtime {
       <div class="menuBox"><div class="settingsRow"><label data-i18n="fontLabel" style="font-size:12px;">گەورە و بچووککردنی دەقی قورئان</label><div class="fontAdjust" style="display:flex;align-items:center;gap:6px;direction:ltr;"><button class="fontBtn" id="fontMinus" type="button">−</button><span id="fontSizeDisplay" style="min-width:34px;text-align:center;direction:ltr;">16</span><button class="fontBtn" id="fontPlus" type="button">+</button></div></div></div>
     </div>
     <div class="filename" id="fname"></div>
+    <div id="draftSaveStatus" aria-live="polite" style="display:none;margin:4px 0 2px;text-align:center;font-size:11px;font-weight:600;color:#4caf50;">✓ کاتەکان بەخۆکار هەڵگیراون</div>
     <audio id="player" controls controlslist="nodownload noplaybackrate nofullscreen" disablepictureinpicture disableremoteplayback playsinline style="display:none;"></audio>
     <div class="speedrow open" id="speedrow" style="margin-top:6px;display:none;">
       <div class="chip active" data-r="1">1x</div>
@@ -949,7 +950,22 @@ function saveLocalDraft(){
       savedAt:Date.now()
     };
     localStorage.setItem(draftKey(sura), JSON.stringify(payload));
-  }catch(e){}
+    const status = document.getElementById('draftSaveStatus');
+    if(status){
+      status.textContent = '✓ کاتەکان بەخۆکار هەڵگیراون';
+      status.style.display = 'block';
+      status.style.color = '#4caf50';
+      clearTimeout(window.__draftStatusTimer);
+      window.__draftStatusTimer = setTimeout(()=>{ if(status) status.style.display='none'; }, 1800);
+    }
+  }catch(e){
+    const status = document.getElementById('draftSaveStatus');
+    if(status){
+      status.textContent = '⚠ هەڵگرتنی خۆکار بەردەست نییە';
+      status.style.display = 'block';
+      status.style.color = '#d9534f';
+    }
+  }
 }
 function loadLocalDraft(sura){
   try{
@@ -1425,7 +1441,9 @@ masterDbInput.addEventListener('change', ()=>{
       const countRes = masterDb.exec("SELECT COUNT(*) FROM timings");
       const rowCount = countRes.length ? countRes[0].values[0][0] : 0;
       masterStatus.textContent = `داتابەیس باركرا: ${rowCount} ڕیز. سورە هەڵبژێرە بۆ دەستپێکردن — گۆڕانکارییەکانت خۆکار هەڵدەگیرێن.`;
-      loadSuraFromMaster(parseInt(suraSelect.value));
+      const loadedSura = parseInt(suraSelect.value);
+      loadSuraFromMaster(loadedSura);
+      if(loadLocalDraft(loadedSura)) render();
     }catch(err){
       alert('نەتوانرا داتابەیسەکە بخوێنرێتەوە: ' + (err && err.message ? err.message : err) + '\nدڵنیابەرەوە خشتەی timings تێدایە.');
     }
@@ -1814,7 +1832,12 @@ async function autoSaveNow(){
     else autoDirty = true;                    // try again at the next change
   }catch(e){ autoDirty = true; }
 }
-document.addEventListener('visibilitychange', ()=>{ if(document.hidden) autoSaveNow(); });
+document.addEventListener('visibilitychange', ()=>{
+  if(document.hidden){
+    saveLocalDraft();
+    autoSaveNow();
+  }
+});
 
 // ---- Import (resume previous session) ----
 function clearCurrentSuraMarks(){
