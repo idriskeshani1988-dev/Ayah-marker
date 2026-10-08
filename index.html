@@ -940,16 +940,15 @@ function saveMarks(){
   try{
     const sura = parseInt(suraSelect.value);
     if(!sura) return;
-    // هەلگرتنا دوماهیک سورەت ب جیا
-    localStorage.setItem(LS_LAST_SURA, String(sura));
-    // هەلگرتنا کاتان
+    saveLastSuraOnly(sura);
     localStorage.setItem(LS_KEY + '_sura_' + sura, JSON.stringify({ marks: marks, seqCounter: seqCounter }));
-    // هەلگرتنا لیستا هەمی سورەتان
     let all = {};
     try{ all = JSON.parse(localStorage.getItem(LS_KEY) || '{}'); }catch(e){ all={}; }
     all['lastSura'] = sura;
     all['sura_'+sura] = { count: marks.length, lastAyah: getLastAyahNum() };
     localStorage.setItem(LS_KEY, JSON.stringify(all));
+    // also save in simple key for easier debug
+    localStorage.setItem('quran_marks_simple_' + sura, JSON.stringify(marks));
   }catch(e){ console.log('save error', e); }
 }
 function loadMarks(sura){
@@ -982,14 +981,36 @@ function getLastAyahNum(){
 function getLastSura(){
   try{
     let s = localStorage.getItem(LS_LAST_SURA);
-    if(s) return parseInt(s);
+    if(s && parseInt(s)>=1) return parseInt(s);
+    s = localStorage.getItem('quran_last_sura_simple');
+    if(s && parseInt(s)>=1) return parseInt(s);
+    s = localStorage.getItem('quran_last_sura_v2');
+    if(s && parseInt(s)>=1) return parseInt(s);
+    s = sessionStorage.getItem(LS_LAST_SURA);
+    if(s && parseInt(s)>=1) return parseInt(s);
     let all = JSON.parse(localStorage.getItem(LS_KEY) || '{}');
-    if(all.lastSura) return parseInt(all.lastSura);
+    if(all.lastSura && parseInt(all.lastSura)>=1) return parseInt(all.lastSura);
     let allOld = JSON.parse(localStorage.getItem('quran_marks_autosave') || '{}');
-    if(allOld.lastSura) return parseInt(allOld.lastSura);
+    if(allOld.lastSura && parseInt(allOld.lastSura)>=1) return parseInt(allOld.lastSura);
+    // window.name fallback
+    if(window.name && window.name.startsWith('sura:')){
+      let n = parseInt(window.name.split(':')[1]);
+      if(n>=1 && n<=114) return n;
+    }
   }catch(e){}
   return null;
 }
+function saveLastSuraOnly(s){
+  try{
+    localStorage.setItem(LS_LAST_SURA, String(s));
+    localStorage.setItem('quran_last_sura_simple', String(s));
+    localStorage.setItem('quran_last_sura_v2', String(s));
+    sessionStorage.setItem(LS_LAST_SURA, String(s));
+    window.name = 'sura:'+s;
+    document.cookie = 'lastSura='+s+'; max-age=31536000; path=/';
+  }catch(e){}
+}
+
 
 
 let currentAyah = 1;
@@ -1359,6 +1380,7 @@ function populateStartAyahOptions(sura){
 }
 let activeSura = parseInt(suraSelect.value);   // the surah the current marks belong to
 suraSelect.addEventListener('change', async ()=>{
+  try{ localStorage.setItem('quran_last_sura_v2', String(parseInt(suraSelect.value))); localStorage.setItem('quran_last_sura_simple', String(parseInt(suraSelect.value))); }catch(e){}
   populateStartAyahOptions(parseInt(suraSelect.value));
   await ensureWorkingDb(activeSura);
   const suraNum = parseInt(suraSelect.value);
@@ -1377,32 +1399,44 @@ suraSelect.addEventListener('change', async ()=>{
   fetchSurahText(sura);
 });
 
-// گەڕانەوەی خۆکاری بۆ دوماهیک سورەت و کات - 100% ئوفلاین - چاککراو
+// گەڕانەوەی خۆکاری بۆ دوماهیک سورەت و کات - 100% ئوفلاین - چاککراو - وەشانی 3
 let restoredSura = null;
-let lastSavedSura = getLastSura();
-if(lastSavedSura && lastSavedSura>=1 && lastSavedSura<=114){
-  suraSelect.value = String(lastSavedSura);
-  activeSura = lastSavedSura;
-  restoredSura = lastSavedSura;
+function doRestore(){
+  let lastSavedSura = getLastSura();
+  console.log('lastSavedSura found:', lastSavedSura);
+  if(lastSavedSura && lastSavedSura>=1 && lastSavedSura<=114){
+    suraSelect.value = String(lastSavedSura);
+    activeSura = lastSavedSura;
+    restoredSura = lastSavedSura;
+    console.log('restored to sura', restoredSura);
+  }
+  populateStartAyahOptions(parseInt(suraSelect.value));
+  let hasMarks = false;
+  try{ hasMarks = loadMarks(parseInt(suraSelect.value)); }catch(e){}
+  fetchSurahText(parseInt(suraSelect.value));
+  setTimeout(()=>{
+    try{
+      const suraNow = parseInt(suraSelect.value);
+      const reloaded = loadMarks(suraNow);
+      if(reloaded || hasMarks){
+        render();
+        if(reloaded) showToast('✅ گەڕایەوە بۆ سورەتی ' + suraNow + ' - ' + marks.length + ' کات ماوە');
+      } else {
+        if(lastSavedSura) showToast('سورەت ' + lastSavedSura + ' گەڕایەوە بەڵام هیچ کات نەدۆزرایەوە');
+      }
+    }catch(e){}
+  }, 800);
 }
-populateStartAyahOptions(parseInt(suraSelect.value));
-// بارکرنا کاتێن هەلگیراو بەرێ
-let hasMarks = false;
-try{
-  hasMarks = loadMarks(parseInt(suraSelect.value));
-}catch(e){}
-// بارکرنا دەقێ قورئانێ
-fetchSurahText(parseInt(suraSelect.value));
-// نیشاندانا کاتان بێی پێدڤی ب هەلبژارتنا دووبارە - دوای بارکرنا دەق
-setTimeout(()=>{
-  try{
-    const suraNow = parseInt(suraSelect.value);
-    const reloaded = loadMarks(suraNow);
-    if(reloaded || hasMarks){
-      render();
-    }
-  }catch(e){}
-}, 700);
+doRestore();
+// دووبارە هەول بدە دوای 1.5 چرکە ئەگەر localStorage درەنگ بار بوو
+setTimeout(()=>{ 
+  let s = getLastSura();
+  if(s && parseInt(suraSelect.value)!=s){
+    suraSelect.value = String(s);
+    doRestore();
+  }
+}, 1500);
+
 
 
 
