@@ -537,6 +537,15 @@
     text-align:center;
   }
   .toast.show{display:block;}
+
+  /* ===== NEW: Progress bar & last ayah highlight ===== */
+  .progress-wrap{ background:var(--paper-dim); border-radius:10px; height:10px; overflow:hidden; margin:8px 0; border:1px solid var(--line);}
+  .progress-bar{ height:100%; background:linear-gradient(90deg, var(--gold), var(--gold-bright)); transition:width .4s ease; width:0%;}
+  .last-ayah-badge{ background:#4caf50; color:#fff; font-size:10px; padding:2px 6px; border-radius:10px; margin-right:6px; animation:pulse 1.5s infinite;}
+  @keyframes pulse{ 0%{opacity:1} 50%{opacity:.6} 100%{opacity:1} }
+  #resumeCard{ position:relative; overflow:hidden;}
+  .resume-progress{ position:absolute; bottom:0; left:0; height:4px; background:#4caf50; transition:width .4s;}
+
 </style>
 <style>
 /* Dark mode: remove white surfaces while preserving audio and ayah-start button colors. */
@@ -733,12 +742,15 @@ body.dark .mark-row.active-row .rowtime {
 
   <div class="card" id="resumeCard" style="display:none; background:#e8f5e9; border:2px solid #4caf50;">
     <div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
-      <div>
-        <div style="font-weight:800; color:#2e7d32; font-size:13px;" id="resumeText">درێژەپێدان</div>
+      <div style="flex:1;">
+        <div style="font-weight:800; color:#2e7d32; font-size:13px; display:flex; align-items:center; gap:6px;" id="resumeText">درێژەپێدان <span class="last-ayah-badge">دوماهیک</span></div>
         <div style="font-size:11px; color:#555;" id="resumeSub">داتای پێشوو هەیە</div>
+        <div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+        <div style="font-size:10px; color:#2e7d32;" id="progressPercent">0%</div>
       </div>
-      <button id="resumeBtn" style="padding:8px 14px; background:#4caf50; color:#fff; border:none; border-radius:8px; font-weight:700; cursor:pointer;">بەردەوام بە ▶</button>
+      <button id="resumeBtn" style="padding:10px 16px; background:#4caf50; color:#fff; border:none; border-radius:10px; font-weight:800; cursor:pointer; white-space:nowrap;">بەردەوام بە ▶</button>
     </div>
+    <div class="resume-progress" id="resumeProgressLine"></div>
   </div>
 
   <div class="card">
@@ -912,6 +924,51 @@ function updateProgressBanner(){
     const card = document.getElementById('resumeCard');
     const txt = document.getElementById('resumeText');
     const sub = document.getElementById('resumeSub');
+    const bar = document.getElementById('progressBar');
+    const pct = document.getElementById('progressPercent');
+    const line = document.getElementById('resumeProgressLine');
+    if(!card) return;
+    const sura = parseInt(suraSelect.value);
+    const lastAyah = getLastAyahForSura(sura);
+    const totalInSura = AYAH_COUNTS[sura-1] || 1;
+    const totalMarked = marks.filter(m=>!m.isTotal).length;
+    if(lastAyah>0){
+      const percent = Math.round((lastAyah/totalInSura)*100);
+      const remaining = totalInSura - lastAyah;
+      if(txt) txt.innerHTML = `گەیشتیتە ئایەتی <b>${lastAyah}</b> ژ <b>${totalInSura}</b> <span class="last-ayah-badge">دوماهیک</span>`;
+      if(sub) sub.textContent = `${totalMarked} ئایەت دیاریکراوە - ${remaining} ئایەت مایە`;
+      if(bar) bar.style.width = percent + '%';
+      if(pct) pct.textContent = percent + '% تەمام بووە - ' + remaining + ' مایە';
+      if(line) line.style.width = percent + '%';
+      // Highlight last mark row with badge
+      setTimeout(()=>{
+        const rows = document.querySelectorAll('.mark-row');
+        rows.forEach(r=>{
+          const numEl = r.querySelector('.rownum');
+          if(numEl && parseInt(numEl.textContent)===lastAyah){
+            if(!r.querySelector('.last-ayah-badge')){
+              const badge = document.createElement('span');
+              badge.className='last-ayah-badge';
+              badge.textContent='دوماهیک ئایەت';
+              numEl.parentNode.insertBefore(badge, numEl);
+            }
+            r.style.border = '2px solid #4caf50';
+            r.style.background = '#e8f5e9';
+          }
+        });
+      }, 100);
+    }
+    if(card && lastAyah>0){
+      card.style.display='block';
+    }
+  }catch(e){ console.log(e); }
+}
+function _old_updateProgressBanner(){
+
+  try{
+    const card = document.getElementById('resumeCard');
+    const txt = document.getElementById('resumeText');
+    const sub = document.getElementById('resumeSub');
     if(!card) return;
     const sura = parseInt(suraSelect.value);
     const lastAyah = getLastAyahForSura(sura);
@@ -935,6 +992,7 @@ function updateProgressBanner(){
       }
     }
   }catch(e){}
+}
 }
 
 function showToast(msg){
