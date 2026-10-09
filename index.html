@@ -737,31 +737,92 @@ body.dark .ayah-line-list.pinned{
 </style>
 
 
+
+
+
 <style id="wide-screen-fix">
-/* پانی شاشە - چوار گوشەی دەقی قورئان و دوگمەکە دیار بێت */
+/* پانی شاشە - سەرەوەکان بچووک بۆ ئەوەی چوار گوشەی قورئان و دوگمەکە جوان دەربکەون */
 @media (min-width: 500px), (orientation: landscape) {
   .wrap{
-    max-width: 600px;
-    padding: 14px 20px 28px !important;
+    max-width: 640px;
+    padding: 8px 18px 20px !important;
     margin: 0 auto;
   }
-  .card{
-    margin-left: 8px !important;
-    margin-right: 8px !important;
-    border-radius: 16px !important;
-    overflow: visible !important;
+  /* بچووککردنەوەی دەنگ لێدان */
+  #player, #audioPlayer{
+    height:22px !important;
+    margin-top:2px !important;
   }
-  #textPanel, #ayahList, #marksPanel, .topControls {
-    border-radius: 16px !important;
-    overflow: hidden;
+  /* لیستی خێرایی دەنگ بچووک */
+  .speedrow{
+    gap:2px !important;
+    margin-top:2px !important;
+  }
+  .speedrow .chip{
+    padding:2px 2px !important;
+    font-size:8px !important;
+    min-width:26px !important;
+    border-radius:10px !important;
+  }
+  #seekRow{
+    margin-top:2px !important;
+  }
+  #seekRow .btn2{
+    padding:3px 3px !important;
+    font-size:9px !important;
+  }
+  /* سورەت و ئایەت بچووک */
+  header{
+    padding:4px 6px !important;
+    margin-bottom:3px !important;
+    border-radius:12px !important;
+  }
+  .topbar{
+    gap:4px !important;
+  }
+  .minifield{
+    padding:1px 4px 2px !important;
+    border-radius:6px !important;
+  }
+  .minilabel{
+    font-size:8px !important;
+    line-height:1.2 !important;
+  }
+  .minilabel b{ font-size:9px !important; }
+  .miniSelect, .miniNumber{
+    font-size:10px !important;
+    padding:0 !important;
+  }
+  .miniBtn{
+    padding:4px 6px !important;
+    font-size:10px !important;
+    border-radius:6px !important;
+  }
+  .filename{ font-size:8px !important; margin-top:1px !important; }
+  /* دەقی قورئان - چوار گوشە دیار و جوان */
+  .card{
+    margin:4px 10px 6px !important;
+    border-radius:16px !important;
+    padding:10px !important;
+    overflow: hidden !important;
+  }
+  #textPanel{
+    border-radius:16px !important;
+  }
+  .ayah-line-list.active{
+    border-radius:8px !important;
+    margin:4px 2px !important;
+    padding:8px 6px !important;
+  }
+  #startAyah{
+    padding:8px !important;
+    font-size:12px !important;
+    border-radius:10px !important;
   }
   body{
-    padding-left: max(8px, env(safe-area-inset-left)) !important;
-    padding-right: max(8px, env(safe-area-inset-right)) !important;
+    padding-left: max(10px, env(safe-area-inset-left)) !important;
+    padding-right: max(10px, env(safe-area-inset-right)) !important;
   }
-}
-@media (min-width: 700px) {
-  .wrap{ max-width: 680px; }
 }
 </style>
 
