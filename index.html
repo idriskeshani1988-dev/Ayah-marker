@@ -768,20 +768,26 @@ body.dark .mark-row.active-row .rowtime {
     width: calc(100% - 6px) !important;
     padding: 3px 5px !important;
   }
-  #markBtn{ height: 22px !important; font-size: 10px !important; border-radius: 6px !important; }
+  #markBtn{ height: 22px !important; font-size: 13px !important; font-weight: 800 !important; border-radius: 6px !important; text-align: center !important; display: flex !important; align-items: center !important; justify-content: center !important; letter-spacing: 0.3px !important; }
 
-  /* لیستی نیشانەکراوەکان - جوان دەربچێت */
+  /* لیستی نیشانەکراوەکان - زۆر باریک */
   #marksPanel, .card:has(#marksList){
-    border-radius: 10px !important;
-    margin: 2px 3px 2px !important;
+    border-radius: 8px !important;
+    margin: 1px 3px 1px !important;
     width: calc(100% - 6px) !important;
-    padding: 3px 5px !important;
+    padding: 1px 3px !important;
+    min-height: 18px !important;
   }
-  #marksPanel .section-title-row, .card:has(#marksList) .section-title-row{ height: 16px !important; margin-bottom: 2px !important; }
-  .section-title{ font-size: 8px !important; }
-  #marksList{ max-height: 36px !important; }
+  #marksPanel .section-title-row, .card:has(#marksList) .section-title-row{ height: 10px !important; margin-bottom: 0 !important; padding: 0 !important; }
+  .section-title{ font-size: 6px !important; line-height: 1 !important; }
+  .resetSmallBtn{ font-size: 5px !important; height: 10px !important; padding: 0 2px !important; }
+  #addTotalBtn{ height: 10px !important; font-size: 5px !important; padding: 0 2px !important; margin: 0 !important; }
+  #marksList{ max-height: 22px !important; margin: 0 !important; }
   #marksList .mark-row:nth-child(n+2){ display:none !important; }
-  .mark-row{ height: 20px !important; border-radius: 5px !important; padding: 1px 4px !important; }
+  .mark-row{ height: 14px !important; min-height: 14px !important; border-radius: 4px !important; padding: 0 3px !important; margin: 1px 0 !important; }
+  .mark-row .rownum{ font-size: 7px !important; }
+  .mark-row .rowtime, .mark-row .rowbtn{ font-size: 6px !important; }
+  #emptyMsg{ font-size: 6px !important; padding: 1px !important; margin: 0 !important; }
 
   #textPanel, .card#textPanel{
     border-radius: 14px !important;
