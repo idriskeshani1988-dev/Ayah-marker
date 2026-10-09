@@ -488,7 +488,8 @@
     max-height:38vh;
     min-height:180px;
     overflow-y:auto;
-    padding:6px 2px;
+    padding:12px 4px;
+    scroll-padding-top:12px;
   }
   .textpanel.open{display:block;}
   .ayah-line{
@@ -515,11 +516,17 @@
     cursor:pointer;
   }
   .ayah-line-list.active{
-    background:#c9f2ee;
-    border-radius:8px;
-    font-weight:600;
+    background:#c7ece7;
+    border:none;
+    border-radius:10px;
+    font-weight:700;
+    margin:8px 4px;
+    padding:14px 12px;
+    box-shadow:none;
+    position:relative;
+    color:#1a3a37;
   }
-  body.dark .ayah-line-list.active{background:#30465e; color:#d5e4f2;}
+  body.dark .ayah-line-list.active{background:#2e4a4a !important; color:#d5e4f2 !important; border:none !important; margin:10px 6px !important; padding:12px 10px !important;}
   .textstatus{
     text-align:center;
     font-size:12px;
@@ -538,8 +545,27 @@
   }
   .toast.show{display:block;}
 
+  #masterStatus{ display:none !important; }
+  .mark-row.active-row{
+    background:#c7ece7 !important;
+    border:none !important;
+    border-radius:10px !important;
+  }
+  .mark-row.active-row .rownum,
+  .mark-row.active-row .rowbtn,
+  .mark-row.active-row .rowtime{
+    color: var(--ink, #2c2c2c) !important;
+    font-weight:700 !important;
+  }
+  .ayah-line-list.pinned{ background:rgba(199,236,231,0.5) !important; border:1.5px dashed #8dd1c7 !important; }
+  body.dark .ayah-line-list.pinned{ background:rgba(46,74,74,0.4) !important; border:1.5px dashed #4a7a7a !important; }
   /* دوماهیک ئایەت رەنگکراو */
   .mark-row.last-reached{ background:#e8f5e9 !important; border:2px solid #4caf50 !important; border-radius:10px; }
+  body.dark .mark-row.active-row{ background:#2e4a4a !important; border:none !important; }
+  body.dark .mark-row.active-row .rownum,
+  body.dark .mark-row.active-row .rowbtn,
+  body.dark .mark-row.active-row .rowtime{ color:#c7ece7 !important; }
+  body.dark .mark-row.last-reached{ background:#2a4a2a !important; border-color:#4caf50 !important; }
   .mark-row.last-reached .rownum{ color:#2e7d32 !important; font-weight:900; }
 
 </style>
@@ -630,13 +656,17 @@ body.dark .rowbtn,
 body.dark .rowtime {
   color: #c8d8e8 !important;
 }
-/* The selected Quran ayah and selected marked row share the same highlight. */
+/* Light brown for both Quran text and marked list - beautiful */
 body.dark .ayah-line.active,
 body.dark .mark-row.active-row {
   background: #30465e !important;
   color: #d5e4f2 !important;
 }
-body.dark .mark-row.active-row .rownum,
+body.dark .mark-row.active-row{
+    background:#2e4a4a !important;
+    border:none !important;
+  }
+  body.dark .mark-row.active-row .rownum,
 body.dark .mark-row.active-row .rowbtn,
 body.dark .mark-row.active-row .rowtime {
   color: #d5e4f2 !important;
@@ -659,7 +689,11 @@ body.dark .ayah-line.active {
   color: #f4f4f4 !important;
 }
 body.dark .mark-row.active-row,
-body.dark .mark-row.active-row .rownum,
+body.dark .mark-row.active-row{
+    background:#2e4a4a !important;
+    border:none !important;
+  }
+  body.dark .mark-row.active-row .rownum,
 body.dark .mark-row.active-row .rowbtn,
 body.dark .mark-row.active-row .rowtime {
   color: #b8d8c5 !important;
@@ -679,6 +713,58 @@ body.dark .mark-row.active-row .rowtime {
   width: 100% !important;
 }
 </style>
+
+<style id="final-brown-remove-2026">
+/* دواین چاککردن - قاوایی لابردن لە تاریکی */
+body.dark .ayah-line-list.active,
+body.dark .ayah-line.active,
+body.dark .mark-row.active-row {
+  background:#2e4a4a !important;
+  border:none !important;
+  color:#c7ece7 !important;
+}
+body.dark .mark-row.active-row .rownum,
+body.dark .mark-row.active-row .rowbtn,
+body.dark .mark-row.active-row .rowtime,
+body.dark .ayah-line-list.active,
+body.dark .ayah-line.active {
+  color:#c7ece7 !important;
+}
+body.dark .ayah-line-list.pinned{
+  background:rgba(46,74,74,0.4) !important;
+  border:1.5px dashed #4a7a7a !important;
+}
+</style>
+
+
+<style id="wide-screen-fix">
+/* پانی شاشە - چوار گوشەی دەقی قورئان و دوگمەکە دیار بێت */
+@media (min-width: 500px), (orientation: landscape) {
+  .wrap{
+    max-width: 600px;
+    padding: 14px 20px 28px !important;
+    margin: 0 auto;
+  }
+  .card{
+    margin-left: 8px !important;
+    margin-right: 8px !important;
+    border-radius: 16px !important;
+    overflow: visible !important;
+  }
+  #textPanel, #ayahList, #marksPanel, .topControls {
+    border-radius: 16px !important;
+    overflow: hidden;
+  }
+  body{
+    padding-left: max(8px, env(safe-area-inset-left)) !important;
+    padding-right: max(8px, env(safe-area-inset-right)) !important;
+  }
+}
+@media (min-width: 700px) {
+  .wrap{ max-width: 680px; }
+}
+</style>
+
 </head>
 <body>
 <div class="wrap">
@@ -742,7 +828,7 @@ body.dark .mark-row.active-row .rowtime {
   </div>
 
   <div class="card" id="markCard">
-    <button class="markbtn" id="markBtn" disabled data-i18n="markStart">دیاریکردنی کۆتایی ئایەت</button>
+    <button class="markbtn" id="markBtn" disabled data-i18n="markStart">دیاریکردنی سەرەتای ئایەت</button>
     <div id="toast" class="toast"></div>
   </div>
 
@@ -795,7 +881,7 @@ const TRANSLATIONS = {
     fwd1:"1 چرکە پاش ⏩", back1:"⏪ 1 چرکە پێش",
     loadingText:"داواکردنی دەقی سورە...",
     nextAyahPrefix:"ئایەتی داهاتوو کە سەرەتای دەستنیشان دەکرێت:",
-    markStart:"دیاریکردنی کۆتایی ئایەت", markTotal:"دیاریکردنی کۆتایی ئایەت",
+    markStart:"دیاریکردنی سەرەتای ئایەت", markTotal:"دیاریکردنی کۆتایی ئایەت",
     nextTotalLabel:"999 (کۆتایی سورە)",
     hintSpace:"یان کلیک لەسەر دوگمە بکە، یان کلیدی سپەیس (Space) لە کیبۆردی کۆمپیوتەردا",
     marksListTitle:"لیستی نیشانەکراوەکان", addTotal:"+ زیادکردنی کۆتایی سورە (999)",
@@ -819,7 +905,7 @@ const TRANSLATIONS = {
     fwd1:"Forward 1s ⏩", back1:"⏪ Back 1s",
     loadingText:"Loading surah text...",
     nextAyahPrefix:"Next ayah start to mark:",
-    markStart:"Mark End of Ayah", markTotal:"Mark End of Ayah",
+    markStart:"Mark Start of Ayah", markTotal:"Mark End of Ayah",
     nextTotalLabel:"999 (Surah End)",
     hintSpace:"Click the button, or press Space on a computer keyboard",
     marksListTitle:"Marked List", addTotal:"+ Add End of Surah (999)",
@@ -843,7 +929,7 @@ const TRANSLATIONS = {
     fwd1:"الأمام 1 ثانية ⏩", back1:"⏪ للخلف 1 ثانية",
     loadingText:"جارٍ تحميل نص السورة...",
     nextAyahPrefix:"الآية التالية لتحديد بدايتها:",
-    markStart:"تحديد نهاية الآية", markTotal:"تحديد نهاية الآية",
+    markStart:"تحديد بداية الآية", markTotal:"تحديد نهاية الآية",
     nextTotalLabel:"999 (نهاية السورة)",
     hintSpace:"اضغط الزر، أو مفتاح المسافة (Space) على لوحة مفاتيح الحاسوب",
     marksListTitle:"قائمة العلامات", addTotal:"+ إضافة نهاية السورة (999)",
@@ -933,44 +1019,28 @@ let lastShownAyah = null;
 let marks = []; // {ayah, timeMs, isTotal, seq}
 let seqCounter = 0;
 
-// هەلگرتنا خۆکاری - بتنێ کاتەکان دمینن - 100% ئوفلاین
-const LS_KEY = 'quran_marks_autosave_v2';
-const LS_LAST_SURA = 'quran_last_sura_v2';
+// هەلگرتنا خۆکاری - بتنێ کاتەکان دمینن
+const LS_KEY = 'quran_marks_autosave';
 function saveMarks(){
   try{
     const sura = parseInt(suraSelect.value);
-    if(!sura) return;
-    saveLastSuraOnly(sura);
-    localStorage.setItem(LS_KEY + '_sura_' + sura, JSON.stringify({ marks: marks, seqCounter: seqCounter }));
     let all = {};
     try{ all = JSON.parse(localStorage.getItem(LS_KEY) || '{}'); }catch(e){ all={}; }
     all['lastSura'] = sura;
-    all['sura_'+sura] = { count: marks.length, lastAyah: getLastAyahNum() };
+    all['sura_'+sura] = { marks: marks, seqCounter: seqCounter };
     localStorage.setItem(LS_KEY, JSON.stringify(all));
-    // also save in simple key for easier debug
-    localStorage.setItem('quran_marks_simple_' + sura, JSON.stringify(marks));
-  }catch(e){ console.log('save error', e); }
+  }catch(e){}
 }
 function loadMarks(sura){
   try{
-    const raw = localStorage.getItem(LS_KEY + '_sura_' + sura);
-    if(raw){
-      const d = JSON.parse(raw);
-      if(d && d.marks && d.marks.length>0){
-        marks = d.marks;
-        seqCounter = d.seqCounter || marks.length;
-        return true;
-      }
-    }
-    // fallback old key
-    const all = JSON.parse(localStorage.getItem('quran_marks_autosave') || '{}');
-    const d2 = all['sura_'+sura];
-    if(d2 && d2.marks && d2.marks.length>0){
-      marks = d2.marks;
-      seqCounter = d2.seqCounter || marks.length;
+    const all = JSON.parse(localStorage.getItem(LS_KEY) || '{}');
+    const d = all['sura_'+sura];
+    if(d && d.marks && d.marks.length>0){
+      marks = d.marks;
+      seqCounter = d.seqCounter || marks.length;
       return true;
     }
-  }catch(e){ console.log('load error', e); }
+  }catch(e){}
   return false;
 }
 function getLastAyahNum(){
@@ -978,40 +1048,6 @@ function getLastAyahNum(){
   if(f.length==0) return 0;
   return Math.max(...f.map(m=>m.ayah));
 }
-function getLastSura(){
-  try{
-    let s = localStorage.getItem(LS_LAST_SURA);
-    if(s && parseInt(s)>=1) return parseInt(s);
-    s = localStorage.getItem('quran_last_sura_simple');
-    if(s && parseInt(s)>=1) return parseInt(s);
-    s = localStorage.getItem('quran_last_sura_v2');
-    if(s && parseInt(s)>=1) return parseInt(s);
-    s = sessionStorage.getItem(LS_LAST_SURA);
-    if(s && parseInt(s)>=1) return parseInt(s);
-    let all = JSON.parse(localStorage.getItem(LS_KEY) || '{}');
-    if(all.lastSura && parseInt(all.lastSura)>=1) return parseInt(all.lastSura);
-    let allOld = JSON.parse(localStorage.getItem('quran_marks_autosave') || '{}');
-    if(allOld.lastSura && parseInt(allOld.lastSura)>=1) return parseInt(allOld.lastSura);
-    // window.name fallback
-    if(window.name && window.name.startsWith('sura:')){
-      let n = parseInt(window.name.split(':')[1]);
-      if(n>=1 && n<=114) return n;
-    }
-  }catch(e){}
-  return null;
-}
-function saveLastSuraOnly(s){
-  try{
-    localStorage.setItem(LS_LAST_SURA, String(s));
-    localStorage.setItem('quran_last_sura_simple', String(s));
-    localStorage.setItem('quran_last_sura_v2', String(s));
-    sessionStorage.setItem(LS_LAST_SURA, String(s));
-    window.name = 'sura:'+s;
-    document.cookie = 'lastSura='+s+'; max-age=31536000; path=/';
-  }catch(e){}
-}
-
-
 
 let currentAyah = 1;
 let showAllMarks = false;
@@ -1081,7 +1117,14 @@ function getStepMs(){
 
 let focusedAyah = null;
 let playbackStopMs = null;
+let pinnedAyah = null;
+let pausedByPin = false; // ئایا لەبەر پین وەستاوە؟
 function startMarkedPlayback(mark){
+  const wasPinnedSame = (pinnedAyah !== null && pinnedAyah === mark.ayah);
+  // ئەگەر ئایەتێکی تر لێدەدەیت، پینی لاببە
+  if(pinnedAyah !== null && pinnedAyah !== mark.ayah){
+    pinnedAyah = null;
+  }
   const ordered = marks.filter(m=>!m.isTotal).sort((a,b)=>a.timeMs-b.timeMs);
   const idx = ordered.findIndex(m=>m.seq===mark.seq);
   let stop = null;
@@ -1090,11 +1133,20 @@ function startMarkedPlayback(mark){
     const total = marks.find(m=>m.isTotal);
     if(total && total.timeMs > mark.timeMs) stop = total.timeMs;
   }
-  playbackStopMs = stop;
+  if(wasPinnedSame){
+    // کاتێک جێگیرە، loop بکە نەک pause
+    const ordered = marks.filter(m=>!m.isTotal).sort((a,b)=>a.timeMs-b.timeMs);
+    const idx = ordered.findIndex(m=>m.seq===mark.seq);
+    if(idx>=0 && idx+1 < ordered.length) playbackStopMs = ordered[idx+1].timeMs;
+    else playbackStopMs = stop;
+  } else {
+    playbackStopMs = stop;
+  }
   player.currentTime = mark.timeMs / 1000;
   player.play().catch(()=>{});
   lastShownAyah = mark.isTotal && currentSurahAyahs ? currentSurahAyahs.length : mark.ayah;
-  renderAyahText(lastShownAyah);
+  if(pinnedAyah === null) renderAyahText(lastShownAyah);
+  else renderAyahText(pinnedAyah, true);
   focusedAyah = mark.isTotal ? null : mark.ayah;
   renderMarksList();
 }
@@ -1109,18 +1161,32 @@ function renderMarksList(){
   } else {
     emptyMsg.style.display='none';
     let displayList = sorted;
-    if(!showAllMarks && marks.length>0){
-      // Two rows that follow the ayah shown in the Quran text:
-      // the current ayah on top, the previous ayah below it (3/2, 4/3, 5/4 ...).
+    const isPlayingFast = !player.paused && player.playbackRate >= 2;
+    if(!showAllMarks && marks.length>0 && !isPlayingFast){
+      // Normal mode: show 2 rows
       const anchor = (focusedAyah !== null) ? focusedAyah : lastShownAyah;
-      let idx = -1;                                  // the ayah's own row, or the closest one before it
+      let idx = -1;
       if(anchor !== null && anchor !== undefined){
         nonTotal.forEach((m, i)=>{ if(m.ayah <= anchor) idx = i; });
       }
       if(idx >= 1){
         displayList = [nonTotal[idx], nonTotal[idx-1]];
       } else {
-        displayList = sorted.slice(0, 2);            // first ayah (or nothing shown yet): 1 and 2
+        displayList = sorted.slice(0, 2);
+      }
+    } else if(isPlayingFast){
+      // At 3x / 2.5x / 2x: keep Quran text and list perfectly synced
+      // Show current + next 2 to keep active visible
+      const anchor = (focusedAyah !== null) ? focusedAyah : lastShownAyah;
+      let idx = -1;
+      if(anchor !== null && anchor !== undefined){
+        nonTotal.forEach((m, i)=>{ if(m.ayah <= anchor) idx = i; });
+      }
+      if(idx >= 0){
+        displayList = nonTotal.slice(idx, idx+3);
+        if(displayList.length<3 && idx>0) displayList = nonTotal.slice(Math.max(0, idx-1), idx+2);
+      } else {
+        displayList = sorted.slice(0, 3);
       }
     }
     showAllBtn.style.display = sorted.length>1 ? 'block' : 'none';
@@ -1160,77 +1226,17 @@ function renderMarksList(){
     }
   }, 50);
 }
-function render(keepFocus = false){
+function render(){
   refreshNextAyah();
-  if(!keepFocus){
+  if(pinnedAyah === null){
     showAyahText();
     focusedAyah = null;
-  }
-  renderMarksList(keepFocus);
-}
-
-function renderMarksList(keepFocus = false){
-  const nonTotal = marks.filter(m=>!m.isTotal).sort((a,b)=>a.ayah-b.ayah);
-  const totals = marks.filter(m=>m.isTotal);
-  const sorted = [...nonTotal, ...totals];
-  marksList.innerHTML = '';
-  if(sorted.length===0){
-    emptyMsg.style.display='block';
-    showAllBtn.style.display='none';
   } else {
-    emptyMsg.style.display='none';
-    let displayList = sorted;
-    if(!showAllMarks && !keepFocus && marks.length>0){
-      const anchor = (focusedAyah !== null) ? focusedAyah : lastShownAyah;
-      let idx = -1;
-      if(anchor !== null && anchor !== undefined){
-        nonTotal.forEach((m, i)=>{ if(m.ayah <= anchor) idx = i; });
-      }
-      if(idx >= 1){
-        displayList = [nonTotal[idx], nonTotal[idx-1]];
-      } else {
-        displayList = sorted.slice(0, 2);
-      }
-    }
-    showAllBtn.style.display = sorted.length>1 ? 'block' : 'none';
-    showAllBtn.textContent = showAllMarks ? t('hideAll') : `${t('showAll')} (${sorted.length})`;
-    displayList.forEach(m=>{
-      const row = document.createElement('div');
-      const isActive = !m.isTotal && m.ayah===lastShownAyah;
-      row.className = 'mark-row' + (m.isTotal ? ' total-row' : '') + (isActive ? ' active-row' : '');
-      row.dataset.seq = m.seq;
-      row.dataset.ayah = m.ayah;
-      row.innerHTML = `
-        <button type="button" class="rowbtn" data-act="play">▶</button>
-        <button type="button" class="rowbtn" data-act="plus">+</button>
-        <button type="button" class="rowbtn" data-act="minus">−</button>
-        <input type="text" inputmode="numeric" pattern="[0-9]*" lang="en" dir="ltr" class="rowtime" data-act="edit" value="${m.timeMs}">
-        <button type="button" class="rowbtn clearbtn" data-act="clear" title="سڕینەوەی کات">🧹</button>
-        <button type="button" class="rowbtn clearbtn" data-act="del" title="سڕینەوەی نیشانە">🗑</button>
-        <span class="rownum">${m.isTotal ? '999' : m.ayah}</span>`;
-      marksList.appendChild(row);
-    });
+    renderAyahText(pinnedAyah, true);
   }
-  if(masterDb && masterLoadedSura!==null){
-    flushSuraToMaster(masterLoadedSura);
-  }
-  scheduleAutoSave();
-  saveMarks();
-  setTimeout(()=>{
-    const lastNum = getLastAyahNum();
-    if(lastNum>0){
-      document.querySelectorAll('.mark-row').forEach(r=>{
-        r.classList.remove('last-reached');
-        const numEl = r.querySelector('.rownum');
-        if(numEl && parseInt(numEl.textContent)===lastNum){
-          r.classList.add('last-reached');
-        }
-      });
-    }
-  }, 50);
+  renderMarksList();
 }
 
-// FIXED: دەستکاریکردن جێگای ئایەت ناگۆڕێت و لیستەکە لە سەرەوە دەمێنێتەوە
 marksList.addEventListener('click', (e)=>{
   const btn = e.target.closest('.rowbtn');
   if(!btn) return;
@@ -1239,33 +1245,39 @@ marksList.addEventListener('click', (e)=>{
   const mark = marks.find(m=>m.seq===seq);
   if(!mark) return;
   const act = btn.dataset.act;
+  // کاتێک دەست لە هەر دوگمەیەک دەدەی بۆ ئایەتێک، ئەو ئایەتە جێگیر بکە
+  if(act==='plus' || act==='minus' || act==='play'){
+    pinnedAyah = mark.ayah;
+    lastShownAyah = mark.ayah;
+    focusedAyah = mark.ayah;
+  }
   if(act==='del'){
+    if(pinnedAyah === mark.ayah) pinnedAyah = null;
     marks = marks.filter(m=>m.seq!==seq);
-    render(true);
+    render();
   } else if(act==='clear'){
     mark.timeMs = 0;
-    // جێگیرکردنی ئایەتەکە لە دەقی قورئان بۆ دەستکاری
-    lastShownAyah = mark.ayah;
-    focusedAyah = mark.ayah;
-    showAllMarks = true;
-    renderAyahText(mark.ayah, true);
-    renderMarksList(true);
+    render();
   } else if(act==='play'){
+    // پینەکە بهێڵەرەوە - با نەچێتە سەر ئایەتی دواتر
     startMarkedPlayback(mark);
+    // دووبارە پین بکەوە دوای لێدان
+    pinnedAyah = mark.ayah;
+    renderAyahText(mark.ayah, true);
   } else if(act==='plus'){
     mark.timeMs += getStepMs();
-    lastShownAyah = mark.ayah;
-    focusedAyah = mark.ayah;
-    showAllMarks = true;
-    renderAyahText(mark.ayah, true);
-    renderMarksList(true);
+    render();
+    setTimeout(()=>{ 
+      startMarkedPlayback(mark);
+      pinnedAyah = mark.ayah;
+      pausedByPin = false;
+      renderAyahText(mark.ayah, true);
+    }, 80);
   } else if(act==='minus'){
     mark.timeMs = Math.max(0, mark.timeMs - getStepMs());
-    lastShownAyah = mark.ayah;
-    focusedAyah = mark.ayah;
-    showAllMarks = true;
-    renderAyahText(mark.ayah, true);
-    renderMarksList(true);
+    render();
+    // خۆکارانە دەنگەکە لە کاتە نوێیەکە دەست پێ بکات - وەک دوگمەی ▶
+    setTimeout(()=>{ startMarkedPlayback(mark); }, 80);
   }
 });
 marksList.addEventListener('focusin', (e)=>{
@@ -1273,18 +1285,13 @@ marksList.addEventListener('focusin', (e)=>{
     const row = e.target.closest('.mark-row');
     const seq = parseInt(row.dataset.seq);
     const mark = marks.find(m=>m.seq===seq);
-    if(!mark) return;
-    // کاتێک دەست دەکەیت بە دەستکاری، ئایەتەکە لە سەرەوە پیشان بدە
-    lastShownAyah = mark.ayah;
-    focusedAyah = mark.ayah;
-    showAllMarks = true;
-    renderAyahText(mark.ayah, true);
-    renderMarksList(true);
-    // دووبارە فۆکەس بخەرەوە سەر inputەکە
-    setTimeout(()=>{
-      const input = document.querySelector(`.mark-row[data-seq="${seq}"] .rowtime`);
-      if(input) input.focus();
-    }, 50);
+    if(mark){
+      pinnedAyah = mark.ayah;
+      lastShownAyah = mark.ayah;
+      focusedAyah = mark.ayah;
+      renderAyahText(mark.ayah, true);
+      // toast removed
+    }
   }
 });
 marksList.addEventListener('change', (e)=>{
@@ -1293,14 +1300,10 @@ marksList.addEventListener('change', (e)=>{
     const seq = parseInt(row.dataset.seq);
     const mark = marks.find(m=>m.seq===seq);
     if(!mark) return;
+    pinnedAyah = mark.ayah;
     const val = parseInt(e.target.value);
     if(!isNaN(val) && val>=0) mark.timeMs = val;
-    // گرنگ: جێگای ئایەت مەگۆڕە، لە سەرەوە بمێنەرەوە
-    lastShownAyah = mark.ayah;
-    focusedAyah = mark.ayah;
-    showAllMarks = true;
-    renderAyahText(mark.ayah, true);
-    renderMarksList(true);
+    render();
   }
 });
 
@@ -1437,12 +1440,13 @@ async function fetchSurahText(sura){
     addTotalBtn.style.display = 'block';
   };
 
-  // 100% ئوفلاین - بتنێ فایلێ ناڤخۆیی و localStorage
+  // 1) get the ayahs: 100% offline only
   let ayahs = null, loadErr = null;
   try{
-    const local = await loadLocalQuran();           // bundled - 100% offline
+    const local = await loadLocalQuran();           // bundled in the APK, works offline
     if(local && local[sura-1]) ayahs = local[sura-1].ayahs;
   }catch(err){ loadErr = err; }
+  // online fetch removed - 100% offline per user request
   if(!ayahs){
     try{
       const saved = localStorage.getItem('quranText_' + sura);
@@ -1450,7 +1454,7 @@ async function fetchSurahText(sura){
     }catch(e){}
   }
   if(!ayahs){
-    showError('دەق نەهاتە دیتن - دڵنیابە فایلێ quran-data.js ل تەنیشت index.html هەیە');
+    showError('نەتوانرا دەقەکە بهێنرێت — پەیوەندیت بە ئینتەرنێتەوە بپشکنە' + (loadErr && loadErr.message ? ' (' + loadErr.message + ')' : ''));
     render();
     return;
   }
@@ -1481,13 +1485,6 @@ function populateStartAyahOptions(sura){
 }
 let activeSura = parseInt(suraSelect.value);   // the surah the current marks belong to
 suraSelect.addEventListener('change', async ()=>{
-  try{ 
-    const v = String(parseInt(suraSelect.value));
-    localStorage.setItem('quran_last_sura_v2', v); 
-    localStorage.setItem('quran_last_sura_simple', v);
-    localStorage.setItem(LS_LAST_SURA, v);
-    saveLastSuraOnly(parseInt(suraSelect.value));
-  }catch(e){}
   populateStartAyahOptions(parseInt(suraSelect.value));
   await ensureWorkingDb(activeSura);
   const suraNum = parseInt(suraSelect.value);
@@ -1496,11 +1493,9 @@ suraSelect.addEventListener('change', async ()=>{
   } else {
     masterLoadedSura = suraNum;
     try{ autoSig = marksSignature(); }catch(e){}
+    render();
   }
   activeSura = suraNum;
-  // هەمیشە دوای گۆڕینی سورەت، دەق و لیست نوێ بکەرەوە
-  try{ await fetchSurahText(suraNum); }catch(e){}
-  try{ render(); }catch(e){}
   const sura = suraNum;
   if(audioBySura.has(sura)){
     loadAudioIntoPlayer(audioBySura.get(sura).url, audioBySura.get(sura).name);
@@ -1508,52 +1503,14 @@ suraSelect.addEventListener('change', async ()=>{
   fetchSurahText(sura);
 });
 
-// گەڕانەوەی خۆکاری بۆ دوماهیک سورەت و کات - 100% ئوفلاین - چاککراو - وەشانی 4 - FIXED
-let restoredSura = null;
-async function doRestore(){
-  let lastSavedSura = getLastSura();
-  console.log('lastSavedSura found:', lastSavedSura);
-  if(lastSavedSura && lastSavedSura>=1 && lastSavedSura<=114){
-    suraSelect.value = String(lastSavedSura);
-    activeSura = lastSavedSura;
-    restoredSura = lastSavedSura;
-    console.log('restored to sura', restoredSura);
-  } else {
-    // ئەگەر هیچ هەڵنەگیرابوو، 1 وەک بنەڕەت
-    lastSavedSura = parseInt(suraSelect.value) || 1;
-  }
-  populateStartAyahOptions(parseInt(suraSelect.value));
-  try{
-    await ensureWorkingDb(parseInt(suraSelect.value));
-  }catch(e){ console.log('ensureWorkingDb error', e); }
-  let hasMarks = false;
-  try{ hasMarks = loadMarks(parseInt(suraSelect.value)); }catch(e){}
-  if(!hasMarks){
-    try{ loadSuraFromMaster(parseInt(suraSelect.value)); hasMarks = true; }catch(e){}
-  }
-  try{
-    await fetchSurahText(parseInt(suraSelect.value));
-  }catch(e){ console.log('fetchSurahText error', e); }
-  try{ render(); }catch(e){}
-  if(hasMarks && marks.length>0){
-    showToast('✅ گەڕایەوە بۆ سورەتی ' + parseInt(suraSelect.value) + ' - ' + marks.length + ' کات ماوە');
-  }
-}
-// یەکەم جار بانگ بکە کاتێک هەموو شت ئامادەیە
-document.addEventListener('DOMContentLoaded', ()=>{
-  setTimeout(()=>{ doRestore(); }, 100);
-});
-// دووبارە هەول بدە دوای 1.5 چرکە ئەگەر localStorage درەنگ بار بوو
-setTimeout(()=>{ 
-  let s = getLastSura();
-  if(s && parseInt(suraSelect.value)!=s){
-    suraSelect.value = String(s);
-    doRestore();
-  }
-}, 1500);
-
-
-
+try{
+  const all = JSON.parse(localStorage.getItem(LS_KEY) || '{}');
+  if(all.lastSura){ suraSelect.value = String(all.lastSura); activeSura = all.lastSura; }
+}catch(e){}
+populateStartAyahOptions(parseInt(suraSelect.value));
+loadMarks(parseInt(suraSelect.value));
+fetchSurahText(parseInt(suraSelect.value));
+setTimeout(()=>{ render(); }, 300);
 
 
 // ---- Multi-surah master database ----
@@ -1630,7 +1587,7 @@ masterDbInput.addEventListener('change', ()=>{
       masterDb = new SQL.Database(bytes);
       const countRes = masterDb.exec("SELECT COUNT(*) FROM timings");
       const rowCount = countRes.length ? countRes[0].values[0][0] : 0;
-      masterStatus.textContent = `داتابەیس باركرا: ${rowCount} ڕیز. سورە هەڵبژێرە بۆ دەستپێکردن — گۆڕانکارییەکانت خۆکار هەڵدەگیرێن.`;
+      /* masterStatus hidden per user request */
       loadSuraFromMaster(parseInt(suraSelect.value));
     }catch(err){
       alert('نەتوانرا داتابەیسەکە بخوێنرێتەوە: ' + (err && err.message ? err.message : err) + '\nدڵنیابەرەوە خشتەی timings تێدایە.');
@@ -1657,7 +1614,8 @@ function renderAyahText(ayahNum, syncInstant=false){
   textPanel.innerHTML = '';
   currentSurahAyahs.forEach(a=>{
     const div = document.createElement('div');
-    div.className = 'ayah-line-list' + (a.numberInSurah===ayahNum ? ' active' : '');
+    const isPinned = pinnedAyah !== null && a.numberInSurah === pinnedAyah;
+    div.className = 'ayah-line-list' + (a.numberInSurah===ayahNum ? ' active' : '') + (isPinned ? ' pinned' : '');
     div.dataset.ayah = a.numberInSurah;
     div.textContent = `${a.text} {${a.numberInSurah}}`;
     textPanel.appendChild(div);
@@ -1674,14 +1632,52 @@ textPanel.addEventListener('click', (e)=>{
   if(!line) return;
   const num = parseInt(line.dataset.ayah);
   const mark = marks.find(m=>!m.isTotal && m.ayah===num);
+  
+  // ئەگەر هەمان ئایەتە و پێشتر جێگیر کراوە، هەر بیخوێنەوە جارێکی تر
+  if(pinnedAyah === num && mark){
+    player.currentTime = mark.timeMs/1000;
+    // دابنێ تا کۆتایی ئەم ئایەتە بخوێنێت و بوەستێت
+    const ordered = marks.filter(m=>!m.isTotal).sort((a,b)=>a.timeMs-b.timeMs);
+    const idx = ordered.findIndex(m=>m.ayah===num);
+    if(idx>=0 && idx+1 < ordered.length) playbackStopMs = ordered[idx+1].timeMs;
+    else {
+      const total = marks.find(m=>m.isTotal);
+      if(total) playbackStopMs = total.timeMs;
+      else playbackStopMs = null;
+    }
+    player.play().catch(()=>{});
+    return;
+  }
+  
+  // جێگیرکردنی ئایەت - جوان و تەواو دیار
+  pinnedAyah = num;
+  lastShownAyah = num;
+  focusedAyah = num;
+  renderAyahText(num, true);
+  renderMarksList();
+  
   if(mark){
-    startMarkedPlayback(mark);
-    scrollMarkRowToTop(mark.seq);
+    player.currentTime = mark.timeMs/1000;
+    const ordered = marks.filter(m=>!m.isTotal).sort((a,b)=>a.timeMs-b.timeMs);
+    const idx = ordered.findIndex(m=>m.ayah===num);
+    if(idx>=0 && idx+1 < ordered.length) playbackStopMs = ordered[idx+1].timeMs;
+    else {
+      const total = marks.find(m=>m.isTotal);
+      if(total) playbackStopMs = total.timeMs;
+      else playbackStopMs = null;
+    }
+    player.play().catch(()=>{});
+    setTimeout(()=>{
+      scrollMarkRowToTop(mark.seq, true);
+      const activeEl = textPanel.querySelector('.ayah-line-list.active');
+      if(activeEl) activeEl.scrollIntoView({block:'start', behavior:'auto'});
+    }, 80);
   } else {
-    playbackStopMs = null;
-    lastShownAyah = num;
-    focusedAyah = num;
-    renderAyahText(num);
+    // ئەگەر کاتی دیاری نەکراوە، تەنها پیشانی بدە
+    setTimeout(()=>{
+      const activeEl = textPanel.querySelector('.ayah-line-list.active');
+      if(activeEl) activeEl.scrollIntoView({block:'start', behavior:'auto'});
+    }, 50);
   }
 });
 function scrollMarkRowToTop(seq, syncInstant=false){
@@ -1701,6 +1697,7 @@ function scrollMarkRowToTop(seq, syncInstant=false){
 }
 function showAyahText(syncInstant=false){
   if(!currentSurahAyahs) return;
+  if(pinnedAyah !== null) return; // ئەگەر ئایەتێک جێگیر کراوە، خۆکار مەگۆڕە
   const total = currentSurahAyahs.length;
   const nonTotal = marks.filter(m=>!m.isTotal).sort((a,b)=>a.timeMs-b.timeMs);
   const isComplete = marks.some(m=>m.isTotal);
@@ -1767,8 +1764,30 @@ function stopSyncLoop(){
   if(syncRaf !== null){ cancelAnimationFrame(syncRaf); syncRaf = null; }
 }
 function checkPlaybackSync(){
+  if(pinnedAyah !== null){
+    // جێگیر کراوە: تەنها جارێک بیخوێنە، پاشان بوەستە و مەچۆ سەر دواتر
+    const pinnedMark = marks.find(m=>!m.isTotal && m.ayah===pinnedAyah);
+    if(pinnedMark){
+      const ordered = marks.filter(m=>!m.isTotal).sort((a,b)=>a.timeMs-b.timeMs);
+      const idx = ordered.findIndex(m=>m.ayah===pinnedAyah);
+      let nextTime = null;
+      if(idx >=0 && idx+1 < ordered.length) nextTime = ordered[idx+1].timeMs;
+      else {
+        const total = marks.find(m=>m.isTotal);
+        if(total) nextTime = total.timeMs;
+      }
+      if(nextTime !== null){
+        const curMs = player.currentTime * 1000;
+        if(curMs >= nextTime - 5){
+          player.pause();
+          player.currentTime = nextTime/1000 - 0.001;
+          pausedByPin = true;
+        }
+      }
+    }
+    return;
+  }
   if(playbackStopMs !== null){
-    // Keep the stop point tied to the real media clock.
     const lookAheadMs = 8 * (player.playbackRate || 1);
     if(player.currentTime*1000 + lookAheadMs >= playbackStopMs){
       player.pause();
@@ -1779,20 +1798,42 @@ function checkPlaybackSync(){
   }
 
   if(marks.some(m=>m.isTotal)){
-    // At high speed use an immediate visual update. Do not use smooth
-    // scrolling because its animation can trail the 3x audio by hundreds
-    // of milliseconds.
-    showAyahText(!player.paused && !player.ended);
+    const isFast = player.playbackRate >= 2;
+    showAyahText(isFast || (!player.paused && !player.ended));
+  } else if(!player.paused && player.playbackRate >= 2){
+    // Even if not complete, keep syncing at high speed
+    showAyahText(true);
   }
 }
-player.addEventListener('play', startSyncLoop);
+player.addEventListener('play', ()=>{
+  // ئەگەر لەبەر پین وەستابوو و ئێستا دوگمەی پێکردنی سەرەکی لێدرا، ئازادی بکە و سورەتەکە بەردەوام بێت
+  if(pausedByPin && pinnedAyah !== null){
+    // با 1 چرکە چاوەڕێ بکات پاشان ئازاد بکات بۆ ئەوەی سورەتەکە بخوێنێت
+    setTimeout(()=>{
+      if(!player.paused){
+        pinnedAyah = null;
+        pausedByPin = false;
+        playbackStopMs = null;
+        lastShownAyah = null;
+      }
+    }, 400);
+  }
+  pausedByPin = false;
+  startSyncLoop();
+});
 player.addEventListener('playing', startSyncLoop);
 player.addEventListener('pause', ()=>{ stopSyncLoop(); checkPlaybackSync(); });
 player.addEventListener('seeked', checkPlaybackSync);
 player.addEventListener('ratechange', ()=>{
+  // At 3x, sync Quran text + marked list together instantly
+  const isFast = player.playbackRate >= 2;
   checkPlaybackSync();
-  // Force one immediate synchronization after changing 1x/1.25x/1.5x/2x/2.5x/3x.
-  if(!player.paused && !player.ended) showAyahText(true);
+  if(!player.paused && !player.ended){
+    showAyahText(true);
+    if(isFast){
+      renderMarksList();
+    }
+  }
 });
 // kept as a fallback (e.g. background tabs where rAF is paused)
 player.addEventListener('timeupdate', checkPlaybackSync);
@@ -1826,6 +1867,8 @@ function getMarkTimeMs(){
 // ---- Marking ----
 function markCurrent(){
   if(player.style.display==='none') return;
+  // کاتێک ئایەتێکی نوێ دیاری دەکەی، پین لاببە
+  pinnedAyah = null;
   refreshNextAyah();
   const timeMs = getMarkTimeMs();
   if(pendingTotal){
@@ -1936,6 +1979,7 @@ let sqlJsPromise = null;
 function loadSqlJs(){
   if(sqlJsPromise) return sqlJsPromise;
   sqlJsPromise = new Promise((resolve,reject)=>{
+    const CDN = 'https://cdn.jsdelivr.net/npm/sql.js/dist/';
     const tryLoad = (base, onFail)=>{
       const script = document.createElement('script');
       script.src = base + 'sql-wasm.js';
@@ -1946,9 +1990,9 @@ function loadSqlJs(){
       script.onerror = ()=>{ script.remove(); onFail(new Error('script load failed')); };
       document.head.appendChild(script);
     };
-    // 100% OFFLINE - تەنها فایلی ناوخۆیی، هیچ CDN نیە
-    const fromFiles = ()=>tryLoad('./', ()=>reject(new Error('sql.js نەدۆزرایەوە - دڵنیابە sql-wasm.js لە تەنیشت index.html هەیە یان WASM لەناو HTML جێگیر کراوە')));
-    // باشترین: sql.js و wasm لەناو خودی ئەم پەڕەیە جێگیر کراوە، هیچ دابەزاندنێکی ناوێت
+    // separate files first (bundled in the APK), then the internet
+    const fromFiles = ()=>tryLoad('./', ()=>tryLoad(CDN, reject));
+    // best: sql.js and its wasm are embedded in this very page, nothing to download
     if(typeof initSqlJs === 'function' && window.SQLJS_WASM_B64){
       try{
         const bin = atob(window.SQLJS_WASM_B64);
@@ -2021,9 +2065,6 @@ async function autoSaveNow(){
 }
 document.addEventListener('visibilitychange', ()=>{ if(document.hidden){ autoSaveNow(); saveMarks(); } });
 window.addEventListener('beforeunload', ()=>{ saveMarks(); });
-window.addEventListener('pagehide', ()=>{ saveMarks(); });
-// هەلگرتن هەر 2 چرکە جارەکێ
-setInterval(()=>{ if(marks.length>0) saveMarks(); }, 2000);
 
 // ---- Import (resume previous session) ----
 function clearCurrentSuraMarks(){
