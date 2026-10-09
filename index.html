@@ -698,6 +698,7 @@ body.dark .mark-row.active-row .rowtime {
 
 
 
+
 <style id="wide-landscape-fix">
 @media (orientation: landscape), (max-height: 500px) {
   body{ padding: 1px 3px !important; }
@@ -709,64 +710,44 @@ body.dark .mark-row.active-row .rowtime {
     margin: 0 2px 1px !important;
     padding: 1px 2px !important;
     width: calc(100% - 4px) !important;
-    min-height: 20px !important;
   }
-  .headtop{ gap: 1px !important; height: 18px !important; }
-  .headtop h1{ font-size: 9px !important; }
-  .menuDots{ font-size: 10px !important; padding: 0 1px !important; height: 14px !important; }
-  .topbar{
-    gap: 1px !important;
-    margin-top: 0 !important;
-    height: 20px !important;
-    min-height: 18px !important;
-  }
+  .topbar{ gap: 2px !important; margin-top: 0 !important; height: 22px !important; }
   .minifield{
     border-radius: 4px !important;
     padding: 0 1px !important;
     min-height: 14px !important;
-    height: 16px !important;
-    border-width: 0.5px !important;
+    height: 18px !important;
   }
-  .minifield .minilabel{
-    font-size: 4px !important;
-    line-height: 1 !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    display: none !important;
-  }
-  .minifield:has(#suraSelect), .minifield:has(#startAyah){
-    flex: 1 1 auto !important;
-    height: 14px !important;
-  }
-  .miniSelect{
-    font-size: 8px !important;
-    height: 12px !important;
-    padding: 0 !important;
-    line-height: 1 !important;
-  }
-  .miniNumber{
-    font-size: 8px !important;
-    height: 12px !important;
-  }
+  .minifield .minilabel{ display:none !important; }
+  .miniSelect, .miniNumber{ font-size: 8px !important; height: 12px !important; }
   #suraSelect{ font-size: 8px !important; }
-  #startAyah{
-    font-size: 8px !important;
-    height: 12px !important;
+
+  /* دوگمەی مینیو - فراوان */
+  #menuBtn{
+    width: 36px !important;
+    min-width: 36px !important;
+    height: 22px !important;
+    font-size: 18px !important;
+    border-radius: 6px !important;
+    background: var(--paper) !important;
+    display:flex !important;
+    align-items:center !important;
+    justify-content:center !important;
   }
-  .miniBtn, #audioPickBtn{
-    border-radius: 4px !important;
-    padding: 0 2px !important;
-    font-size: 6px !important;
-    height: 14px !important;
-    min-height: 14px !important;
-  }
+  /* دوگمەی دەنگ - فراوان */
   #audioPickBtn{
-    padding: 0 3px !important;
-    font-size: 6px !important;
+    width: 68px !important;
+    min-width: 68px !important;
+    height: 22px !important;
+    border-radius: 6px !important;
+    padding: 0 4px !important;
+    font-size: 9px !important;
+    font-weight: 800 !important;
   }
+
   .filename{ display:none !important; }
 
-  /* دەنگ لێدان - باریک */
+  /* دەنگ لێدان */
   .card:first-of-type,
   header + .card{
     border-radius: 8px !important;
@@ -774,57 +755,76 @@ body.dark .mark-row.active-row .rowtime {
     width: calc(100% - 4px) !important;
     padding: 1px 2px !important;
   }
-  #player, #audioPlayer, audio{
-    height: 14px !important;
-    margin-top: 0 !important;
-  }
-  .speedrow{
-    gap: 1px !important;
-    margin-top: 0 !important;
-  }
-  .speedrow .chip{
-    border-radius: 4px !important;
-    padding: 0 1px !important;
-    font-size: 5px !important;
-    height: 12px !important;
-    min-width: 14px !important;
-    line-height: 12px !important;
-  }
-  #seekRow{
-    gap: 1px !important;
-    margin-top: 0 !important;
-  }
-  #seekRow .btn2{
-    border-radius: 4px !important;
-    padding: 0 1px !important;
-    font-size: 5px !important;
-    height: 12px !important;
-  }
+  #player, #audioPlayer, audio{ height: 14px !important; margin-top: 0 !important; }
+  .speedrow{ gap: 1px !important; margin-top: 0 !important; }
+  .speedrow .chip{ border-radius: 4px !important; height: 12px !important; font-size: 5px !important; }
+  #seekRow{ gap: 1px !important; margin-top: 0 !important; }
+  #seekRow .btn2{ border-radius: 4px !important; height: 12px !important; font-size: 5px !important; }
 
-  /* دەقی قورئان - جوانتر و فراوانتر */
-  #textPanel, .card#textPanel{
-    border-radius: 14px !important;
-    margin: 2px 2px 2px !important;
+  /* === دیاریکردنی کۆتایی ئایەت - زۆر باریک === */
+  #markCard{
+    border-radius: 8px !important;
+    margin: 1px 2px 2px !important;
     width: calc(100% - 4px) !important;
-    padding: 8px 6px !important;
+    padding: 2px 3px !important;
+    min-height: 24px !important;
   }
-  #textPanel .ayah-line-list{ font-size: 11px !important; }
-  #startAyah:not(select){
-    border-radius: 10px !important;
-    margin: 2px 2px !important;
-    width: calc(100% - 4px) !important;
-    padding: 6px !important;
+  #markBtn{
+    padding: 2px 6px !important;
+    font-size: 9px !important;
+    height: 20px !important;
+    min-height: 20px !important;
+    border-radius: 6px !important;
+    line-height: 1 !important;
   }
-  #marksPanel{
-    border-radius: 10px !important;
+  #toast{ font-size: 8px !important; }
+
+  /* === لیستی نیشانەکراوەکان - زۆر باریک === */
+  #marksPanel, .card:has(#marksList){
+    border-radius: 8px !important;
     margin: 1px 2px !important;
     width: calc(100% - 4px) !important;
     padding: 2px 4px !important;
   }
+  #marksPanel .section-title-row, .card:has(#marksList) .section-title-row{
+    margin-bottom: 1px !important;
+    height: 14px !important;
+  }
+  .section-title{ font-size: 7px !important; }
+  .resetSmallBtn{ font-size: 6px !important; padding: 1px 3px !important; height: 12px !important; }
+  #addTotalBtn{ padding: 1px 3px !important; font-size: 7px !important; height: 14px !important; margin-bottom: 1px !important; }
+  #marksList{ max-height: 26px !important; overflow:hidden !important; }
   #marksList .mark-row:nth-child(n+2){ display:none !important; }
-  #marksList{ max-height: 28px !important; }
+  .mark-row{ padding: 0 3px !important; height: 18px !important; min-height: 18px !important; border-radius: 4px !important; }
+  .rownum{ font-size: 8px !important; }
+  .rowtime, .rowbtn{ font-size: 7px !important; }
+
+/* === دەقی قورئان - چاککردنی گەورە و بچووککردنەوە === */
+  #textPanel, .card#textPanel{
+    border-radius: 12px !important;
+    margin: 2px 2px 2px !important;
+    width: calc(100% - 4px) !important;
+    padding: 6px 6px !important;
+  }
+  /* گەورە و بچووککردنەوە کار بکات - بەکارهێنانی variable */
+  #textPanel .ayah-line,
+  #textPanel .ayah-line-list,
+  .ayah-line,
+  .ayah-line-list{
+    font-size: var(--quran-font-size,16px) !important;
+    line-height: 2 !important;
+  }
+  /* دوگمەی گەورە و بچووککردن لە مینیو - فراوان و دیار */
+  #settingsMenu .fontBtn{
+    width: 32px !important;
+    height: 28px !important;
+    font-size: 16px !important;
+    border-radius: 8px !important;
+  }
+  #fontSizeDisplay{ font-size: 12px !important; min-width: 28px !important; }
 }
 </style>
+
 
 
 </head>
