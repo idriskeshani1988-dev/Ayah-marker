@@ -814,35 +814,173 @@ body.dark .mark-row.active-row .rowtime {
   .mark-row .rowbtn{ flex:0 0 32px !important; width:32px !important; min-width:32px !important; max-width:32px !important; min-height:28px !important; max-height:28px !important; font-size:20px !important; font-weight:700 !important; padding:0 !important; }
   .mark-row .rowbtn.clearbtn{ font-size:15px !important; }
   .mark-row .rownum{ flex:0 0 34px !important; min-width:34px !important; max-width:34px !important; font-size:17px !important; font-weight:800 !important; }
+  /* audio player, speed chips and 1-second buttons share ONE line so the whole screen fits */
+  header{ display:flex !important; flex-wrap:wrap !important; align-items:center !important; gap:3px 5px !important; }
+  header .topbar, header .settingsMenu, header .filename{ flex:0 0 100% !important; }
+  header .filename:empty{ display:none !important; }
+  header #player{ flex:1.4 1 34% !important; width:auto !important; min-width:230px !important; margin:0 !important; }
+  header .speedrow{ flex:1.6 1 32% !important; margin:0 !important; flex-wrap:nowrap !important; }
+  header .speedrow .chip{ min-width:0 !important; padding:1px 3px !important; }
+  header #seekRow{ flex:1 1 22% !important; margin:0 !important; }
+  /* smaller top boxes (surah / ayah selectors, audio) so the Quran text box can be bigger */
+  header{ padding:2px 5px !important; margin-bottom:2px !important; gap:2px 4px !important; }
+  .topbar .minifield{ padding:0 5px 0 !important; border-radius:6px !important; }
+  .minilabel{ font-size:7px !important; line-height:1 !important; }
+  .miniSelect, .miniNumber{ font-size:10.5px !important; line-height:1.15 !important; padding:0 !important; min-height:0 !important; height:18px !important; }
+  .miniBtn{ padding:3px 8px !important; font-size:10.5px !important; }
+  .menuDots{ font-size:19px !important; padding:0 4px !important; }
+  header #player{ height:20px !important; min-width:210px !important; }
+  header .speedrow .chip{ font-size:8.5px !important; padding:0 3px !important; line-height:1.25 !important; }
+  header .subactions .btn2, header #seekRow .btn2{ font-size:8.5px !important; padding:0 4px !important; line-height:1.3 !important; }
+  .card{ padding:2px 4px !important; margin-bottom:2px !important; }
+  .markbtn{ padding:3px 8px !important; font-size:12px !important; }
+  .section-title-row{ margin-bottom:0 !important; }
+  /* even smaller top box and marks list */
+  header .filename{ display:none !important; }
+  header .topbar{ height:26px !important; min-height:0 !important; align-items:stretch !important; gap:3px !important; }
+  header .topbar .minifield{ height:26px !important; min-height:0 !important; padding:0 5px !important; display:flex !important; flex-direction:column !important; justify-content:center !important; }
+  header .topbar .minilabel{ font-size:6.5px !important; line-height:1 !important; margin:0 !important; }
+  header .topbar .miniSelect, header .topbar .miniNumber{ height:14px !important; max-height:14px !important; margin:0 !important; padding:0 !important; font-size:10px !important; line-height:1 !important; }
+  header .topbar .miniBtn{ height:26px !important; padding:0 8px !important; font-size:10px !important; line-height:1 !important; }
+  header .topbar .menuDots{ height:26px !important; font-size:17px !important; padding:0 3px !important; line-height:1 !important; }
+  header #player{ height:18px !important; }
+  header .speedrow .chip{ font-size:8px !important; }
+  header .subactions .btn2, header #seekRow .btn2{ font-size:8px !important; }
+  #markCard{ padding:2px 4px !important; }
+  .section-title{ font-size:9px !important; }
+  .resetSmallBtn, #showAllBtn{ padding:0 6px !important; font-size:8.5px !important; line-height:1.3 !important; }
+  #marksList{ max-height:28px !important; }
+  .mark-row{ min-height:26px !important; max-height:26px !important; padding-top:0 !important; padding-bottom:0 !important; }
+  .mark-row .rowtime{ font-size:13px !important; padding:1px 4px !important; }
+  .mark-row .rowbtn{ min-height:24px !important; max-height:24px !important; font-size:17px !important; }
+  .mark-row .rowbtn.clearbtn{ font-size:13px !important; }
+  .mark-row .rownum{ font-size:15px !important; }
+  /* the Quran text takes the height that is left on the screen */
+  .textpanel{ max-height:calc(100vh - 138px) !important; max-height:calc(100dvh - 138px) !important; min-height:80px !important; }
+  /* smaller audio box, surah and ayah boxes -> bigger Quran text box */
+  header{ padding:2px 5px !important; gap:2px 4px !important; margin-bottom:2px !important; }
+  .topbar .minifield{ padding:0 5px 0 !important; border-radius:6px !important; }
+  .topbar .miniSelect, .topbar .miniNumber, #suraSelect, #startAyah{ font-size:11px !important; height:20px !important; line-height:1.1 !important; }
+  .minilabel{ font-size:7px !important; line-height:1 !important; }
+  .miniBtn{ padding:3px 8px !important; font-size:10.5px !important; }
+  .menuDots{ font-size:18px !important; padding:0 4px !important; }
+  header #player{ height:20px !important; min-width:210px !important; }
+  header .speedrow .chip{ font-size:8.5px !important; padding:0 3px !important; line-height:1.4 !important; }
+  header .subactions .btn2, header #seekRow .btn2{ font-size:8.5px !important; padding:0 3px !important; line-height:1.4 !important; }
+  .markbtn{ padding:3px 8px !important; font-size:12px !important; }
+  .card{ padding:2px 4px !important; margin-bottom:2px !important; }
+  .wrap{ padding:2px 5px 3px !important; }
 }
 </style>
 <style id="longpress-bookmark">
 .ayah-line-list{ -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; }
 </style>
 
-<style id="voice-panel-toggle">
-#voicePanel{
-  transition: all 0.25s ease;
-  border:1.5px solid var(--line);
-  border-radius:10px;
-  padding:6px;
-  margin-top:6px;
-  background:#fff;
+<style id="header-toggle-2026-10-10">
+/* دوگمەی شاردنەوە / پیشاندانی بوکسی سەرەوە */
+#hdrToggleBar{display:flex;justify-content:center;margin:0 0 3px;}
+#hdrToggleBtn{
+  border:none;background:var(--gold);color:#fff;font-weight:700;cursor:pointer;
+  font-size:11px;line-height:1;padding:4px 16px;border-radius:999px;
+  box-shadow:0 2px 6px rgba(0,0,0,.25);
 }
-body.dark #voicePanel{background:var(--paper-dim); border-color:var(--line);}
-#voicePanel.hidden-voice{display:none !important;}
-#showVoiceBtn{
-  animation: fadeIn 0.2s ease;
+body.hdr-hidden header{display:none !important;}
+/* کاتێک بوکسەکە شاراوەیە: دەقی قورئان هەموو بەرزییە ماوەکە دەگرێت */
+body.hdr-hidden .wrap{
+  display:flex;flex-direction:column;
+  height:100vh;height:100dvh;
+  max-width:100% !important;
+  padding-top:max(4px, env(safe-area-inset-top)) !important;
 }
-@keyframes fadeIn{ from{opacity:0; transform:translateY(-4px);} to{opacity:1; transform:translateY(0);} }
+body.hdr-hidden .wrap > *{flex:0 0 auto;}
+body.hdr-hidden .wrap > .card:has(#textPanel){
+  flex:1 1 auto;min-height:0;display:flex;flex-direction:column;
+}
+body.hdr-hidden #textPanel{
+  flex:1 1 auto;min-height:0 !important;max-height:none !important;height:auto !important;
+}
 </style>
 
+<style id="move-controls-2026-10-10">
+/* خێرایی دەنگ لە ناو مینیو */
+#speedMenuBox{margin-top:8px;}
+#speedMenuBox .speedrow{display:flex !important;flex-wrap:wrap;justify-content:center;gap:6px !important;margin:4px 0 0 !important;}
+#speedMenuBox .speedrow .chip{font-size:12px !important;padding:5px 10px !important;min-width:44px !important;line-height:1.3 !important;}
+/* ١ چرکە پێش / پاش لە تەنیشت دوگمەی دیاریکردن */
+#markCard{display:flex;align-items:stretch;gap:5px;}
+#markCard #markBtn{flex:1 1 auto;width:auto;min-width:0;}
+#markCard #seekRow{display:contents !important;}
+#markCard #seekRow .btn2{flex:0 0 auto;width:auto;min-width:58px;padding:4px 6px !important;font-size:11px !important;line-height:1.25;margin:0 !important;}
+</style>
+
+<style id="portrait-slim-2026-10-10">
+/* شاشەی ستوونی: دوگمەی دیاریکردن و لیستی نیشانەکراوەکان باریکتر -> دەقی قورئان گەورەتر */
+@media (orientation: portrait){
+  #markCard{padding:5px 8px !important;margin-bottom:5px !important;}
+  .markbtn{padding:7px 8px !important;font-size:14px !important;}
+  #markCard #seekRow .btn2{padding:2px 6px !important;}
+  .card:has(#marksList){padding:5px 8px !important;margin-bottom:0 !important;}
+  .section-title-row{margin-bottom:2px !important;}
+  .section-title{font-size:12px !important;}
+  #marksList:not(.all){max-height:64px !important;}
+  .mark-row{padding-top:1px !important;padding-bottom:1px !important;min-height:30px !important;gap:4px !important;}
+  .mark-row .rowbtn{font-size:17px !important;padding:0 4px !important;min-height:26px !important;line-height:1 !important;}
+  .mark-row .rowbtn.clearbtn{font-size:14px !important;}
+  .mark-row .rownum{font-size:15px !important;}
+  .mark-row .rowtime{font-size:13px !important;padding:1px 4px !important;height:26px !important;}
+  .section-title{font-size:11px !important;}
+  #showAllBtn,.resetSmallBtn{padding:1px 8px !important;font-size:10px !important;line-height:1.3 !important;}
+  #markCard{padding:4px 6px !important;gap:4px !important;}
+  .markbtn{padding:0 8px !important;font-size:13.5px !important;height:36px !important;line-height:1.1 !important;}
+  #markCard #seekRow .btn2{height:36px !important;padding:0 5px !important;font-size:10.5px !important;white-space:nowrap !important;min-width:0 !important;}
+  /* دەقی قورئان هەموو بەرزییە ماوەکە دەگرێت */
+  .wrap{display:flex;flex-direction:column;height:100vh;height:100dvh;overflow-y:auto;}
+  .wrap > *{flex:0 0 auto;}
+  .wrap > .card:has(#textPanel){flex:1 1 auto;min-height:0;display:flex;flex-direction:column;}
+  #textPanel{flex:1 1 auto;min-height:0 !important;max-height:none !important;height:auto !important;}
+}
+</style>
+
+<style id="mini-play-2026-10-10">
+#hdrToggleBar{align-items:center;gap:8px;}
+#miniPlayBtn{
+  display:none;border:none;background:var(--gold);color:#fff;cursor:pointer;
+  width:30px;height:24px;border-radius:999px;font-size:13px;line-height:1;padding:0;
+  box-shadow:0 2px 6px rgba(0,0,0,.25);
+}
+body.hdr-hidden #miniPlayBtn{display:inline-block;}
+</style>
+
+<style id="topbar-layout-2026-10-10">
+#hdrToggleBar{position:relative;min-height:26px;}
+#miniPlayBtn{position:absolute;right:4px;top:50%;transform:translateY(-50%);}
+#miniMenuBtn{
+  display:none;position:absolute;left:4px;top:50%;transform:translateY(-50%);
+  border:none;background:var(--gold);color:#fff;cursor:pointer;
+  width:30px;height:24px;border-radius:999px;font-size:15px;line-height:1;padding:0;
+  box-shadow:0 2px 6px rgba(0,0,0,.25);
+}
+body.hdr-hidden #miniMenuBtn{display:inline-block;}
+/* مینیو وەک پەنجەرەیەک کاتێک بوکسی سەرەوە شاراوەیە */
+body.hdr-hidden header.menu-open{
+  display:block !important;position:fixed;z-index:60;
+  top:calc(env(safe-area-inset-top, 0px) + 36px);left:6px;right:6px;margin:0 !important;
+}
+body.hdr-hidden header.menu-open > *:not(#settingsMenu){display:none !important;}
+/* ١ چرکە پێش / پاش هاوشێوەی دوگمەی دیاریکردن */
+#markCard > .btn2{
+  flex:0 0 auto !important;width:auto !important;min-width:0 !important;
+  height:36px !important;padding:0 6px !important;margin:0 !important;
+  font-size:10.5px !important;line-height:1.1 !important;white-space:nowrap !important;
+  border-radius:var(--radius) !important;
+}
+</style>
 </head>
 <body>
 <div class="wrap">
+  <div id="hdrToggleBar"><button id="miniMenuBtn" type="button" aria-label="menu">☰</button><button id="miniPlayBtn" type="button" aria-label="play/pause">▶</button><button id="hdrToggleBtn" type="button">▲ شاردنەوەی بوکسی سەرەوە</button></div>
   <header>
-    <div class="topbar" id="topbarWrapper">
-      <button id="hideTopbarBtn" type="button" title="شاردنەوە" style="border:none;background:none;font-size:26px;cursor:pointer;padding:0 6px;color:var(--teal);flex:0 0 auto;line-height:1;">✕</button>
+    <div class="topbar">
       <button id="audioPickBtn" class="miniBtn" data-i18n="audioPick">🎧 دەنگ</button>
       <div class="minifield" style="padding:3px 6px 4px;flex:1 1 auto;min-width:0;">
         <span class="minilabel" data-i18n="labelSura">سورە</span>
@@ -890,24 +1028,20 @@ body.dark #voicePanel{background:var(--paper-dim); border-color:var(--line);}
       <div class="menuBox"><div class="settingsRow"><label for="stepMsInput" data-i18n="stepLabel" style="font-size:12px;">هەنگاوی گۆڕینی کات (1–1000 ms)</label><input id="stepMsInput" type="text" inputmode="numeric" pattern="[0-9]*" lang="en" maxlength="4" value="50" style="width:92px;padding:6px;border:1px solid var(--line);border-radius:8px;direction:ltr;"></div></div>
       <div class="menuBox"><div class="settingsRow"><label data-i18n="fontLabel" style="font-size:12px;">گەورە و بچووککردنی دەقی قورئان</label><div class="fontAdjust" style="display:flex;align-items:center;gap:6px;direction:ltr;"><button class="fontBtn" id="fontMinus" type="button">−</button><span id="fontSizeDisplay" style="min-width:34px;text-align:center;direction:ltr;">16</span><button class="fontBtn" id="fontPlus" type="button">+</button></div></div></div>
     </div>
-    <!-- VOICE PANEL - چوار گوشەی پێکردنی دەنگ - دەتوانرێت هەمووی بشاردرێتەوە و بگەڕێتەوە -->
-    <div id="voicePanel">
-      <div class="filename" id="fname"></div>
-      <audio id="player" controls controlslist="nodownload noplaybackrate nofullscreen" disablepictureinpicture disableremoteplayback playsinline style="display:none;"></audio>
-      <div class="speedrow open" id="speedrow" style="margin-top:6px;display:none;">
-        <div class="chip active" data-r="1">1x</div>
-        <div class="chip" data-r="1.25">1.25x</div>
-        <div class="chip" data-r="1.5">1.5x</div>
-        <div class="chip" data-r="2">2x</div>
-        <div class="chip" data-r="2.5">2.5x</div>
-        <div class="chip" data-r="3">3x</div>
-      </div>
-      <div class="subactions" id="seekRow" style="display:none; margin-top:6px;">
-        <button class="btn2" id="fwd1Btn" data-i18n="fwd1">1 چرکە پاش ⏩</button>
-        <button class="btn2" id="back1Btn" data-i18n="back1">⏪ 1 چرکە پێش</button>
-      </div>
+    <div class="filename" id="fname"></div>
+    <audio id="player" controls controlslist="nodownload noplaybackrate nofullscreen" disablepictureinpicture disableremoteplayback playsinline style="display:none;"></audio>
+    <div class="speedrow open" id="speedrow" style="margin-top:6px;display:none;">
+      <div class="chip active" data-r="1">1x</div>
+            <div class="chip" data-r="1.25">1.25x</div>
+      <div class="chip" data-r="1.5">1.5x</div>
+      <div class="chip" data-r="2">2x</div>
+      <div class="chip" data-r="2.5">2.5x</div>
+      <div class="chip" data-r="3">3x</div>
     </div>
-    <button id="showVoiceBtn" type="button" style="display:none;width:100%;margin-top:6px;padding:8px;border-radius:10px;border:1.5px dashed var(--gold);background:#fff8e6;color:var(--teal);font-size:12.5px;font-weight:700;cursor:pointer;">👁️ پیشاندانەوەی سەرەوە</button>
+    <div class="subactions" id="seekRow" style="display:none; margin-top:6px;">
+      <button class="btn2" id="fwd1Btn" data-i18n="fwd1">1 چرکە پاش ⏩</button>
+      <button class="btn2" id="back1Btn" data-i18n="back1">⏪ 1 چرکە پێش</button>
+    </div>
     <input type="file" id="fileInput" accept="audio/*" multiple>
   </header>
   <div class="card">
@@ -1114,7 +1248,11 @@ const LS_KEY = 'quran_marks_autosave';
 function currentMarksSura(){
   try{ return activeSura; }catch(e){ return parseInt(suraSelect.value); }
 }
+// Nothing may be saved before the saved state has been read at start-up; an early save (empty list,
+// surah 1) would overwrite the last surah and the saved marks of surah 1.
+let startupRestoreDone = false;
 function saveMarks(){
+  if(!startupRestoreDone) return;
   try{
     const sura = currentMarksSura();
     let all = {};
@@ -1615,6 +1753,7 @@ try{
 }catch(e){}
 populateStartAyahOptions(parseInt(suraSelect.value));
 loadMarks(parseInt(suraSelect.value));
+startupRestoreDone = true;
 jumpToNextUnmarked(parseInt(suraSelect.value));
 fetchSurahText(parseInt(suraSelect.value));
 setTimeout(()=>{ render(); }, 300);
@@ -1768,6 +1907,18 @@ exportMasterBtn.addEventListener('click', async ()=>{
   catch(err){ alert('نەتوانرا فایلی db هەڵبگیرێت: ' + (err && err.message ? err.message : err)); }
 });
 
+// Scroll `el` to the top of its OWN scroll box. scrollIntoView() also scrolls the whole page, which
+// pushed the Quran text box (and the marked ayah at its top) off the screen.
+function scrollInsideToTop(box, el, instant){
+  if(!box || !el) return;
+  const top = box.scrollTop + (el.getBoundingClientRect().top - box.getBoundingClientRect().top);
+  box.scrollTo({top: top, behavior: instant ? 'auto' : 'smooth'});
+}
+// Keep the top of the Quran text box on the screen (page scrolled / bars hidden or shown).
+function keepTextPanelOnScreen(){
+  const r = textPanel.getBoundingClientRect();
+  if(r.top < 0 || r.top > window.innerHeight * 0.6) window.scrollBy(0, r.top - 4);
+}
 function renderAyahText(ayahNum, syncInstant=false){
   if(!currentSurahAyahs || textLoadedForSura !== parseInt(suraSelect.value)) return;
   const bms = (typeof getBookmarks === 'function') ? getBookmarks() : {};
@@ -1795,7 +1946,8 @@ function renderAyahText(ayahNum, syncInstant=false){
   });
   const activeEl = textPanel.querySelector('.ayah-line-list.active');
   if(activeEl){
-    activeEl.scrollIntoView({block:'start', behavior: syncInstant ? 'auto' : 'smooth'});
+    scrollInsideToTop(textPanel, activeEl, syncInstant);
+    keepTextPanelOnScreen();
   }
 }
 textPanel.addEventListener('click', (e)=>{
@@ -1818,7 +1970,7 @@ function scrollMarkRowToTop(seq, syncInstant=false){
   if(row){
     // Never animate the list while audio is running: at 3x the animation
     // itself makes the marked row visibly trail behind the audio.
-    row.scrollIntoView({block:'start', behavior: syncInstant ? 'auto' : 'smooth'});
+    scrollInsideToTop(marksList, row, syncInstant);
   } else {
     marksList.scrollIntoView({block:'nearest', behavior: syncInstant ? 'auto' : 'smooth'});
   }
@@ -2312,9 +2464,25 @@ if(loadProgressBtn){
     const sName = getSuraName(sura);
     showToast(`▶️ دەستی پێکرد: سورەتی ${sName} - ئایەتی ${ayah}`);
     settingsMenu.classList.remove('open');
-    setTimeout(()=>{ textPanel.querySelector('.ayah-line-list.active')?.scrollIntoView({block:'start', behavior:'smooth'}); }, 100);
+    setTimeout(()=>{ scrollInsideToTop(textPanel, textPanel.querySelector('.ayah-line-list.active'), false); keepTextPanelOnScreen(); }, 100);
   });
 }
+// ---- Screen size changed (browser bars hidden/shown with X, rotation): marked ayah back to the top ----
+(function(){
+  let t = null;
+  function realign(){
+    const a = document.activeElement;
+    if(a && /^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName)) return;   // keyboard open: do not move anything
+    const el = textPanel.querySelector('.ayah-line-list.active');
+    if(!el) return;
+    scrollInsideToTop(textPanel, el, true);
+    keepTextPanelOnScreen();
+  }
+  const schedule = ()=>{ clearTimeout(t); t = setTimeout(realign, 200); };
+  window.addEventListener('resize', schedule);
+  window.addEventListener('orientationchange', schedule);
+  if(window.visualViewport) window.visualViewport.addEventListener('resize', schedule);
+})();
 // ---- Long-press an ayah in the Quran text to bookmark it ----
 (function(){
   let timer = null, startX = 0, startY = 0, suppressClick = false;
@@ -2418,69 +2586,84 @@ if('serviceWorker' in navigator && location.protocol.startsWith('http') && !(win
     navigator.serviceWorker.register('sw.js').catch(()=>{});
   });
 }
-</script>
 
-
-
-
-<script id="voice-panel-logic">
-// X بۆ شاردنەوەی سەرەوە - بە حەزی خۆت - قورئان گەورە دەبێت
+// ---- Hide / show the whole top box ----
 (function(){
-  const voicePanel = document.getElementById('voicePanel');
-  const topbar = document.getElementById('topbarWrapper') || document.querySelector('.topbar');
-  const headerEl = document.querySelector('header');
-  const textPanel = document.getElementById('textPanel');
-  const hideTopBtn = document.getElementById('hideTopbarBtn');
-  const showBtn = document.getElementById('showVoiceBtn');
+  const btn=document.getElementById('hdrToggleBtn');
+  const L={
+    ku:{hide:'▲ شاردنەوەی بوکسی سەرەوە',show:'▼ پیشاندانی بوکسی سەرەوە'},
+    en:{hide:'▲ Hide top box',show:'▼ Show top box'},
+    ar:{hide:'▲ إخفاء الصندوق العلوي',show:'▼ إظهار الصندوق العلوي'}
+  };
+  function label(){
+    const l=L[document.documentElement.lang]||L.ku;
+    btn.textContent=document.body.classList.contains('hdr-hidden')?l.show:l.hide;
+  }
+  function set(hidden){
+    document.body.classList.toggle('hdr-hidden',hidden);
+    label();
+    try{localStorage.setItem('hdrHidden',hidden?'1':'0');}catch(e){}
+  }
+  btn.addEventListener('click',()=>set(!document.body.classList.contains('hdr-hidden')));
+  new MutationObserver(label).observe(document.documentElement,{attributes:true,attributeFilter:['lang']});
+  let saved=null; try{saved=localStorage.getItem('hdrHidden');}catch(e){}
+  set(saved==='1');
+})();
 
-  if(!voicePanel || !topbar || !showBtn) return;
+// ---- Move speed buttons into the menu, and 1s buttons beside the mark button ----
+(function(){
+  const menu=document.getElementById('settingsMenu');
+  const speed=document.getElementById('speedrow');
+  const seek=document.getElementById('seekRow');
+  const markBtn=document.getElementById('markBtn');
+  const fwd=document.getElementById('fwd1Btn'), back=document.getElementById('back1Btn');
+  if(!menu||!speed||!seek||!markBtn) return;
+  const box=document.createElement('div');
+  box.className='menuBox'; box.id='speedMenuBox';
+  const lab=document.createElement('div');
+  lab.className='settingsRow'; lab.style.justifyContent='center';
+  lab.innerHTML='<span>🎚️ خێرایی دەنگ (1x – 3x)</span>';
+  box.appendChild(lab); box.appendChild(speed);
+  const divs=menu.querySelectorAll('.menuDivider');
+  menu.insertBefore(box, divs.length? divs[divs.length-1].nextSibling : menu.firstChild);
+  // seek buttons: back on one side, forward on the other side of the mark button
+  const card=markBtn.parentNode;
+  card.insertBefore(seek, markBtn);
+  seek.style.display='contents';
+  card.insertBefore(back, markBtn);
+  card.insertBefore(fwd, markBtn.nextSibling);
+  speed.style.display='flex';
+})();
 
-  function expandQuran(){
-    if(textPanel){
-      textPanel.style.maxHeight = '82vh';
-      textPanel.style.minHeight = '68vh';
-      textPanel.style.transition = 'all 0.3s ease';
-    }
-    if(headerEl){
-      headerEl.style.padding = '2px 8px';
-      headerEl.style.marginBottom = '2px';
-    }
-  }
-  function restoreQuran(){
-    if(textPanel){
-      textPanel.style.maxHeight = '';
-      textPanel.style.minHeight = '';
-    }
-    if(headerEl){
-      headerEl.style.padding = '';
-      headerEl.style.marginBottom = '';
-    }
-  }
-  function hideAll(){
-    topbar.style.display='none';
-    voicePanel.style.display='none';
-    voicePanel.classList.add('hidden-voice');
-    showBtn.style.display='block';
-    expandQuran();
-    try{ localStorage.setItem('topPanelHidden','1'); }catch(e){}
-  }
-  function showAll(){
-    topbar.style.display='flex';
-    voicePanel.style.display='block';
-    voicePanel.classList.remove('hidden-voice');
-    showBtn.style.display='none';
-    restoreQuran();
-    try{ localStorage.setItem('topPanelHidden','0'); }catch(e){}
-  }
-  if(hideTopBtn) hideTopBtn.addEventListener('click', hideAll);
-  // ئەگەر hideVoiceBtn مابێت بیشارەوە
-  const oldHide = document.getElementById('hideVoiceBtn');
-  if(oldHide) oldHide.style.display='none';
-  showBtn.addEventListener('click', showAll);
-  window.hideVoicePanel = hideAll;
-  window.showVoicePanel = showAll;
+// ---- Mini play/pause button (visible while the top box is hidden) ----
+(function(){
+  const b=document.getElementById('miniPlayBtn'), pl=document.getElementById('player');
+  if(!b||!pl) return;
+  const sync=()=>{ b.textContent = pl.paused ? '▶' : '⏸'; };
+  b.addEventListener('click',()=>{
+    if(!pl.getAttribute('src') && !pl.currentSrc) return;
+    if(pl.paused){ pl.play().catch(()=>{}); } else { pl.pause(); }
+  });
+  ['play','pause','ended','loadeddata','emptied'].forEach(ev=>pl.addEventListener(ev,sync));
+  sync();
+})();
+
+// ---- Separate menu button (works while the top box is hidden) ----
+(function(){
+  const mb=document.getElementById('miniMenuBtn'), real=document.getElementById('menuBtn');
+  const menu=document.getElementById('settingsMenu'), hdr=document.querySelector('header');
+  const tg=document.getElementById('hdrToggleBtn');
+  if(!mb||!real||!menu||!hdr) return;
+  mb.addEventListener('click',(e)=>{
+    e.stopPropagation();
+    real.click();
+    hdr.classList.toggle('menu-open', menu.classList.contains('open'));
+  });
+  document.addEventListener('click',()=>{
+    if(!menu.classList.contains('open')) hdr.classList.remove('menu-open');
+  });
+  tg.addEventListener('click',()=>hdr.classList.remove('menu-open'));
 })();
 </script>
-
 </body>
 </html>
