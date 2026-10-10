@@ -819,11 +819,30 @@ body.dark .mark-row.active-row .rowtime {
 <style id="longpress-bookmark">
 .ayah-line-list{ -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; }
 </style>
+
+<style id="voice-panel-toggle">
+#voicePanel{
+  transition: all 0.25s ease;
+  border:1.5px solid var(--line);
+  border-radius:10px;
+  padding:6px;
+  margin-top:6px;
+  background:#fff;
+}
+body.dark #voicePanel{background:var(--paper-dim); border-color:var(--line);}
+#voicePanel.hidden-voice{display:none !important;}
+#showVoiceBtn{
+  animation: fadeIn 0.2s ease;
+}
+@keyframes fadeIn{ from{opacity:0; transform:translateY(-4px);} to{opacity:1; transform:translateY(0);} }
+</style>
+
 </head>
 <body>
 <div class="wrap">
   <header>
-    <div class="topbar">
+    <div class="topbar" id="topbarWrapper">
+      <button id="hideTopbarBtn" type="button" title="شاردنەوە" style="border:none;background:none;font-size:26px;cursor:pointer;padding:0 6px;color:var(--teal);flex:0 0 auto;line-height:1;">✕</button>
       <button id="audioPickBtn" class="miniBtn" data-i18n="audioPick">🎧 دەنگ</button>
       <div class="minifield" style="padding:3px 6px 4px;flex:1 1 auto;min-width:0;">
         <span class="minilabel" data-i18n="labelSura">سورە</span>
@@ -871,20 +890,24 @@ body.dark .mark-row.active-row .rowtime {
       <div class="menuBox"><div class="settingsRow"><label for="stepMsInput" data-i18n="stepLabel" style="font-size:12px;">هەنگاوی گۆڕینی کات (1–1000 ms)</label><input id="stepMsInput" type="text" inputmode="numeric" pattern="[0-9]*" lang="en" maxlength="4" value="50" style="width:92px;padding:6px;border:1px solid var(--line);border-radius:8px;direction:ltr;"></div></div>
       <div class="menuBox"><div class="settingsRow"><label data-i18n="fontLabel" style="font-size:12px;">گەورە و بچووککردنی دەقی قورئان</label><div class="fontAdjust" style="display:flex;align-items:center;gap:6px;direction:ltr;"><button class="fontBtn" id="fontMinus" type="button">−</button><span id="fontSizeDisplay" style="min-width:34px;text-align:center;direction:ltr;">16</span><button class="fontBtn" id="fontPlus" type="button">+</button></div></div></div>
     </div>
-    <div class="filename" id="fname"></div>
-    <audio id="player" controls controlslist="nodownload noplaybackrate nofullscreen" disablepictureinpicture disableremoteplayback playsinline style="display:none;"></audio>
-    <div class="speedrow open" id="speedrow" style="margin-top:6px;display:none;">
-      <div class="chip active" data-r="1">1x</div>
-            <div class="chip" data-r="1.25">1.25x</div>
-      <div class="chip" data-r="1.5">1.5x</div>
-      <div class="chip" data-r="2">2x</div>
-      <div class="chip" data-r="2.5">2.5x</div>
-      <div class="chip" data-r="3">3x</div>
+    <!-- VOICE PANEL - چوار گوشەی پێکردنی دەنگ - دەتوانرێت هەمووی بشاردرێتەوە و بگەڕێتەوە -->
+    <div id="voicePanel">
+      <div class="filename" id="fname"></div>
+      <audio id="player" controls controlslist="nodownload noplaybackrate nofullscreen" disablepictureinpicture disableremoteplayback playsinline style="display:none;"></audio>
+      <div class="speedrow open" id="speedrow" style="margin-top:6px;display:none;">
+        <div class="chip active" data-r="1">1x</div>
+        <div class="chip" data-r="1.25">1.25x</div>
+        <div class="chip" data-r="1.5">1.5x</div>
+        <div class="chip" data-r="2">2x</div>
+        <div class="chip" data-r="2.5">2.5x</div>
+        <div class="chip" data-r="3">3x</div>
+      </div>
+      <div class="subactions" id="seekRow" style="display:none; margin-top:6px;">
+        <button class="btn2" id="fwd1Btn" data-i18n="fwd1">1 چرکە پاش ⏩</button>
+        <button class="btn2" id="back1Btn" data-i18n="back1">⏪ 1 چرکە پێش</button>
+      </div>
     </div>
-    <div class="subactions" id="seekRow" style="display:none; margin-top:6px;">
-      <button class="btn2" id="fwd1Btn" data-i18n="fwd1">1 چرکە پاش ⏩</button>
-      <button class="btn2" id="back1Btn" data-i18n="back1">⏪ 1 چرکە پێش</button>
-    </div>
+    <button id="showVoiceBtn" type="button" style="display:none;width:100%;margin-top:6px;padding:8px;border-radius:10px;border:1.5px dashed var(--gold);background:#fff8e6;color:var(--teal);font-size:12.5px;font-weight:700;cursor:pointer;">👁️ پیشاندانەوەی سەرەوە</button>
     <input type="file" id="fileInput" accept="audio/*" multiple>
   </header>
   <div class="card">
@@ -2396,5 +2419,68 @@ if('serviceWorker' in navigator && location.protocol.startsWith('http') && !(win
   });
 }
 </script>
+
+
+
+
+<script id="voice-panel-logic">
+// X بۆ شاردنەوەی سەرەوە - بە حەزی خۆت - قورئان گەورە دەبێت
+(function(){
+  const voicePanel = document.getElementById('voicePanel');
+  const topbar = document.getElementById('topbarWrapper') || document.querySelector('.topbar');
+  const headerEl = document.querySelector('header');
+  const textPanel = document.getElementById('textPanel');
+  const hideTopBtn = document.getElementById('hideTopbarBtn');
+  const showBtn = document.getElementById('showVoiceBtn');
+
+  if(!voicePanel || !topbar || !showBtn) return;
+
+  function expandQuran(){
+    if(textPanel){
+      textPanel.style.maxHeight = '82vh';
+      textPanel.style.minHeight = '68vh';
+      textPanel.style.transition = 'all 0.3s ease';
+    }
+    if(headerEl){
+      headerEl.style.padding = '2px 8px';
+      headerEl.style.marginBottom = '2px';
+    }
+  }
+  function restoreQuran(){
+    if(textPanel){
+      textPanel.style.maxHeight = '';
+      textPanel.style.minHeight = '';
+    }
+    if(headerEl){
+      headerEl.style.padding = '';
+      headerEl.style.marginBottom = '';
+    }
+  }
+  function hideAll(){
+    topbar.style.display='none';
+    voicePanel.style.display='none';
+    voicePanel.classList.add('hidden-voice');
+    showBtn.style.display='block';
+    expandQuran();
+    try{ localStorage.setItem('topPanelHidden','1'); }catch(e){}
+  }
+  function showAll(){
+    topbar.style.display='flex';
+    voicePanel.style.display='block';
+    voicePanel.classList.remove('hidden-voice');
+    showBtn.style.display='none';
+    restoreQuran();
+    try{ localStorage.setItem('topPanelHidden','0'); }catch(e){}
+  }
+  if(hideTopBtn) hideTopBtn.addEventListener('click', hideAll);
+  // ئەگەر hideVoiceBtn مابێت بیشارەوە
+  const oldHide = document.getElementById('hideVoiceBtn');
+  if(oldHide) oldHide.style.display='none';
+  showBtn.addEventListener('click', showAll);
+  window.hideVoicePanel = hideAll;
+  window.showVoicePanel = showAll;
+})();
+</script>
+
 </body>
 </html>
