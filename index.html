@@ -1092,10 +1092,191 @@ body:not(.dark) .topPrefs > .settingsRow{border-color:#000;}
 .topPrefs > .settingsRow:last-child{flex:0 1 auto !important;}
 .topPrefs .langBtns{justify-content:flex-start;}
 </style>
+
+<style id="bar-selects-2026-10-11">
+#hdrToggleBar{gap:4px !important;}
+#hdrToggleBtn{font-size:10.5px !important;padding:4px 10px !important;white-space:nowrap;}
+#hdrToggleBar .minifield{flex:0 0 auto !important;display:block !important;padding:0 !important;margin:0 !important;
+  border:1.5px solid #000;border-radius:999px;background:var(--gold);overflow:hidden;}
+#hdrToggleBar .minifield .minilabel{display:none !important;}
+#hdrToggleBar .minifield select{
+  width:62px;height:24px;padding:0 4px !important;margin:0 !important;border:0 !important;
+  background:transparent !important;color:#fff;font-size:11px !important;font-weight:700;
+  text-overflow:ellipsis;text-align:center;-webkit-appearance:none;appearance:none;
+}
+#hdrToggleBar .minifield select option{color:#000;background:#fff;}
+#hdrToggleBar .minifield.ayahField select{width:44px;}
+</style>
+
+<style id="header-compact-portrait-2026-10-11">
+@media (orientation: portrait){
+  header{padding:3px 6px !important;margin-bottom:3px !important;border-radius:10px !important;}
+  header .topbar{height:28px !important;min-height:0 !important;align-items:stretch !important;gap:4px !important;}
+  header .topbar .miniBtn{height:28px !important;padding:0 9px !important;font-size:11px !important;border-radius:8px !important;}
+  header .topbar .minifield{height:28px !important;min-height:0 !important;padding:0 6px !important;border-radius:8px !important;display:flex !important;align-items:center !important;}
+  header .topbar .minilabel{display:none !important;}
+  header .topbar .miniSelect, header .topbar .miniNumber{height:24px !important;max-height:24px !important;font-size:12px !important;padding:0 !important;line-height:1.2 !important;}
+  header .topbar .minifield:has(#startAyah){flex:0 0 56px !important;}
+  header .topbar .menuDots{height:28px !important;font-size:18px !important;padding:0 4px !important;line-height:1 !important;}
+  header .filename{font-size:9px !important;line-height:1.1 !important;margin:1px 0 0 !important;}
+  header #player{height:26px !important;min-height:0 !important;margin:2px 0 0 !important;}
+}
+</style>
+
+<style id="box-in-menu-2026-10-11">
+#hdrToggleBtn{display:none !important;}
+#boxInMenu{display:flex;flex-direction:column;gap:8px;}
+#boxInMenu #audioPickBtn{width:100%;height:36px !important;font-size:13px !important;}
+#boxInMenu #fname{text-align:center;margin:0 !important;font-size:11px !important;}
+#boxInMenu #player{width:100% !important;height:40px !important;min-width:0 !important;margin:0 !important;}
+</style>
+
+<style id="menu-audio-row-bar-selects-2026-10-11">
+/* menu: 🎧 button on the right (big), player beside it, file name under both */
+#boxInMenu{flex-direction:row !important;flex-wrap:wrap;align-items:center;gap:8px !important;}
+#boxInMenu #audioPickBtn{order:1;flex:0 0 112px;width:112px !important;height:46px !important;font-size:15px !important;border-radius:12px !important;}
+#boxInMenu #player{order:2;flex:1 1 0;min-width:0 !important;width:auto !important;height:46px !important;}
+#boxInMenu #fname{order:3;flex:0 0 100%;}
+/* top bar: clear and wider surah / ayah boxes */
+#hdrToggleBar .minifield{background:var(--paper) !important;border:1.5px solid #000 !important;border-radius:999px !important;}
+#hdrToggleBar .minifield select{
+  width:124px !important;height:28px !important;color:#000 !important;font-size:13px !important;font-weight:700 !important;
+  padding:0 8px !important;background:transparent !important;
+}
+#hdrToggleBar .minifield.ayahField select{width:64px !important;}
+#hdrToggleBar .minifield select option{color:#000;background:#fff;}
+</style>
+
+<style id="menu-audio-row2-2026-10-11">
+#boxInMenu{padding-bottom:10px !important;border-bottom:1.5px solid var(--line);}
+#boxInMenu #audioPickBtn{order:1 !important;}
+#boxInMenu #fname{order:2 !important;flex:1 1 0 !important;min-width:0;text-align:center;font-size:14px !important;font-weight:700;color:var(--teal);}
+#boxInMenu #player{order:3 !important;flex:0 0 100% !important;width:100% !important;}
+</style>
+
+<style id="menu-audio-one-row-2026-10-11">
+#boxInMenu{flex-wrap:nowrap !important;gap:6px !important;}
+#boxInMenu #audioPickBtn{flex:0 0 82px !important;width:82px !important;height:44px !important;font-size:13px !important;padding:0 4px !important;}
+#boxInMenu #fname{flex:0 0 58px !important;font-size:11.5px !important;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+#boxInMenu #player{flex:1 1 0 !important;width:auto !important;min-width:0 !important;height:44px !important;}
+</style>
+
+<style id="dark-bar-name2-menuview-2026-10-11">
+/* dark mode: surah / ayah boxes readable */
+body.dark #hdrToggleBar .minifield{background:var(--paper-dim) !important;border-color:var(--ink) !important;}
+body.dark #hdrToggleBar .minifield select{color:var(--ink) !important;}
+body.dark #hdrToggleBar .minifield select option{color:#fff;background:#202d3d;}
+/* file name on two short lines: 001 / mp3 */
+#boxInMenu #fname{white-space:pre-line !important;line-height:1.15 !important;flex:0 0 42px !important;font-size:12px !important;}
+/* while the menu is open only the menu (and the top bar) is visible */
+body.menu-view .wrap > *:not(header):not(#hdrToggleBar){visibility:hidden !important;}
+</style>
+
+<style id="mini-time-bigger-rowbtn-2026-10-11">
+#miniTime{position:absolute;right:44px;top:50%;transform:translateY(-50%);color:#fff;font-size:12.5px;font-weight:700;
+  font-variant-numeric:tabular-nums;white-space:nowrap;text-shadow:0 1px 2px rgba(0,0,0,.4);}
+/* bigger tap targets in the marks list */
+@media (orientation: portrait){
+  .mark-row{min-height:40px !important;}
+  .mark-row .rowbtn{font-size:26px !important;min-height:36px !important;min-width:44px !important;padding:0 8px !important;}
+  .mark-row .rowbtn.clearbtn{font-size:18px !important;min-width:36px !important;}
+  .mark-row .rowtime{height:32px !important;font-size:14px !important;}
+  #marksList:not(.all){max-height:82px !important;}
+}
+</style>
+
+<style id="time-visible-thin-rowtime-2026-10-11">
+/* move surah / ayah boxes a little to the left so the remaining time is fully visible */
+#hdrToggleBar{padding-right:46px !important;}
+/* time boxes in the marks list: thinner border, same fill as the Quran text background */
+body:not(.dark) .mark-row .rowtime,
+body.dark .mark-row .rowtime,
+.mark-row .rowtime{border-width:1px !important;background:var(--paper) !important;}
+</style>
+
+<style id="elapsed-time-ayah-lines-2026-10-11">
+#hdrToggleBar{padding-right:72px !important;}
+#miniTime{right:40px !important;font-size:11px !important;letter-spacing:-0.2px;}
+body:not(.dark) .ayah-line-list:not(.bookmarked){border-bottom:1px solid rgba(0,0,0,.5) !important;}
+body.dark .ayah-line-list:not(.bookmarked){border-bottom:1px solid rgba(255,255,255,.35) !important;}
+</style>
+
+<style id="one-pill-5rows-soft-lines-2026-10-11">
+/* surah + ayah in one rounded box */
+#surahAyahPill{display:flex;align-items:center;border:1.5px solid #000;border-radius:999px;background:var(--paper);overflow:hidden;}
+body.dark #surahAyahPill{border-color:var(--ink);background:var(--paper-dim);}
+#surahAyahPill .minifield{border:0 !important;border-radius:0 !important;background:transparent !important;}
+#surahAyahPill .minifield select{width:128px !important;}
+#surahAyahPill .minifield.ayahField{border-right:1.5px solid rgba(0,0,0,.45) !important;}
+body.dark #surahAyahPill .minifield.ayahField{border-right-color:rgba(255,255,255,.4) !important;}
+#surahAyahPill .minifield.ayahField select{width:56px !important;}
+/* "show all": five rows visible */
+@media (orientation: portrait){ #marksList.all{max-height:228px !important;} }
+/* softer separators between ayahs */
+body:not(.dark) .ayah-line-list:not(.bookmarked){border-bottom:1px solid rgba(0,0,0,.18) !important;}
+body.dark .ayah-line-list:not(.bookmarked){border-bottom:1px solid rgba(255,255,255,.14) !important;}
+</style>
+
+<style id="center-pill-stacked-time-2026-10-11">
+#hdrToggleBar{padding-right:0 !important;}
+#miniTime{white-space:pre-line !important;text-align:center;line-height:1.15 !important;font-size:11px !important;right:40px !important;}
+#surahAyahPill .minifield select{width:116px !important;}
+#surahAyahPill .minifield.ayahField select{width:50px !important;}
+@media (orientation: portrait){ #marksList.all{max-height:184px !important;} }
+</style>
+
+<style id="time-flip-five-rows-2026-10-11">
+#miniTime{right:48px !important;}
+@media (orientation: portrait){ #marksList.all{max-height:196px !important;} }
+</style>
+
+<style id="mini-speed-2026-10-11">
+/* only the number is visible; tapping it opens a small list */
+#miniSpeed{
+  position:absolute;left:42px;top:50%;transform:translateY(-50%);
+  min-width:40px;height:28px;padding:0 4px;border:0;background:transparent;color:#fff;
+  font-size:14px;font-weight:800;text-shadow:0 1px 2px rgba(0,0,0,.45);cursor:pointer;
+}
+#miniSpeedList{
+  display:none;position:absolute;left:36px;top:calc(100% + 2px);z-index:80;
+  background:var(--paper);border:1.5px solid #000;border-radius:10px;padding:3px;
+  box-shadow:0 6px 16px rgba(0,0,0,.35);
+}
+body.dark #miniSpeedList{border-color:var(--ink);background:var(--paper-dim);}
+#miniSpeedList.open{display:block;}
+#miniSpeedList button{
+  display:block;width:56px;height:27px;margin:0;border:0;border-radius:7px;background:transparent;
+  color:#000;font-size:13px;font-weight:700;cursor:pointer;
+}
+body.dark #miniSpeedList button{color:var(--ink);}
+#miniSpeedList button.sel{background:var(--teal);color:#fff;}
+#speedMenuBox{display:none !important;}
+</style>
+
+<style id="pick-list-2026-10-11">
+#surahAyahPill .minifield select{pointer-events:none;}
+#surahAyahPill .minifield{cursor:pointer;}
+#pickList{
+  display:none;position:absolute;top:calc(100% + 3px);left:50%;transform:translateX(-50%);z-index:90;
+  width:228px;max-height:56vh;overflow-y:auto;overscroll-behavior:contain;
+  background:var(--paper);border:1.5px solid #000;border-radius:12px;padding:3px;
+  box-shadow:0 8px 20px rgba(0,0,0,.4);
+}
+body.dark #pickList{background:var(--paper-dim);border-color:var(--ink);}
+#pickList.open{display:block;}
+#pickList.grid.open{display:grid;grid-template-columns:repeat(6,1fr);gap:3px;}
+#pickList button{
+  border:0;background:transparent;color:#000;cursor:pointer;font-weight:700;border-radius:7px;
+}
+body.dark #pickList button{color:var(--ink);}
+#pickList:not(.grid) button{display:block;width:100%;height:30px;font-size:13.5px;text-align:center;border-bottom:1px solid rgba(0,0,0,.12);border-radius:0;}
+#pickList.grid button{height:32px;font-size:13px;}
+#pickList button.sel{background:var(--teal);color:#fff;}
+</style>
 </head>
 <body>
 <div class="wrap">
-  <div id="hdrToggleBar"><button id="miniMenuBtn" type="button" aria-label="menu">☰</button><button id="miniPlayBtn" type="button" aria-label="play/pause">▶</button><button id="hdrToggleBtn" type="button">▲ شاردنەوەی بوکسی سەرەوە</button></div>
+  <div id="hdrToggleBar"><button id="miniSpeed" type="button" aria-label="speed">1x</button><div id="miniSpeedList"><button type="button" data-r="1">1x</button><button type="button" data-r="1.25">1.25x</button><button type="button" data-r="1.5">1.5x</button><button type="button" data-r="2">2x</button><button type="button" data-r="2.5">2.5x</button><button type="button" data-r="3">3x</button></div><button id="miniMenuBtn" type="button" aria-label="menu">☰</button><span id="miniTime" dir="ltr"></span><button id="miniPlayBtn" type="button" aria-label="play/pause">▶</button><button id="hdrToggleBtn" type="button">▲ شاردنەوەی بوکسی سەرەوە</button></div>
   <header>
     <div class="topbar">
       <button id="audioPickBtn" class="miniBtn" data-i18n="audioPick">🎧 دەنگ</button>
@@ -2876,6 +3057,152 @@ if('serviceWorker' in navigator && location.protocol.startsWith('http') && !(win
     try{ updateProgressButtons(); }catch(e){}
     try{ const l=document.getElementById('loadProgressBtn'); if(l && l.style.display==='none') l.textContent=t('resumeProgress'); }catch(e){}
   };
+})();
+
+// ---- While the top box is hidden: surah list + ayah number sit beside the show button ----
+(function(){
+  const bar=document.getElementById('hdrToggleBar'), tg=document.getElementById('hdrToggleBtn');
+  const sSel=document.getElementById('suraSelect'), aSel=document.getElementById('startAyah');
+  if(!bar||!tg||!sSel||!aSel) return;
+  const sField=sSel.closest('.minifield'), aField=aSel.closest('.minifield');
+  if(!sField||!aField) return;
+  aField.classList.add('ayahField');
+  const sHome=document.createComment('sura-home'), aHome=document.createComment('ayah-home');
+  sField.parentNode.insertBefore(sHome,sField);
+  aField.parentNode.insertBefore(aHome,aField);
+  function apply(){
+    const hidden=document.body.classList.contains('hdr-hidden');
+    if(hidden){
+      let pill=document.getElementById('surahAyahPill');
+      if(!pill){ pill=document.createElement('div'); pill.id='surahAyahPill'; bar.insertBefore(pill,tg); }
+      pill.appendChild(sField);   // surah on the right (RTL)
+      pill.appendChild(aField);   // ayah on the left
+    }else{
+      sHome.parentNode.insertBefore(sField,sHome.nextSibling);
+      aHome.parentNode.insertBefore(aField,aHome.nextSibling);
+    }
+  }
+  new MutationObserver(apply).observe(document.body,{attributes:true,attributeFilter:['class']});
+  apply();
+})();
+
+// ---- The whole top box (audio button, file name, player) lives at the top of the menu ----
+(function(){
+  const menu=document.getElementById('settingsMenu');
+  const pick=document.getElementById('audioPickBtn');
+  const fn=document.getElementById('fname');
+  const pl=document.getElementById('player');
+  if(!menu||!pick||!pl) return;
+  const box=document.createElement('div'); box.id='boxInMenu';
+  box.appendChild(pick); if(fn) box.appendChild(fn); box.appendChild(pl);
+  menu.insertBefore(box, menu.firstChild);
+  // the page always uses the compact top bar; the menu opens with the ☰ button
+  const keep=()=>{ if(!document.body.classList.contains('hdr-hidden')) document.body.classList.add('hdr-hidden'); };
+  new MutationObserver(keep).observe(document.body,{attributes:true,attributeFilter:['class']});
+  keep();
+  try{ localStorage.setItem('hdrHidden','1'); }catch(e){}
+})();
+
+// ---- "mp3.001" -> two lines "001" / "mp3" ----
+(function(){
+  const fn=document.getElementById('fname'); if(!fn) return;
+  let busy=false;
+  function fmt(){
+    if(busy) return;
+    const t=fn.textContent||'';
+    if(t.indexOf('\n')>=0) return;
+    const m=t.match(/^(.+)\.([^.\s]+)$/);
+    if(!m) return;
+    busy=true; fn.textContent=m[2]+'\n'+m[1]; busy=false;
+  }
+  new MutationObserver(fmt).observe(fn,{childList:true,characterData:true,subtree:true});
+  fmt();
+})();
+// ---- show only the menu while it is open ----
+(function(){
+  const hdr=document.querySelector('header'); if(!hdr) return;
+  const sync=()=>document.body.classList.toggle('menu-view', hdr.classList.contains('menu-open'));
+  new MutationObserver(sync).observe(hdr,{attributes:true,attributeFilter:['class']});
+  sync();
+})();
+
+// ---- remaining time of the recording, beside the mini play button ----
+(function(){
+  const pl=document.getElementById('player'), el=document.getElementById('miniTime');
+  if(!pl||!el) return;
+  function f(sec){ sec=Math.max(0,Math.floor(sec)); const h=Math.floor(sec/3600), m=Math.floor((sec%3600)/60), s=sec%60; const ss=(s<10?'0':'')+s; return h>0 ? h+':'+(m<10?'0':'')+m+':'+ss : m+':'+ss; }
+  function upd(){
+    const d=pl.duration;
+    if(!isFinite(d)||d<=0){ el.textContent=''; return; }
+    el.textContent=f(d)+'\n'+f(pl.currentTime);
+  }
+  ['timeupdate','loadedmetadata','durationchange','seeked','emptied','ended'].forEach(ev=>pl.addEventListener(ev,upd));
+  upd();
+})();
+
+// ---- speed number beside the menu button: tap -> small list (drives the same speed chips) ----
+(function(){
+  const btn=document.getElementById('miniSpeed'), list=document.getElementById('miniSpeedList');
+  const row=document.getElementById('speedrow'), pl=document.getElementById('player');
+  if(!btn||!list||!row) return;
+  function show(r){
+    r=String(parseFloat(r)||1);
+    btn.textContent=r+'x';
+    list.querySelectorAll('button').forEach(b=>b.classList.toggle('sel', b.dataset.r===r));
+  }
+  btn.addEventListener('click',(e)=>{ e.stopPropagation(); list.classList.toggle('open'); });
+  list.addEventListener('click',(e)=>{
+    const b=e.target.closest('button'); if(!b) return;
+    e.stopPropagation();
+    const chip=row.querySelector('.chip[data-r="'+b.dataset.r+'"]');
+    if(chip) chip.click();
+    show(b.dataset.r);
+    list.classList.remove('open');
+  });
+  document.addEventListener('click',()=>list.classList.remove('open'));
+  function sync(){ const a=row.querySelector('.chip.active'); if(a) show(a.dataset.r); }
+  new MutationObserver(sync).observe(row,{attributes:true,subtree:true,attributeFilter:['class']});
+  if(pl) pl.addEventListener('ratechange',()=>show(pl.playbackRate));
+  sync();
+})();
+
+// ---- thin custom lists for the surah and ayah boxes (instead of the big native picker) ----
+(function(){
+  const bar=document.getElementById('hdrToggleBar');
+  const sSel=document.getElementById('suraSelect'), aSel=document.getElementById('startAyah');
+  if(!bar||!sSel||!aSel) return;
+  const list=document.createElement('div'); list.id='pickList'; bar.appendChild(list);
+  let current=null;
+  function close(){ list.classList.remove('open'); current=null; }
+  function open(sel, grid){
+    list.innerHTML=''; list.classList.toggle('grid', !!grid);
+    Array.from(sel.options).forEach(o=>{
+      const b=document.createElement('button'); b.type='button';
+      b.dataset.v=o.value; b.textContent = grid ? o.value : o.textContent;
+      if(o.value===sel.value) b.classList.add('sel');
+      list.appendChild(b);
+    });
+    list.classList.add('open'); current=sel;
+    const selBtn=list.querySelector('button.sel');
+    if(selBtn) list.scrollTop=Math.max(0, selBtn.offsetTop-list.clientHeight/2+selBtn.offsetHeight/2);
+  }
+  function hook(sel, grid){
+    const field=sel.closest('.minifield'); if(!field) return;
+    field.addEventListener('click',(e)=>{
+      e.stopPropagation();
+      if(current===sel){ close(); } else { open(sel, grid); }
+    });
+  }
+  hook(sSel,false); hook(aSel,true);
+  list.addEventListener('click',(e)=>{
+    e.stopPropagation();
+    const b=e.target.closest('button'); if(!b||!current) return;
+    const sel=current; sel.value=b.dataset.v;
+    sel.dispatchEvent(new Event('input',{bubbles:true}));
+    sel.dispatchEvent(new Event('change',{bubbles:true}));
+    close();
+  });
+  document.addEventListener('click',close);
 })();
 </script>
 </body>
