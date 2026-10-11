@@ -1273,6 +1273,50 @@ body.dark #pickList button{color:var(--ink);}
 #pickList.grid button{height:32px;font-size:13px;}
 #pickList button.sel{background:var(--teal);color:#fff;}
 </style>
+
+<style id="step28-2026-10-11">
+/* -1s / +1s buttons swapped: "1 چرکە پێش" on the left, "1 چرکە پاش" on the right */
+#markCard #fwd1Btn{order:1 !important;}
+#markCard #markBtn{order:2 !important;}
+#markCard #back1Btn{order:3 !important;}
+/* smaller pick lists with bigger names / numbers */
+#pickList{width:176px !important;max-height:46vh !important;}
+#pickList.ayahlist{width:84px !important;}
+#pickList:not(.grid) button{height:36px !important;font-size:18px !important;}
+/* dark mode: marks list uses the Quran-text colours */
+body.dark .mark-row:not(.active-row){background:transparent !important;}
+body.dark .mark-row.active-row{background:#30465e !important;}
+body.dark .mark-row.last-reached{background:rgba(76,175,80,.16) !important;border-color:#5fbf6a !important;}
+body.dark .mark-row .rownum,
+body.dark .mark-row .rowbtn,
+body.dark .mark-row .rowtime{color:var(--ink) !important;}
+body.dark .mark-row.last-reached .rownum{color:#8fdc9a !important;}
+body.dark .mark-row.active-row .rownum,
+body.dark .mark-row.active-row .rowbtn,
+body.dark .mark-row.active-row .rowtime{color:#d5e4f2 !important;}
+body.dark .mark-row .rowtime{background:var(--paper) !important;border-color:var(--ink) !important;}
+</style>
+
+<style id="pick-dark-narrow-2026-10-12">
+body.dark #pickList button.sel{background:#30465e !important;color:#e6f0f8 !important;}
+body.dark #pickList button{color:var(--ink) !important;border-bottom-color:rgba(255,255,255,.12) !important;}
+#pickList{width:150px !important;padding:2px !important;}
+#pickList.ayahlist{width:74px !important;}
+</style>
+
+<style id="dark-whiter-text-2026-10-12">
+body.dark{--ink:#e6eee9;}
+body.dark .menuAction:not(#saveProgressBtn),
+body.dark .menuBox, body.dark .menuBox span, body.dark .settingsRow, body.dark .settingsRow span,
+body.dark .langBtn:not(.active), body.dark .toggleBtn, body.dark .chip:not(.active),
+body.dark .btn2, body.dark .fontBtn, body.dark #stepMsInput, body.dark #fname,
+body.dark .section-title, body.dark .hint, body.dark .empty{color:#eef3f0 !important;}
+body.dark .ayah-line-list, body.dark .ayah-line-list .ayah-text{color:#e9f0f6;}
+body.dark .ayah-line-list.active{color:#f3f8fc !important;}
+body.dark .mark-row .rownum, body.dark .mark-row .rowbtn, body.dark .mark-row .rowtime{color:#eef3f0 !important;}
+body.dark .mark-row.active-row .rownum, body.dark .mark-row.active-row .rowbtn, body.dark .mark-row.active-row .rowtime{color:#f3f8fc !important;}
+body.dark #pickList button{color:#eef3f0 !important;}
+</style>
 </head>
 <body>
 <div class="wrap">
@@ -3183,6 +3227,13 @@ if('serviceWorker' in navigator && location.protocol.startsWith('http') && !(win
       list.appendChild(b);
     });
     list.classList.add('open'); current=sel;
+    const isAyah=(sel===aSel);
+    list.classList.toggle('ayahlist', isAyah);
+    const f=sel.closest('.minifield');
+    if(f){
+      const fr=f.getBoundingClientRect(), br=bar.getBoundingClientRect();
+      list.style.left=(isAyah ? (fr.left-br.left+fr.width/2) : br.width/2)+'px';
+    }
     const selBtn=list.querySelector('button.sel');
     if(selBtn) list.scrollTop=Math.max(0, selBtn.offsetTop-list.clientHeight/2+selBtn.offsetHeight/2);
   }
@@ -3193,7 +3244,7 @@ if('serviceWorker' in navigator && location.protocol.startsWith('http') && !(win
       if(current===sel){ close(); } else { open(sel, grid); }
     });
   }
-  hook(sSel,false); hook(aSel,true);
+  hook(sSel,false); hook(aSel,false);
   list.addEventListener('click',(e)=>{
     e.stopPropagation();
     const b=e.target.closest('button'); if(!b||!current) return;
