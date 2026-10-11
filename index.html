@@ -1317,6 +1317,40 @@ body.dark .mark-row .rownum, body.dark .mark-row .rowbtn, body.dark .mark-row .r
 body.dark .mark-row.active-row .rownum, body.dark .mark-row.active-row .rowbtn, body.dark .mark-row.active-row .rowtime{color:#f3f8fc !important;}
 body.dark #pickList button{color:#eef3f0 !important;}
 </style>
+
+<style id="step33-2026-10-12">
+/* arrow button + safer marks list */
+#showAllBtn{font-size:15px !important;line-height:1 !important;padding:3px 16px !important;min-width:48px;}
+#marksList{margin-top:8px !important;}
+@media (orientation: portrait){
+  .mark-row .rowbtn.clearbtn{font-size:12px !important;min-width:22px !important;min-height:22px !important;padding:0 !important;line-height:1 !important;}
+  .mark-row .rownum{font-size:12px !important;}
+}
+/* dark mode: speed list readable */
+body.dark #miniSpeedList button{color:#eef3f0 !important;}
+body.dark #miniSpeedList button.sel{background:#30465e !important;color:#fff !important;}
+</style>
+
+<style id="showall-center-2026-10-12">
+.section-title-row{position:relative;}
+#showAllBtn{position:absolute !important;left:50%;top:50%;transform:translate(-50%,-50%);}
+#showAllLabel{font-size:12px;font-weight:700;color:var(--teal);cursor:pointer;padding:4px 0;}
+body.dark #showAllLabel{color:var(--ink);}
+</style>
+
+<style id="showall-small-2026-10-12">
+#showAllLabel{font-size:10.5px !important;font-weight:700;white-space:nowrap;}
+</style>
+
+<style id="rownum-bigger-2026-10-12">
+@media (orientation: portrait){
+  .mark-row .rownum{font-size:19px !important;font-weight:600;min-width:26px;text-align:center;}
+}
+</style>
+
+<style id="showall-align-2026-10-12">
+#showAllBtn{left:calc(50% + 14px) !important;}
+</style>
 </head>
 <body>
 <div class="wrap">
@@ -1402,7 +1436,8 @@ body.dark #pickList button{color:#eef3f0 !important;}
 
   <div class="card">
     <div class="section-title-row">
-      <button id="showAllBtn" class="resetSmallBtn" style="display:none;border-color:var(--teal);color:var(--teal);">پیشاندانی هەموو</button>
+      <span id="showAllLabel" style="display:none;">پیشاندانی هەموو</span>
+      <button id="showAllBtn" class="resetSmallBtn" style="display:none;border-color:var(--teal);color:var(--teal);">▼</button>
       <p class="section-title" data-i18n="marksListTitle">لیستی نیشانەکراوەکان</p>
     </div>
     <button class="btn2" id="addTotalBtn" style="width:100%;margin-bottom:8px;display:none;" data-i18n="addTotal">+ زیادکردنی کۆتایی سورە (999)</button>
@@ -1758,7 +1793,10 @@ function renderMarksList(){
       if(anchor !== null && anchor !== undefined){
         nonTotal.forEach((m, i)=>{ if(m.ayah <= anchor) idx = i; });
       }
-      if(idx >= 1){
+      if(totals.length && nonTotal.length && idx === nonTotal.length-1){
+        // the end of the surah is reached: show the 999 row on top, the last ayah below it
+        displayList = [totals[0], nonTotal[idx]];
+      } else if(idx >= 1){
         displayList = [nonTotal[idx], nonTotal[idx-1]];
       } else {
         displayList = sorted.slice(0, 2);            // first ayah (or nothing shown yet): 1 and 2
@@ -1768,7 +1806,9 @@ function renderMarksList(){
     }
     marksList.classList.toggle('all', !!showAllMarks);
     showAllBtn.style.display = sorted.length>1 ? 'block' : 'none';
-    showAllBtn.textContent = showAllMarks ? t('hideAll') : `${t('showAll')} (${sorted.length})`;
+    showAllBtn.textContent = showAllMarks ? '▲' : '▼';
+  showAllBtn.title = showAllMarks ? t('hideAll') : `${t('showAll')} (${sorted.length})`;
+  { const lab=document.getElementById('showAllLabel'); if(lab){ const n=sorted.length; lab.dataset.n=n; lab.textContent = t('showAll')+' ('+n+')'; } }
     displayList.forEach(m=>{
       const row = document.createElement('div');
       const isActive = !m.isTotal && m.ayah===lastShownAyah;
@@ -2471,6 +2511,7 @@ player.addEventListener('ratechange', ()=>{
 player.addEventListener('timeupdate', checkPlaybackSync);
 let advancedFromSura = null;
 function advanceToNextSura(){
+  return false;   // a finished surah no longer moves to the next surah automatically
   if(audioBySura.size > 1){
     const current = parseInt(suraSelect.value)||1;
     const next = [...audioBySura.keys()].filter(n=>n>current).sort((a,b)=>a-b)[0];
@@ -3099,6 +3140,7 @@ if('serviceWorker' in navigator && location.protocol.startsWith('http') && !(win
   applyLanguage = function(lang){
     orig(lang);
     try{ updateProgressButtons(); }catch(e){}
+    try{ const l=document.getElementById('showAllLabel'); if(l && l.dataset.n!==undefined) l.textContent=t('showAll')+' ('+l.dataset.n+')'; }catch(e){}
     try{ const l=document.getElementById('loadProgressBtn'); if(l && l.style.display==='none') l.textContent=t('resumeProgress'); }catch(e){}
   };
 })();
@@ -3254,6 +3296,16 @@ if('serviceWorker' in navigator && location.protocol.startsWith('http') && !(win
     close();
   });
   document.addEventListener('click',close);
+})();
+
+// ---- "show all": plain text on the right, arrow button in the centre ----
+(function(){
+  const btn=document.getElementById('showAllBtn'), lab=document.getElementById('showAllLabel');
+  if(!btn||!lab) return;
+  const sync=()=>{ lab.style.display = (btn.style.display==='none') ? 'none' : 'inline'; };
+  new MutationObserver(sync).observe(btn,{attributes:true,attributeFilter:['style']});
+  lab.addEventListener('click',()=>btn.click());
+  sync();
 })();
 </script>
 </body>
