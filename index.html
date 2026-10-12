@@ -1351,6 +1351,18 @@ body.dark #showAllLabel{color:var(--ink);}
 <style id="showall-align-2026-10-12">
 #showAllBtn{left:calc(50% + 14px) !important;}
 </style>
+
+<style id="auto-mark-2026-10-12">
+#autoProg{display:none;position:fixed;left:8px;right:8px;top:calc(env(safe-area-inset-top,0px) + 44px);z-index:120;
+  background:#0f3d3a;color:#fff;border:1.5px solid #000;border-radius:12px;padding:8px 12px;font-size:13px;font-weight:700;text-align:center;
+  box-shadow:0 6px 16px rgba(0,0,0,.4);}
+body.dark #autoProg{background:#30465e;border-color:var(--ink);}
+</style>
+
+<style id="online-mark-2026-10-12">
+#openaiKey{width:100%;height:40px;box-sizing:border-box;border:1.5px solid #000;border-radius:10px;padding:0 10px;background:var(--paper);color:var(--ink);font-size:13px;direction:ltr;text-align:left;}
+body.dark #openaiKey{border-color:var(--ink);}
+</style>
 </head>
 <body>
 <div class="wrap">
@@ -1388,6 +1400,9 @@ body.dark #showAllLabel{color:var(--ink);}
       <div class="menuBox" style="border:1.5px solid var(--teal); border-radius:10px; padding:6px; margin-top:6px; background:#fff;">
         <button class="menuAction" id="exportDb" data-i18n="saveDb" style="margin-top:0;">هەڵگرتنی داتابەیس (db)</button>
         <button class="menuAction" id="loadMasterBtn" data-i18n="loadMaster">بارکردنی داتابەیس (db)</button>
+        <button class="menuAction" id="autoMarkBtn" style="margin-top:0;">🤖 دیاریکردنی خۆکاری ئایەتەکان (لە دەنگەوە)</button>
+        <button class="menuAction" id="onlineMarkBtn" style="margin-top:0;">🌐 دیاریکردنی ئۆنڵاین (Whisper — بێبەرامبەر بە Groq)</button>
+        <input id="openaiKey" type="password" autocomplete="off" placeholder="کلیل: gsk_... (Groq بێبەرامبەر) یان sk-... (OpenAI)">
         <p class="hint menuHint" id="masterStatus" data-i18n="masterStatusDefault" style="margin-top:4px;">هیچ داتابەیسێکی سەرجەم بارنەکراوە — ئەم بەشە ئیختیارییە</p>
         <button class="menuAction" id="exportMasterBtn" style="display:none;" data-i18n="exportMaster">دەرهێنانی هەموو داتابەیسەکە (.db)</button>
       </div>
@@ -3306,6 +3321,465 @@ if('serviceWorker' in navigator && location.protocol.startsWith('http') && !(win
   new MutationObserver(sync).observe(btn,{attributes:true,attributeFilter:['style']});
   lab.addEventListener('click',()=>btn.click());
   sync();
+})();
+
+// ================= Automatic ayah marking from the audio (silence analysis) =================
+(function(){
+  Object.assign(TRANSLATIONS.ku, {"autoMark": "🤖 دیاریکردنی خۆکاری ئایەتەکان (لە دەنگەوە)", "autoMarkNoAudio": "سەرەتا فایلی دەنگ بار بکە", "autoMarkNoText": "سەرەتا سورەتێک هەڵبژێرە", "autoMarkWorking": "خوێندنەوەی دەنگ: {p}٪ — بۆ هەڵوەشاندنەوە بگوشە", "autoMarkAnalyze": "دۆزینەوەی کۆتایی ئایەتەکان...", "autoMarkDone": "{n} ئایەت دیاری کران — دەتوانیت پێداچوونەوە بکەیت", "autoMarkFail": "نەتوانرا بە شێوەی خۆکار دیاری بکرێت. هۆکار: ", "autoMarkConfirm": "نیشانەکانی ئێستای ئەم سورەتە دەگۆڕدرێن بە ئەنجامی خۆکار. بەردەوام بیت؟", "autoMarkCancelled": "هەڵوەشێنرایەوە"});
+  Object.assign(TRANSLATIONS.en, {"autoMark": "🤖 Auto-mark ayahs (from audio)", "autoMarkNoAudio": "Load the audio file first", "autoMarkNoText": "Select a surah first", "autoMarkWorking": "Reading audio: {p}% — tap to cancel", "autoMarkAnalyze": "Finding ayah ends...", "autoMarkDone": "{n} ayahs marked — you can review them now", "autoMarkFail": "Automatic marking failed. Reason: ", "autoMarkConfirm": "The current marks of this surah will be replaced by the automatic result. Continue?", "autoMarkCancelled": "Cancelled"});
+  Object.assign(TRANSLATIONS.ar, {"autoMark": "🤖 تحديد الآيات تلقائيًا (من الصوت)", "autoMarkNoAudio": "حمّل ملف الصوت أولًا", "autoMarkNoText": "اختر سورة أولًا", "autoMarkWorking": "قراءة الصوت: {p}٪ — اضغط للإلغاء", "autoMarkAnalyze": "البحث عن نهايات الآيات...", "autoMarkDone": "تم تحديد {n} آية — يمكنك المراجعة الآن", "autoMarkFail": "فشل التحديد التلقائي. السبب: ", "autoMarkConfirm": "سيتم استبدال علامات هذه السورة الحالية بالنتيجة التلقائية. هل تريد المتابعة؟", "autoMarkCancelled": "تم الإلغاء"});
+
+  // pure algorithm: env = dB per frame
+function autoBoundaries(env, frameSec, lens){
+  const N = lens.length, F = env.length;
+  if(N < 1 || F < 10) return null;
+  const sorted = Float32Array.from(env).sort();
+  const q = p => sorted[Math.min(F-1, Math.floor(p*(F-1)))];
+  const lo = q(0.10), hi = q(0.92);
+  const thr = lo + 0.30*(hi-lo);
+  let first = 0, last = F-1;
+  while(first < F && env[first] < thr) first++;
+  while(last > first && env[last] < thr) last--;
+  if(last - first < N) return null;
+  const tStart = first*frameSec, tEnd = (last+1)*frameSec;
+  if(N === 1) return {starts:[tStart], end:tEnd, tStart, tEnd, cands:0};
+  // silence runs between first and last
+  let cands = [];
+  for(const minSil of [0.22, 0.15, 0.10, 0.07]){
+    cands = [];
+    let i = first;
+    while(i <= last){
+      if(env[i] < thr){
+        let j = i; while(j <= last && env[j] < thr) j++;
+        const dur = (j - i)*frameSec;
+        if(dur >= minSil) cands.push({t: j*frameSec, dur});   // t = end of silence = start of next speech
+        i = j;
+      } else i++;
+    }
+    if(cands.length >= (N-1)*1.05) break;
+  }
+  const M = cands.length;
+  if(M < N-1) return {error:'few', cands:M};
+  const PAUSE = 4;
+  let sumW = 0; const w = lens.map(l => { const x = l + PAUSE; sumW += x; return x; });
+  const rate = (tEnd - tStart)/sumW;              // seconds per char
+  const exp = w.map(x => x*rate);
+  const silCost = c => 0.6*(1 - Math.min(c.dur, 0.9)/0.9);
+  const segCost = (dur, e) => { const d = Math.max(dur, 0.15); const r = Math.log(d/e); return r*r; };
+  const INF = 1e18;
+  const K = N-1;                                   // boundaries to choose
+  const cost = new Array(K), back = new Array(K);
+  // k = 0 : boundary between ayah 1 and 2
+  cost[0] = new Float64Array(M).fill(INF); back[0] = new Int32Array(M).fill(-1);
+  for(let j=0;j<M;j++){
+    const dur = cands[j].t - tStart;
+    if(dur > exp[0]*5 + 3) break;
+    cost[0][j] = segCost(dur, exp[0]) + silCost(cands[j]);
+  }
+  for(let k=1;k<K;k++){
+    cost[k] = new Float64Array(M).fill(INF); back[k] = new Int32Array(M).fill(-1);
+    const prev = cost[k-1];
+    for(let j=k;j<M;j++){
+      let best = INF, bi = -1;
+      for(let p=j-1;p>=k-1;p--){
+        const dur = cands[j].t - cands[p].t;
+        if(dur > exp[k]*5 + 3) break;
+        if(prev[p] >= INF) continue;
+        const c = prev[p] + segCost(dur, exp[k]);
+        if(c < best){ best = c; bi = p; }
+      }
+      if(bi >= 0){ cost[k][j] = best + silCost(cands[j]); back[k][j] = bi; }
+    }
+  }
+  let best = INF, bj = -1;
+  for(let j=K-1;j<M;j++){
+    if(cost[K-1][j] >= INF) continue;
+    const c = cost[K-1][j] + segCost(tEnd - cands[j].t, exp[N-1]);
+    if(c < best){ best = c; bj = j; }
+  }
+  if(bj < 0) return {error:'nopath', cands:M};
+  const idx = new Array(K);
+  for(let k=K-1, j=bj; k>=0; k--){ idx[k] = j; j = back[k][j]; }
+  const starts = [tStart].concat(idx.map(j => cands[j].t));
+  return {starts, end:tEnd, tStart, tEnd, cands:M, cost:best};
+}
+
+
+
+  // ---- MP3 helpers: cut the file at frame boundaries so every piece decodes cleanly ----
+  const BR1=[0,32,40,48,56,64,80,96,112,128,160,192,224,256,320], BR2=[0,8,16,24,32,40,48,56,64,80,96,112,128,144,160];
+  const SR1=[44100,48000,32000], SR2=[22050,24000,16000], SR25=[11025,12000,8000];
+  function frameLen(b,i){
+    if(b[i]!==0xFF || (b[i+1]&0xE0)!==0xE0) return 0;
+    const ver=(b[i+1]>>3)&3, layer=(b[i+1]>>1)&3, bi=(b[i+2]>>4)&15, si=(b[i+2]>>2)&3, pad=(b[i+2]>>1)&1;
+    if(ver===1 || layer!==1 || bi===0 || bi===15 || si===3) return 0;      // Layer III only
+    const mpeg1 = ver===3;
+    const br=(mpeg1?BR1:BR2)[bi]*1000, sr=(mpeg1?SR1:(ver===2?SR2:SR25))[si];
+    return Math.floor((mpeg1?144:72)*br/sr)+pad;
+  }
+  async function findSync(blob, p){
+    const buf=new Uint8Array(await blob.slice(p,p+12288).arrayBuffer());
+    for(let i=0;i<buf.length-8;i++){
+      const L=frameLen(buf,i);
+      if(L>=24 && i+L+4<buf.length && frameLen(buf,i+L)>0) return p+i;
+    }
+    return p;
+  }
+
+  // ---- decode the audio piece by piece (8 kHz) and keep only a loudness value per 20 ms ----
+  async function decodeEnvelope(blob, onProgress, isCancelled){
+    const AC=window.OfflineAudioContext||window.webkitOfflineAudioContext;
+    if(!AC) throw new Error('no audio decoder');
+    const SR=8000, FR=160, CH=4*1024*1024, total=blob.size;
+    const parts=[]; let carry=new Float32Array(0), nFrames=0;
+    let a=0;
+    while(a<total){
+      if(isCancelled()) throw new Error('cancelled');
+      let b=Math.min(total, a+CH);
+      if(b<total) b=await findSync(blob,b);
+      if(b<=a) b=Math.min(total,a+CH);
+      const ab=await blob.slice(a,b).arrayBuffer();
+      const ctx=new AC(1,1,SR);
+      let buf;
+      try{
+        buf = await new Promise((res,rej)=>{ const r=ctx.decodeAudioData(ab,res,rej); if(r&&r.then) r.then(res,rej); });
+      }catch(e){ throw new Error('decode failed at '+Math.round(a/total*100)+'%'); }
+      const ch=buf.getChannelData(0);
+      let data=ch;
+      if(carry.length){ data=new Float32Array(carry.length+ch.length); data.set(carry,0); data.set(ch,carry.length); }
+      const n=Math.floor(data.length/FR);
+      const env=new Float32Array(n);
+      for(let f=0;f<n;f++){
+        let sum=0; const o=f*FR;
+        for(let k=0;k<FR;k++){ const v=data[o+k]; sum+=v*v; }
+        env[f]=20*Math.log10(Math.sqrt(sum/FR)+1e-5);
+      }
+      carry=data.slice(n*FR);
+      parts.push(env); nFrames+=n;
+      a=b;
+      onProgress(a/total);
+      await new Promise(r=>setTimeout(r,0));
+    }
+    const all=new Float32Array(nFrames); let o=0;
+    for(const p of parts){ all.set(p,o); o+=p.length; }
+    return {env:all, frameSec:FR/SR};
+  }
+
+  window.__ayahTools={decodeEnvelope,findSync,frameLen};
+  // ---- UI ----
+  const btn=document.getElementById('autoMarkBtn');
+  if(!btn) return;
+  const prog=document.createElement('div'); prog.id='autoProg'; document.body.appendChild(prog);
+  let cancelled=false, running=false, hideTimer=null;
+  function say(msg, sticky){
+    prog.textContent=msg; prog.style.display='block';
+    clearTimeout(hideTimer);
+    if(!sticky) hideTimer=setTimeout(()=>{ prog.style.display='none'; }, 7000);
+  }
+  prog.addEventListener('click',()=>{ if(running){ cancelled=true; } else prog.style.display='none'; });
+
+  btn.addEventListener('click', async (e)=>{
+    e.stopPropagation();
+    if(running || window.__ayahBusy) return;
+    const pl=document.getElementById('player');
+    const src=pl && (pl.currentSrc||pl.src);
+    if(!src){ alert(t('autoMarkNoAudio')); return; }
+    if(!currentSurahAyahs || !currentSurahAyahs.length){ alert(t('autoMarkNoText')); return; }
+    if(marks.filter(m=>!m.isTotal).length>1 && !confirm(t('autoMarkConfirm'))) return;
+    // close the menu so the progress is visible
+    try{ document.getElementById('settingsMenu').classList.remove('open'); document.querySelector('header').classList.remove('menu-open'); }catch(_){}
+    running=true; window.__ayahBusy=true; cancelled=false;
+    try{
+      say(tf('autoMarkWorking',{p:0}), true);
+      const blob=await (await fetch(src)).blob();
+      const r=await decodeEnvelope(blob, p=>say(tf('autoMarkWorking',{p:Math.round(p*100)}), true), ()=>cancelled);
+      say(t('autoMarkAnalyze'), true);
+      await new Promise(r2=>setTimeout(r2,30));
+      const lens=currentSurahAyahs.map(a=>String(a.text||'').replace(/[\u064B-\u065F\u0670\u06D6-\u06ED\u0640]/g,'').replace(/\s+/g,'').length||1);
+      const res=autoBoundaries(r.env, r.frameSec, lens);
+      if(!res) throw new Error('audio too short or silent');
+      if(res.error) throw new Error(res.error==='few' ? 'not enough pauses found ('+res.cands+')' : 'no consistent result');
+      const durMs = isFinite(pl.duration) ? Math.round(pl.duration*1000) : Infinity;
+      const totalMs = Math.min(durMs, Math.round(res.tEnd*1000)+300);
+      marks=[]; seqCounter=0;
+      res.starts.forEach((st,k)=>{
+        marks.push({ayah:k+1, timeMs: k===0 ? 0 : Math.round(st*1000), isTotal:false, seq:seqCounter++});
+      });
+      marks.push({ayah:999, timeMs:totalMs, isTotal:true, seq:seqCounter++});
+      render();
+      say(tf('autoMarkDone',{n:res.starts.length}));
+    }catch(err){
+      if(cancelled || (err && err.message==='cancelled')) say(t('autoMarkCancelled'));
+      else say(t('autoMarkFail')+(err&&err.message?err.message:err));
+    }finally{ running=false; window.__ayahBusy=false; }
+  });
+})();
+
+// ================= Online marking with Whisper (word timestamps) + millisecond snapping =================
+(function(){
+  Object.assign(TRANSLATIONS.ku, {"onlineMark": "🌐 دیاریکردنی ئۆنڵاین (Whisper — بێبەرامبەر بە Groq)", "onlineKeyPh": "کلیل: gsk_... (Groq بێبەرامبەر) یان sk-... (OpenAI)", "onlineNoKey": "سەرەتا کلیلی OpenAI API لە خانەی کلیلەکە بنووسە", "onlineUpload": "ناردنی دەنگ بۆ Whisper: {i}/{n}", "onlineAlign": "بەراوردکردنی دەق لەگەڵ دەنگ...", "onlineSnap": "ڕێکخستنی کاتەکان بە میلی چرکە: {p}٪", "onlineDone": "{n} ئایەت بە شێوەی بێ پچران دیاری کران — پێداچوونەوە بکە", "onlineFail": "دیاریکردنی ئۆنڵاین سەرنەکەوت. هۆکار: ", "onlineOnlyMp3": "ئەم شێوازە تەنها فایلی mp3 پشتگیری دەکات", "onlineWait": "سنووری بێبەرامبەر پڕ بووە — چاوەڕوانی {s} چرکە..."});
+  Object.assign(TRANSLATIONS.en, {"onlineMark": "🌐 Online marking (Whisper — free with Groq)", "onlineKeyPh": "Key: gsk_... (Groq, free) or sk-... (OpenAI)", "onlineNoKey": "Enter your OpenAI API key in the key box first", "onlineUpload": "Sending audio to Whisper: {i}/{n}", "onlineAlign": "Matching the text with the audio...", "onlineSnap": "Fine-tuning times to the millisecond: {p}%", "onlineDone": "{n} ayahs marked continuously — please review", "onlineFail": "Online marking failed. Reason: ", "onlineOnlyMp3": "This method supports mp3 files only", "onlineWait": "Free limit reached — waiting {s} s..."});
+  Object.assign(TRANSLATIONS.ar, {"onlineMark": "🌐 التحديد عبر الإنترنت (Whisper — مجاني مع Groq)", "onlineKeyPh": "المفتاح: gsk_... (Groq مجاني) أو sk-... (OpenAI)", "onlineNoKey": "اكتب مفتاح OpenAI API في خانة المفتاح أولًا", "onlineUpload": "إرسال الصوت إلى Whisper: {i}/{n}", "onlineAlign": "مطابقة النص مع الصوت...", "onlineSnap": "ضبط الأزمنة بالملي ثانية: {p}٪", "onlineDone": "تم تحديد {n} آية بشكل متصل — يرجى المراجعة", "onlineFail": "فشل التحديد عبر الإنترنت. السبب: ", "onlineOnlyMp3": "هذه الطريقة تدعم ملفات mp3 فقط", "onlineWait": "تم بلوغ الحد المجاني — انتظار {s} ثانية..."});
+
+  function normAr(s){
+  return String(s||'')
+    .replace(/[\u064B-\u065F\u0670\u06D6-\u06ED\u0640\u200c\u200d]/g,'')
+    .replace(/[\u0622\u0623\u0625\u0671]/g,'\u0627')
+    .replace(/\u0649/g,'\u064A').replace(/\u0629/g,'\u0647')
+    .replace(/[^\u0621-\u064A]/g,'');
+}
+function lev(a,b){
+  const n=a.length,m=b.length; if(!n) return m; if(!m) return n;
+  let prev=new Array(m+1),cur=new Array(m+1);
+  for(let j=0;j<=m;j++) prev[j]=j;
+  for(let i=1;i<=n;i++){
+    cur[0]=i; const ca=a.charCodeAt(i-1);
+    for(let j=1;j<=m;j++){
+      const c=ca===b.charCodeAt(j-1)?0:1;
+      cur[j]=Math.min(prev[j]+1,cur[j-1]+1,prev[j-1]+c);
+    }
+    const t=prev;prev=cur;cur=t;
+  }
+  return prev[m];
+}
+function wordCost(a,b){ if(a===b) return 0; const L=Math.max(a.length,b.length); return Math.min(1, lev(a,b)/L); }
+
+// refs: array of normalized reference words, hyp: array of normalized hypothesis words
+// returns match[i] = index in hyp or -1
+function alignWords(refs, hyp){
+  const R=refs.length, T=hyp.length;
+  const match=new Int32Array(R).fill(-1);
+  if(!R||!T) return match;
+  const band=Math.max(120, Math.round(0.08*Math.max(R,T)));
+  const W=2*band+1, GAP=0.7;
+  const jLo=new Int32Array(R+1), jHi=new Int32Array(R+1);
+  for(let i=0;i<=R;i++){ const c=Math.round(i*T/R); jLo[i]=Math.max(0,c-band); jHi[i]=Math.min(T,c+band); }
+  const dir=new Uint8Array((R+1)*W);      // 0 none, 1 diag, 2 up (ref skipped), 3 left (hyp skipped)
+  let prev=new Float32Array(W).fill(1e9), cur=new Float32Array(W).fill(1e9);
+  // row 0
+  for(let j=jLo[0];j<=jHi[0];j++){ prev[j-jLo[0]]=j*GAP; dir[j-jLo[0]]=3; }
+  prev[0]=0; dir[0]=0;
+  for(let i=1;i<=R;i++){
+    cur.fill(1e9);
+    const lo=jLo[i], hi=jHi[i], plo=jLo[i-1], phi=jHi[i-1];
+    for(let j=lo;j<=hi;j++){
+      let best=1e9, d=0;
+      // up: (i-1,j)
+      if(j>=plo && j<=phi){ const v=prev[j-plo]+GAP; if(v<best){best=v;d=2;} }
+      // diag: (i-1,j-1)
+      if(j>=1 && j-1>=plo && j-1<=phi){ const v=prev[j-1-plo]+wordCost(refs[i-1],hyp[j-1]); if(v<best){best=v;d=1;} }
+      // left: (i,j-1)
+      if(j>lo){ const v=cur[j-1-lo]+GAP; if(v<best){best=v;d=3;} }
+      cur[j-lo]=best; dir[i*W+(j-lo)]=d;
+    }
+    const t=prev;prev=cur;cur=t;
+  }
+  // traceback
+  let i=R,j=T;
+  while(i>0||j>0){
+    const d=dir[i*W+(j-jLo[i])];
+    if(d===1){ match[i-1]=j-1; i--; j--; }
+    else if(d===2){ i--; }
+    else if(d===3){ j--; }
+    else break;
+  }
+  return match;
+}
+
+// ayahWords: array (per ayah) of arrays of normalized words; hypWords: [{n,start,end}]
+function ayahStartsFromWords(ayahWords, hypWords){
+  const refs=[], owner=[];
+  ayahWords.forEach((ws,k)=>ws.forEach(w=>{ refs.push(w); owner.push(k); }));
+  const m=alignWords(refs, hypWords.map(h=>h.n));
+  const N=ayahWords.length;
+  const starts=new Array(N).fill(null), ends=new Array(N).fill(null);
+  let idx=0;
+  for(let k=0;k<N;k++){
+    const cnt=ayahWords[k].length; let firstQ=-1, firstJ=-1, lastJ=-1;
+    for(let q=0;q<cnt;q++){ const j=m[idx+q]; if(j>=0){ if(firstQ<0){firstQ=q;firstJ=j;} lastJ=j; } }
+    if(firstQ>=0){
+      const avg=0.35;
+      starts[k]=hypWords[firstJ].start - (firstQ>0 ? Math.min(firstQ,3)*avg*0.5 : 0);
+      ends[k]=hypWords[lastJ].end;
+    }
+    idx+=cnt;
+  }
+  return {starts, ends, matched:starts.filter(x=>x!==null).length};
+}
+function fillAndOrder(starts, lens, endAll){
+  const N=starts.length, out=starts.slice();
+  // fill unknown by interpolation using text length
+  let k=0;
+  while(k<N){
+    if(out[k]!==null){ k++; continue; }
+    let a=k-1; let b=k; while(b<N && out[b]===null) b++;
+    const tA = a>=0 ? out[a] : 0, tB = b<N ? out[b] : endAll;
+    let wsum=0; for(let q=Math.max(a,0);q<b;q++) wsum+=lens[q]; if(a<0) wsum=0;
+    let acc=0; const base=a>=0 ? lens[a] : 0; let tot=base; for(let q=k;q<b;q++) tot+=lens[q]; tot+= (b<N?0:0);
+    let run=base;
+    for(let q=k;q<b;q++){ out[q]=tA+(tB-tA)*(run/Math.max(1,tot+ (b<N?lens[b]*0:0))); run+=lens[q]; }
+    k=b;
+  }
+  out[0]=0;
+  for(let i=1;i<N;i++) if(!(out[i]>out[i-1]+0.15)) out[i]=out[i-1]+0.15;
+  return out;
+}
+function silenceList(env, frameSec, minSil){
+  const F=env.length; const sorted=Float32Array.from(env).sort();
+  const q=p=>sorted[Math.min(F-1,Math.floor(p*(F-1)))];
+  const lo=q(0.10), hi=q(0.92), thr=lo+0.30*(hi-lo);
+  const list=[]; let i=0;
+  while(i<F){
+    if(env[i]<thr){ let j=i; while(j<F && env[j]<thr) j++; const dur=(j-i)*frameSec; if(dur>=minSil) list.push({t:j*frameSec,s:i*frameSec,dur}); i=j; } else i++;
+  }
+  return list;
+}
+function snapStarts(starts, sil, win){
+  const out=starts.slice();
+  for(let k=1;k<out.length;k++){
+    const B=out[k]; let best=null,bc=1e9;
+    // binary-ish scan (list is sorted by t)
+    for(let q=0;q<sil.length;q++){
+      const c=sil[q]; if(c.t<B-win) continue; if(c.t>B+win) break;
+      const cost=Math.abs(c.t-B)-0.5*Math.min(c.dur,1);
+      if(cost<bc){bc=cost;best=c;}
+    }
+    if(best) out[k]=best.t;
+  }
+  for(let i=1;i<out.length;i++) if(!(out[i]>out[i-1]+0.15)) out[i]=out[i-1]+0.15;
+  return out;
+}
+
+
+
+  function skipId3(u8){ if(u8.length>10 && u8[0]===0x49 && u8[1]===0x44 && u8[2]===0x33) return 10+(((u8[6]&0x7f)<<21)|((u8[7]&0x7f)<<14)|((u8[8]&0x7f)<<7)|(u8[9]&0x7f)); return 0; }
+  function mp3Seconds(u8, first){
+    const T=window.__ayahTools; let pos=skipId3(u8), frames=0, spf=1152, sr=0, firstPos=-1;
+    while(pos+4<u8.length){
+      const L=T.frameLen(u8,pos);
+      if(L>=24){
+        if(!sr){
+          const ver=(u8[pos+1]>>3)&3, si=(u8[pos+2]>>2)&3, mpeg1=ver===3;
+          sr=(mpeg1?[44100,48000,32000]:(ver===2?[22050,24000,16000]:[11025,12000,8000]))[si]; spf=mpeg1?1152:576; firstPos=pos;
+        }
+        frames++; pos+=L;
+      } else pos++;
+    }
+    if(first && firstPos>=0){   // a Xing/Info header frame carries no audio
+      const head=String.fromCharCode.apply(null,Array.from(u8.subarray(firstPos,firstPos+48)));
+      if(head.indexOf('Xing')>=0 || head.indexOf('Info')>=0) frames-=1;
+    }
+    return sr ? frames*spf/sr : 0;
+  }
+
+  const btn=document.getElementById('onlineMarkBtn'), keyInp=document.getElementById('openaiKey');
+  const prog=document.getElementById('autoProg');
+  if(!btn||!keyInp||!prog) return;
+  try{ keyInp.value=localStorage.getItem('openai_key')||''; }catch(e){}
+  keyInp.addEventListener('change',()=>{ try{ localStorage.setItem('openai_key', keyInp.value.trim()); }catch(e){} });
+  keyInp.addEventListener('click',e=>e.stopPropagation());
+  let cancelled=false, running=false, hideTimer=null;
+  function say(msg,sticky){ prog.textContent=msg; prog.style.display='block'; clearTimeout(hideTimer); if(!sticky) hideTimer=setTimeout(()=>{prog.style.display='none';},8000); }
+  prog.addEventListener('click',()=>{ if(running) cancelled=true; });
+
+  async function transcribe(key, bytes, idx){
+    const groq=/^gsk_/.test(key);   // Groq keys (free tier) start with gsk_, OpenAI keys with sk-
+    const url=groq ? 'https://api.groq.com/openai/v1/audio/transcriptions' : 'https://api.openai.com/v1/audio/transcriptions';
+    const fd=new FormData();
+    fd.append('file', new Blob([bytes],{type:'audio/mpeg'}), 'chunk'+idx+'.mp3');
+    fd.append('model', groq ? 'whisper-large-v3' : 'whisper-1');
+    fd.append('response_format','verbose_json');
+    fd.append('timestamp_granularities[]','word');
+    fd.append('language','ar');
+    let lastErr=null, waits=0;
+    for(let attempt=0; attempt<10; attempt++){
+      if(cancelled) throw new Error('cancelled');
+      try{
+        const r=await fetch(url,{method:'POST',headers:{Authorization:'Bearer '+key},body:fd});
+        if(r.status===429 && waits<8){            // free-tier limit reached: wait, then try again
+          waits++;
+          let sec=parseInt(r.headers.get('retry-after')||'',10); if(!(sec>0)) sec=60; sec=Math.min(sec+2,300);
+          for(let q=sec;q>0;q--){ if(cancelled) throw new Error('cancelled'); say(tf('onlineWait',{s:q}),true); await new Promise(res=>setTimeout(res,1000)); }
+          continue;
+        }
+        if(!r.ok){ let m=''; try{ m=(await r.json()).error.message; }catch(_){} throw new Error('HTTP '+r.status+(m?': '+m:'')); }
+        return await r.json();
+      }catch(e){
+        if(e && e.message==='cancelled') throw e;
+        lastErr=e;
+        if(/^HTTP 4/.test(String(e.message))) break;
+        await new Promise(res=>setTimeout(res,1500));
+      }
+    }
+    throw lastErr||new Error('request failed');
+  }
+
+  btn.addEventListener('click', async (e)=>{
+    e.stopPropagation();
+    if(running || window.__ayahBusy) return;
+    const pl=document.getElementById('player'), src=pl && (pl.currentSrc||pl.src);
+    const key=keyInp.value.trim();
+    if(!src){ alert(t('autoMarkNoAudio')); return; }
+    if(!currentSurahAyahs || !currentSurahAyahs.length){ alert(t('autoMarkNoText')); return; }
+    if(!key){ alert(t('onlineNoKey')); return; }
+    if(marks.filter(m=>!m.isTotal).length>1 && !confirm(t('autoMarkConfirm'))) return;
+    try{ localStorage.setItem('openai_key', key); }catch(_){}
+    try{ document.getElementById('settingsMenu').classList.remove('open'); document.querySelector('header').classList.remove('menu-open'); }catch(_){}
+    running=true; window.__ayahBusy=true; cancelled=false;
+    try{
+      const T=window.__ayahTools;
+      const blob=await (await fetch(src)).blob();
+      // ---- 1) send the audio to Whisper in frame-aligned pieces (< 25 MB each) ----
+      const total=blob.size, CH=18*1024*1024, pieces=[]; let a=0;
+      while(a<total){ let b=Math.min(total,a+CH); if(b<total) b=await T.findSync(blob,b); if(b<=a) b=Math.min(total,a+CH); pieces.push([a,b]); a=b; }
+      let offset=0; const hyp=[];
+      for(let i=0;i<pieces.length;i++){
+        if(cancelled) throw new Error('cancelled');
+        say(tf('onlineUpload',{i:i+1,n:pieces.length}),true);
+        const bytes=new Uint8Array(await blob.slice(pieces[i][0],pieces[i][1]).arrayBuffer());
+        const dur=mp3Seconds(bytes,i===0);
+        if(!dur) throw new Error(t('onlineOnlyMp3'));
+        const js=await transcribe(key,bytes,i+1);
+        const words=js.words||[];
+        if(!words.length && i===0) throw new Error('Whisper returned no word timestamps');
+        words.forEach(w=>{ const n=normAr(w.word); if(n) hyp.push({n, start:(w.start||0)+offset, end:(w.end||0)+offset}); });
+        offset+=dur;
+      }
+      // ---- 2) match the Whisper words with the Quran text ----
+      say(t('onlineAlign'),true);
+      await new Promise(r2=>setTimeout(r2,30));
+      const ayahWords=currentSurahAyahs.map(ay=>String(ay.text||'').split(/\s+/).map(normAr).filter(Boolean));
+      const lens=ayahWords.map(w=>w.join('').length||1);
+      const res=ayahStartsFromWords(ayahWords,hyp);
+      if(res.matched < Math.max(1,Math.floor(ayahWords.length*0.4))) throw new Error('only '+res.matched+' of '+ayahWords.length+' ayahs recognised');
+      const lastEnd=Math.max.apply(null,res.ends.filter(x=>x!==null));
+      const durSec=isFinite(pl.duration)?pl.duration:Infinity;
+      let starts=fillAndOrder(res.starts,lens,lastEnd);
+      let endSec=Math.min(durSec,lastEnd+0.25);
+      // ---- 3) snap every boundary to the real silence in the audio (20 ms frames -> exact ms) ----
+      try{
+        const r=await T.decodeEnvelope(blob, p=>say(tf('onlineSnap',{p:Math.round(p*100)}),true), ()=>cancelled);
+        const sl=silenceList(r.env,r.frameSec,0.10);
+        starts=snapStarts(starts,sl,0.7);
+        // end of the surah: end of the last speech
+        const F=r.env.length, sorted=Float32Array.from(r.env).sort();
+        const q=pp=>sorted[Math.min(F-1,Math.floor(pp*(F-1)))], thr=q(0.10)+0.30*(q(0.92)-q(0.10));
+        let last=F-1; while(last>0 && r.env[last]<thr) last--;
+        endSec=Math.min(durSec,(last+1)*r.frameSec+0.3);
+      }catch(snapErr){ if(cancelled || (snapErr&&snapErr.message==='cancelled')) throw snapErr; /* keep the Whisper times */ }
+      for(let i=1;i<starts.length;i++) if(!(starts[i]>starts[i-1]+0.15)) starts[i]=starts[i-1]+0.15;
+      if(!(endSec>starts[starts.length-1]+0.1)) endSec=starts[starts.length-1]+0.5;
+      // ---- 4) write the marks (continuous: every ayah starts where the previous one ends) ----
+      marks=[]; seqCounter=0;
+      starts.forEach((st,k)=>marks.push({ayah:k+1, timeMs: k===0?0:Math.round(st*1000), isTotal:false, seq:seqCounter++}));
+      marks.push({ayah:999, timeMs:Math.round(endSec*1000), isTotal:true, seq:seqCounter++});
+      render();
+      say(tf('onlineDone',{n:starts.length}));
+    }catch(err){
+      if(cancelled || (err&&err.message==='cancelled')) say(t('autoMarkCancelled'));
+      else say(t('onlineFail')+(err&&err.message?err.message:err));
+    }finally{ running=false; window.__ayahBusy=false; }
+  });
 })();
 </script>
 </body>
