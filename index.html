@@ -1363,6 +1363,26 @@ body.dark #autoProg{background:#30465e;border-color:var(--ink);}
 #openaiKey{width:100%;height:40px;box-sizing:border-box;border:1.5px solid #000;border-radius:10px;padding:0 10px;background:var(--paper);color:var(--ink);font-size:13px;direction:ltr;text-align:left;}
 body.dark #openaiKey{border-color:var(--ink);}
 </style>
+
+<style id="menu-tall-2026-10-12">
+/* menu uses the whole screen height so every part is visible */
+.settingsMenu, .settingsMenu.open{max-height:calc(100dvh - 58px) !important;overflow-y:auto !important;}
+</style>
+
+<style id="conv-dialog-2026-10-12">
+#convDlg{position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:16px;}
+#convDlg .convBox{width:100%;max-width:380px;background:var(--paper);color:var(--ink);border:1.5px solid #000;border-radius:14px;padding:16px;box-shadow:0 10px 30px rgba(0,0,0,.5);direction:rtl;}
+body.dark #convDlg .convBox{border-color:var(--ink);}
+#convDlg .convTitle{font-size:16px;font-weight:800;margin-bottom:6px;}
+#convDlg .convFile{font-size:12px;opacity:.7;margin-bottom:8px;direction:ltr;text-align:center;word-break:break-all;}
+#convDlg .convMsg{font-size:13.5px;margin-bottom:8px;line-height:1.6;}
+#convDlg .convHow{font-size:12.5px;margin-bottom:10px;line-height:1.6;padding:8px;border-radius:10px;background:var(--paper-dim);}
+#convDlg .convNever{display:flex;gap:8px;align-items:center;font-size:12.5px;margin-bottom:12px;}
+#convDlg .convBtns{display:flex;gap:8px;}
+#convDlg .convBtns button{flex:1;height:42px;border-radius:10px;border:1.5px solid #000;font-weight:700;font-size:13.5px;cursor:pointer;background:var(--paper);color:var(--ink);}
+body.dark #convDlg .convBtns button{border-color:var(--ink);}
+#convDlg .convBtns #convOpenBtn{background:var(--gold);color:#fff;}
+</style>
 </head>
 <body>
 <div class="wrap">
@@ -1957,6 +1977,7 @@ document.querySelectorAll('.langBtn').forEach(btn=>{
 });
 applyLanguage('ku');
 function loadAudioIntoPlayer(url, label){
+  try{ if(window.__checkAudioFormat) window.__checkAudioFormat(url, label); }catch(e){}
   player.src = url;
   player.style.display='block';
   speedrow.style.display='flex';
@@ -2124,7 +2145,7 @@ function jumpToNextUnmarked(sura){
     if(!count) return;
     const have = new Set(marks.filter(m=>!m.isTotal).map(m=>Number(m.ayah)));
     let n = 1;
-    while(n<=count && have.has(n)) n++;
+    if(have.size > 1){ while(n<=count && have.has(n)) n++; }   // continue where it stopped; a fresh surah starts at 1
     startAyahInput.value = String(n<=count ? n : 1);
   }catch(e){}
 }
@@ -2315,7 +2336,7 @@ async function exportAllSurahs(){
   if(IS_NATIVE && window.AndroidSave && typeof window.AndroidSave.saveToDownloadsOverwrite === 'function'){
     const b64 = await blobToBase64(blob);
     const r = saveIntoAppFolder(AUTO_DB_NAME, b64);
-    if(r === 'ok'){ alert(t('savedOk') + APP_FOLDER + '/' + AUTO_DB_NAME); return; }
+    if(r === 'ok'){ alert(t('savedOk') + AUTO_DB_NAME); return; }
   }
   await saveBlob(blob, AUTO_DB_NAME);
 }
@@ -2750,28 +2771,9 @@ const APP_FOLDER = 'Ayah-marker';
 function saveIntoAppFolder(name, b64){
   const A = window.AndroidSave;
   if(!(A && typeof A.saveToDownloadsOverwrite === 'function')) return 'no-bridge';
-  let r = 'error';
-  try{ r = String(A.saveToDownloadsOverwrite(APP_FOLDER + '/' + name, b64, 'application/octet-stream')); }catch(e){ r = 'error'; }
-  if(r === 'ok') return 'ok';
-  try{ r = String(A.saveToDownloadsOverwrite(name, b64, 'application/octet-stream')); }catch(e){ r = 'error'; }
-  return r;
+  try{ return String(A.saveToDownloadsOverwrite(name, b64, 'application/octet-stream')); }catch(e){ return 'error'; }
 }
-// First launch of the installed app: create the Ayah-marker folder (a small README is placed in it).
-(function(){
-  try{
-    if(!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform())) return;
-    if(localStorage.getItem('ayah_folder_init')==='1') return;
-    setTimeout(()=>{
-      const A = window.AndroidSave;
-      if(!(A && typeof A.saveToDownloadsOverwrite === 'function')) return;
-      try{
-        const txt = 'Ayah-marker\nQuran-timing.db is saved here when you press the save database button.\n';
-        const r = String(A.saveToDownloadsOverwrite(APP_FOLDER + '/README.txt', btoa(txt), 'text/plain'));
-        if(r === 'ok') localStorage.setItem('ayah_folder_init','1');
-      }catch(e){}
-    }, 2500);
-  }catch(e){}
-})();
+// (the README / sub-folder creation was removed: only Quran-timing.db is written to Downloads)
 let lastDownloadSig = null;
 function savePartialProgress(){
   // app is being left: save the unfinished surah too (not only completed ones)
@@ -2928,6 +2930,7 @@ if(clearProgressBtn){
 }
 if(loadProgressBtn){
   loadProgressBtn.addEventListener('click', async ()=>{
+    settingsMenu.classList.remove('open');   // close the menu first: the surah may take a moment to load
     const bms = getBookmarks();
     const sura = parseInt(bms['lastSura']) || parseInt(suraSelect.value);
     const ayah = parseInt(bms['sura_'+sura] || bms['lastAyah']);
@@ -3780,6 +3783,118 @@ function snapStarts(starts, sil, win){
       else say(t('onlineFail')+(err&&err.message?err.message:err));
     }finally{ running=false; window.__ayahBusy=false; }
   });
+})();
+
+// ---- the header overlay can never stay open when the menu is closed (blank screen fix) ----
+(function(){
+  const menu=document.getElementById('settingsMenu'), hdr=document.querySelector('header');
+  if(!menu||!hdr) return;
+  new MutationObserver(()=>{ if(!menu.classList.contains('open')) hdr.classList.remove('menu-open'); })
+    .observe(menu,{attributes:true,attributeFilter:['class']});
+})();
+
+// ================= Ask before using an audio file that is not a constant-bitrate mp3 =================
+(function(){
+  Object.assign(TRANSLATIONS.ku, {"convTitle": "پێویستە ئەم دەنگە کۆنڤێرت بکرێت؟", "convVbr": "ئەم فایلە mp3ی VBRە (bitrateی گۆڕاوە). لە ئەپی قورئانی پیرۆزدا ڕەنگە ئایەتەکان کەمێک پێش یان پاش بکەون.", "convOther": "ئەم فایلە {kind}ە، نەک mp3 ی ئاسایی. لە ئەپی قورئانی پیرۆزدا ڕەنگە ئایەتەکان کەمێک پێش یان پاش بکەون.", "convHow": "ڕێگا: بچۆ online-convert.com ← mp3 بۆ mp3 ← «Keep original bitrate» هەڵبژێرە ← دوای کۆنڤێرت، فایلە نوێیەکە لێرە هەڵبژێرەوە.", "convOpen": "🌐 کۆنڤێرت (کردنەوەی ماڵپەڕ)", "convSkip": "نەخێر، بەردەوام بە", "convNever": "جارێکی تر مەپرسە"});
+  Object.assign(TRANSLATIONS.en, {"convTitle": "Does this audio need converting?", "convVbr": "This file is a VBR mp3 (changing bitrate). In the Quran app the ayahs may start slightly early or late.", "convOther": "This file is {kind}, not a normal mp3. In the Quran app the ayahs may start slightly early or late.", "convHow": "How: open online-convert.com → mp3 to mp3 → choose \"Keep original bitrate\" → then pick the new file here.", "convOpen": "🌐 Convert (open the website)", "convSkip": "No, continue", "convNever": "Do not ask again"});
+  Object.assign(TRANSLATIONS.ar, {"convTitle": "هل يحتاج هذا الصوت إلى تحويل؟", "convVbr": "هذا الملف mp3 بمعدل بت متغير (VBR). قد تظهر الآيات في تطبيق القرآن مبكرة أو متأخرة قليلًا.", "convOther": "هذا الملف {kind} وليس mp3 عاديًا. قد تظهر الآيات في تطبيق القرآن مبكرة أو متأخرة قليلًا.", "convHow": "الطريقة: افتح online-convert.com ← mp3 إلى mp3 ← اختر «Keep original bitrate» ← ثم اختر الملف الجديد هنا.", "convOpen": "🌐 تحويل (فتح الموقع)", "convSkip": "لا، تابع", "convNever": "لا تسأل مرة أخرى"});
+
+  const BR1=[0,32,40,48,56,64,80,96,112,128,160,192,224,256,320], BR2=[0,8,16,24,32,40,48,56,64,80,96,112,128,144,160];
+function hdr(b,i){
+  if(b[i]!==0xFF || (b[i+1]&0xE0)!==0xE0) return null;
+  const ver=(b[i+1]>>3)&3, layer=(b[i+1]>>1)&3, bi=(b[i+2]>>4)&15, si=(b[i+2]>>2)&3, pad=(b[i+2]>>1)&1;
+  if(ver===1 || layer!==1 || bi===0 || bi===15 || si===3) return null;
+  const m1=ver===3, br=(m1?BR1:BR2)[bi], sr=(m1?[44100,48000,32000]:(ver===2?[22050,24000,16000]:[11025,12000,8000]))[si];
+  return {len:Math.floor((m1?144:72)*br*1000/sr)+pad, br};
+}
+function id3Size(u){ return (u.length>10&&u[0]===0x49&&u[1]===0x44&&u[2]===0x33) ? 10+(((u[6]&0x7f)<<21)|((u[7]&0x7f)<<14)|((u[8]&0x7f)<<7)|(u[9]&0x7f)) : 0; }
+function ascii(u,a,b){ let s=''; for(let i=a;i<Math.min(b,u.length);i++) s+=String.fromCharCode(u[i]); return s; }
+async function bytes(blob,a,b){ return new Uint8Array(await blob.slice(a,b).arrayBuffer()); }
+// -> {kind:'mp3'|'m4a'|'ogg'|'wav'|'webm'|'unknown', cbr:boolean, bitrate:number|null, why:string}
+async function analyzeAudio(blob){
+  const head=await bytes(blob,0,65536);
+  if(ascii(head,4,8)==='ftyp') return {kind:'m4a',cbr:false,bitrate:null,why:'container'};
+  if(ascii(head,0,4)==='OggS') return {kind:'ogg',cbr:false,bitrate:null,why:'container'};
+  if(ascii(head,0,4)==='RIFF') return {kind:'wav',cbr:false,bitrate:null,why:'container'};
+  if(head[0]===0x1A&&head[1]===0x45&&head[2]===0xDF&&head[3]===0xA3) return {kind:'webm',cbr:false,bitrate:null,why:'container'};
+  const id3=id3Size(head);
+  const total=blob.size;
+  // locate the first real frame
+  let first=-1, firstBuf=head, base=0;
+  if(id3>head.length-8){ base=id3; firstBuf=await bytes(blob,base,base+65536); }
+  else base=0;
+  let start=base?0:id3;
+  for(let i=start;i<firstBuf.length-8;i++){
+    const h=hdr(firstBuf,i);
+    if(h && h.len>=24){ const h2=hdr(firstBuf,i+h.len); if(h2){ first=base+i; break; } }
+  }
+  if(first<0) return {kind:'unknown',cbr:false,bitrate:null,why:'no mp3 frames'};
+  const fb=await bytes(blob,first,first+2048);
+  const tag=ascii(fb,4,80);
+  const hasXing=tag.indexOf('Xing')>=0, hasInfo=tag.indexOf('Info')>=0, hasVbri=ascii(fb,36,40)==='VBRI';
+  const rates=new Set();
+  const spots=[0,0.2,0.4,0.6,0.8,1];
+  for(const f of spots){
+    let p=f===0?first:Math.max(first,Math.floor(total*f)-98304);
+    const buf=await bytes(blob,p,p+98304);
+    let i=0;
+    if(f!==0){ // resync
+      for(;i<buf.length-8;i++){ const h=hdr(buf,i); if(h&&h.len>=24&&hdr(buf,i+h.len)) break; }
+    }
+    let n=0;
+    while(i+4<buf.length && n<200){
+      const h=hdr(buf,i); if(!h) break;
+      // skip the Xing/Info frame itself
+      if(!(f===0&&n===0&&(hasXing||hasInfo||hasVbri))) rates.add(h.br);
+      i+=h.len; n++;
+    }
+  }
+  const bitrate = rates.size===1 ? [...rates][0] : null;
+  const cbr = rates.size===1 && !hasXing && !hasVbri;
+  return {kind:'mp3',cbr,bitrate,why: hasXing||hasVbri ? 'VBR header' : (rates.size>1 ? 'bitrate changes' : 'constant')};
+}
+
+
+
+  const asked=new Set();
+  let dlg=null;
+  function closeDlg(){ if(dlg){ dlg.remove(); dlg=null; } }
+  function openDlg(info, label){
+    closeDlg();
+    dlg=document.createElement('div'); dlg.id='convDlg';
+    const msg = info.kind==='mp3' ? t('convVbr') : tf('convOther',{kind:info.kind.toUpperCase()});
+    dlg.innerHTML =
+      '<div class="convBox">'+
+        '<div class="convTitle"></div>'+
+        '<div class="convFile"></div>'+
+        '<div class="convMsg"></div>'+
+        '<div class="convHow"></div>'+
+        '<label class="convNever"><input type="checkbox" id="convNeverChk"> <span></span></label>'+
+        '<div class="convBtns"><button type="button" id="convOpenBtn"></button><button type="button" id="convSkipBtn"></button></div>'+
+      '</div>';
+    document.body.appendChild(dlg);
+    dlg.querySelector('.convTitle').textContent=t('convTitle');
+    dlg.querySelector('.convFile').textContent=label||'';
+    dlg.querySelector('.convMsg').textContent=msg;
+    dlg.querySelector('.convHow').textContent=t('convHow');
+    dlg.querySelector('.convNever span').textContent=t('convNever');
+    dlg.querySelector('#convOpenBtn').textContent=t('convOpen');
+    dlg.querySelector('#convSkipBtn').textContent=t('convSkip');
+    const remember=()=>{ try{ if(dlg.querySelector('#convNeverChk').checked) localStorage.setItem('noConvertPrompt','1'); }catch(e){} };
+    dlg.querySelector('#convOpenBtn').addEventListener('click',()=>{ remember(); try{ window.open('https://www.online-convert.com/','_blank'); }catch(e){ location.href='https://www.online-convert.com/'; } closeDlg(); });
+    dlg.querySelector('#convSkipBtn').addEventListener('click',()=>{ remember(); closeDlg(); });
+  }
+  window.__checkAudioFormat=async function(url,label){
+    try{
+      if(localStorage.getItem('noConvertPrompt')==='1') return;
+      if(!url || asked.has(url)) return;
+      asked.add(url);
+      const blob=await (await fetch(url)).blob();
+      const info=await analyzeAudio(blob);
+      if(info.cbr) return;                    // constant-bitrate mp3: nothing to convert
+      openDlg(info,label);
+    }catch(e){}
+  };
 })();
 </script>
 </body>
