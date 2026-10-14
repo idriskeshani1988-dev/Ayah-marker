@@ -1429,6 +1429,13 @@ body.dark #ocBar button{border-color:var(--ink);}
 body.bar-collapsed #hdrToggleBar{display:none !important;}
 body.bar-collapsed #barHandle{opacity:.6;}
 </style>
+<style id="bar-handle-bottom-css">
+#barHandleBottom{display:block;margin:3px auto 0;width:64px;height:22px;border:none;border-radius:12px 12px 0 0;
+  background:var(--gold);color:#fff;font-size:13px;font-weight:700;line-height:22px;padding:0;cursor:pointer;opacity:.9;
+  box-shadow:0 -2px 5px rgba(0,0,0,.22);-webkit-tap-highlight-color:transparent;}
+body.bottom-collapsed .bottomPart{display:none !important;}
+body.bottom-collapsed #barHandleBottom{opacity:.6;}
+</style>
 </head>
 <body>
 <div class="wrap">
@@ -19826,6 +19833,25 @@ self.onmessage=function(e){
     set(c);
   });
   let saved=null; try{ saved=localStorage.getItem('barCollapsed'); }catch(e){}
+  set(saved==='1');
+})();
+
+// ---- ▼ / ▲ handle at the bottom: hide / show the 1-second, mark and marks-list boxes ----
+(function(){
+  const wrap=document.querySelector('.wrap'), mc=document.getElementById('markCard');
+  if(!wrap||!mc) return;
+  mc.classList.add('bottomPart');
+  let n=mc.nextElementSibling; while(n){ n.classList.add('bottomPart'); n=n.nextElementSibling; }
+  const h=document.createElement('button');
+  h.id='barHandleBottom'; h.type='button'; h.setAttribute('aria-label','hide / show bottom buttons');
+  wrap.appendChild(h);
+  function set(c){
+    document.body.classList.toggle('bottom-collapsed',c);
+    h.textContent=c?'▲':'▼';
+    try{ localStorage.setItem('bottomCollapsed',c?'1':'0'); }catch(e){}
+  }
+  h.addEventListener('click',(e)=>{ e.stopPropagation(); set(!document.body.classList.contains('bottom-collapsed')); });
+  let saved=null; try{ saved=localStorage.getItem('bottomCollapsed'); }catch(e){}
   set(saved==='1');
 })();
 </script>
