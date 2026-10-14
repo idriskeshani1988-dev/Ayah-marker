@@ -1400,6 +1400,28 @@ body.dark #convBar{border-color:rgba(255,255,255,.35);}
 #convBoxCancel{display:block;margin:8px auto 0;border:1.5px solid #000;border-radius:8px;background:transparent;color:inherit;font-size:12.5px;font-weight:700;padding:5px 16px;cursor:pointer;}
 body.dark #convBoxCancel{border-color:var(--ink);}
 </style>
+
+<style id="oc-panel-2026-10-14">
+#ocPanel{display:none;position:fixed;inset:0;z-index:300;background:var(--paper);flex-direction:column;
+  padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);}
+#ocPanel.open{display:flex;}
+#ocBar{display:flex;gap:8px;align-items:center;padding:6px 8px;border-bottom:1.5px solid #000;}
+body.dark #ocBar{border-bottom-color:var(--ink);}
+#ocBar button{height:34px;padding:0 12px;border:1.5px solid #000;border-radius:10px;background:var(--paper);color:var(--ink);font-weight:700;font-size:12.5px;cursor:pointer;}
+body.dark #ocBar button{border-color:var(--ink);}
+#ocBar #ocBrowserBtn{margin-inline-start:auto;}
+#ocNote{padding:6px 10px;font-size:11.5px;line-height:1.5;color:var(--ink);opacity:.85;}
+#ocFrame{flex:1 1 auto;width:100%;border:0;background:#fff;}
+</style>
+
+<style id="site-overlay-2026-10-14">
+#siteOverlay{display:none;position:fixed;inset:0;z-index:300;flex-direction:column;background:var(--paper);}
+#siteOverlay .soBar{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:calc(env(safe-area-inset-top,0px) + 6px) 8px 6px;background:#0f3d3a;color:#fff;}
+#siteOverlay .soBar button{border:0;border-radius:999px;padding:7px 12px;background:var(--gold);color:#fff;font-weight:700;font-size:13px;}
+#siteOverlay .soTitle{font-size:13px;font-weight:700;direction:ltr;}
+#siteOverlay .soHint{padding:6px 10px;font-size:11.5px;line-height:1.5;background:var(--paper-dim);color:var(--ink);}
+#siteOverlay iframe{flex:1 1 auto;width:100%;border:0;background:#fff;}
+</style>
 </head>
 <body>
 <div class="wrap">
@@ -1437,10 +1459,16 @@ body.dark #convBoxCancel{border-color:var(--ink);}
       <div class="menuBox" style="border:1.5px solid var(--teal); border-radius:10px; padding:6px; margin-top:6px; background:#fff;">
         <button class="menuAction" id="exportDb" data-i18n="saveDb" style="margin-top:0;">هەڵگرتنی داتابەیس (db)</button>
         <button class="menuAction" id="loadMasterBtn" data-i18n="loadMaster">بارکردنی داتابەیس (db)</button>
+        <button class="menuAction" id="clearSuraBtn" data-i18n="clearSuraBtn" style="margin-top:0;">سڕینەوەی لیستی نیشانەکراوەکان تەنها بۆ ئەم سورەتە</button>
+        <button class="menuAction" id="clearAllBtn" data-i18n="clearAllBtn">سڕینەوەی لیستی نیشانەکراوەکان بۆ هەموو سورەتەکان</button>
+        <button class="menuAction" id="clearAudioBtn" data-i18n="audioClear">سڕینەوەی دەنگە هەڵگیراوەکان</button>
+        <button class="menuAction" id="saveProgressBtn" data-i18n="progressSave" style="background:var(--teal);color:#fff; margin-top:0;">🔖 هەڵگرتنی ئایەتی گەیشتوو</button>
+        <button class="menuAction" id="loadProgressBtn" style="display:none;">▶️ دەستپێکردنەوە لە ئایەتی هەڵگیراو</button>
+        <button class="menuAction" id="clearProgressBtn" data-i18n="progressClear" style="display:none;">🗑 سڕینەوەی ئایەتی گەیشتوو</button>
+        <p class="hint menuHint" id="progressStatus" style="display:none;"></p>
         <button class="menuAction" id="autoMarkBtn" data-i18n="autoMark" style="margin-top:0;">🤖 دیاریکردنی خۆکاری ئایەتەکان (لە دەنگەوە)</button>
         <button class="menuAction" id="onlineMarkBtn" data-i18n="onlineMark" style="margin-top:0;">🌐 دیاریکردنی ئۆنڵاین (Whisper — بێبەرامبەر بە Groq)</button>
         <input id="openaiKey" type="password" autocomplete="off" placeholder="کلیل: gsk_... (Groq بێبەرامبەر) یان sk-... (OpenAI)">
-        <button class="menuAction" id="convertMp3Btn" data-i18n="convMenu" style="margin-top:0;">🔄 کۆنڤێرتی mp3 بۆ CBR (لێرە)</button>
         <div id="convBox" style="display:none;">
           <div id="convBoxTitle"></div>
           <div id="convBar"><div id="convBarFill"></div></div>
@@ -1449,19 +1477,6 @@ body.dark #convBoxCancel{border-color:var(--ink);}
         </div>
         <p class="hint menuHint" id="masterStatus" data-i18n="masterStatusDefault" style="margin-top:4px;">هیچ داتابەیسێکی سەرجەم بارنەکراوە — ئەم بەشە ئیختیارییە</p>
         <button class="menuAction" id="exportMasterBtn" style="display:none;" data-i18n="exportMaster">دەرهێنانی هەموو داتابەیسەکە (.db)</button>
-      </div>
-      <!-- گروپی 3: سڕینەوەی لیستەکان - دوو دوو لە ناو بۆردەرێک -->
-      <div class="menuBox" style="border:1.5px solid var(--teal); border-radius:10px; padding:6px; margin-top:8px; background:#fff;">
-        <button class="menuAction" id="clearSuraBtn" data-i18n="clearSuraBtn" style="margin-top:0;">سڕینەوەی لیستی نیشانەکراوەکان تەنها بۆ ئەم سورەتە</button>
-        <button class="menuAction" id="clearAllBtn" data-i18n="clearAllBtn">سڕینەوەی لیستی نیشانەکراوەکان بۆ هەموو سورەتەکان</button>
-        <button class="menuAction" id="clearAudioBtn" data-i18n="audioClear">سڕینەوەی دەنگە هەڵگیراوەکان</button>
-      </div>
-      <!-- گروپی 2: هەڵگرتنی ئایەتی گەیشتوو - دوو دوو لە ناو بۆردەرێک -->
-      <div class="menuBox" style="border:1.5px solid var(--teal); border-radius:10px; padding:6px; margin-top:8px; background:#fff;">
-        <button class="menuAction" id="saveProgressBtn" data-i18n="progressSave" style="background:var(--teal);color:#fff; margin-top:0;">🔖 هەڵگرتنی ئایەتی گەیشتوو</button>
-        <button class="menuAction" id="loadProgressBtn" style="display:none;">▶️ دەستپێکردنەوە لە ئایەتی هەڵگیراو</button>
-        <button class="menuAction" id="clearProgressBtn" data-i18n="progressClear" style="display:none;">🗑 سڕینەوەی ئایەتی گەیشتوو</button>
-        <p class="hint menuHint" id="progressStatus" style="display:none;"></p>
       </div>
       <div class="menuDivider"></div>
       <div class="menuBox"><div class="settingsRow"><label for="stepMsInput" data-i18n="stepLabel" style="font-size:12px;">هەنگاوی گۆڕینی کات (1–1000 ms)</label><input id="stepMsInput" type="text" inputmode="numeric" pattern="[0-9]*" lang="en" maxlength="4" value="50" style="width:92px;padding:6px;border:1px solid var(--line);border-radius:8px;direction:ltr;"></div></div>
@@ -19736,6 +19751,57 @@ self.onmessage=function(e){
 
   // all texts follow the chosen language (also the buttons added later)
   try{ applyLanguage(currentLang); }catch(e){}
+})();
+
+// ================= online-convert.com inside the app (experimental: the site may refuse to be framed) =================
+(function(){
+  Object.assign(TRANSLATIONS.ku, {"ocOpen": "🌐 کردنەوەی online-convert.com لە ناو ئەپەکە", "ocBrowser": "↗ لە وێبگەڕ بکەرەوە", "ocClose": "✕ داخستن", "ocNote": "ئەگەر لاپەڕەکە بەتاڵ بوو یان نەکرایەوە، ماڵپەڕەکە ڕێگە نادات لە ناو ئەپەکە بکرێتەوە — دوگمەی «لە وێبگەڕ بکەرەوە» بگوشە. دوای کۆنڤێرت، فایلەکە دابەزێنە و بە دوگمەی 🎧 دەنگ بیهێنەوە ناو ئەپەکە."});
+  Object.assign(TRANSLATIONS.en, {"ocOpen": "🌐 Open online-convert.com inside the app", "ocBrowser": "↗ Open in browser", "ocClose": "✕ Close", "ocNote": "If the page is blank or does not load, the site does not allow being opened inside the app — tap \"Open in browser\". After converting, download the file and bring it back with the 🎧 Audio button."});
+  Object.assign(TRANSLATIONS.ar, {"ocOpen": "🌐 فتح online-convert.com داخل التطبيق", "ocBrowser": "↗ افتح في المتصفح", "ocClose": "✕ إغلاق", "ocNote": "إذا كانت الصفحة فارغة أو لم تُفتح فالموقع لا يسمح بفتحه داخل التطبيق — اضغط «افتح في المتصفح». بعد التحويل نزّل الملف وأعده إلى التطبيق بزر 🎧 الصوت."});
+  const URL_OC='https://www.online-convert.com/';
+  const btn=document.getElementById('ocOpenBtn'); if(!btn) return;
+  let panel=null, frame=null;
+  function build(){
+    panel=document.createElement('div'); panel.id='ocPanel';
+    panel.innerHTML='<div id="ocBar"><button type="button" id="ocCloseBtn"></button><button type="button" id="ocBrowserBtn"></button></div><div id="ocNote"></div>';
+    frame=document.createElement('iframe'); frame.id='ocFrame';
+    frame.setAttribute('sandbox','allow-scripts allow-forms allow-same-origin allow-popups allow-downloads allow-modals');
+    frame.setAttribute('referrerpolicy','no-referrer');
+    panel.appendChild(frame); document.body.appendChild(panel);
+    panel.querySelector('#ocCloseBtn').addEventListener('click',()=>panel.classList.remove('open'));
+    panel.querySelector('#ocBrowserBtn').addEventListener('click',()=>{ try{ window.open(URL_OC,'_blank'); }catch(e){ location.href=URL_OC; } });
+  }
+  btn.addEventListener('click',e=>{
+    e.stopPropagation();
+    if(!panel) build();
+    panel.querySelector('#ocCloseBtn').textContent=t('ocClose');
+    panel.querySelector('#ocBrowserBtn').textContent=t('ocBrowser');
+    panel.querySelector('#ocNote').textContent=t('ocNote');
+    if(!frame.getAttribute('src')) frame.setAttribute('src',URL_OC);
+    panel.classList.add('open');
+  });
+})();
+
+// ================= online-convert.com inside the app (opens in a frame; falls back to the browser) =================
+(function(){
+  Object.assign(TRANSLATIONS.ku, {"siteBtn": "🌐 ماڵپەڕی online-convert لە ناو ئەپەکە", "siteClose": "داخستن", "siteOpen": "کردنەوە لە وێبگەڕ", "siteHint": "ئەگەر پەڕەکە بەتاڵ بوو، ماڵپەڕەکە ڕێگە نادات لە ناو ئەپەکە بکرێتەوە: «کردنەوە لە وێبگەڕ» بگوشە. دوای کۆنڤێرت، فایلەکە دابەزێنە و بیهێنەرەوە ناو ئەپەکە."});
+  Object.assign(TRANSLATIONS.en, {"siteBtn": "🌐 online-convert site inside the app", "siteClose": "Close", "siteOpen": "Open in browser", "siteHint": "If the page is blank, the site does not allow being opened inside the app: tap “Open in browser”. After converting, download the file and bring it back into the app."});
+  Object.assign(TRANSLATIONS.ar, {"siteBtn": "🌐 موقع online-convert داخل التطبيق", "siteClose": "إغلاق", "siteOpen": "فتح في المتصفح", "siteHint": "إذا ظهرت الصفحة فارغة فالموقع لا يسمح بفتحه داخل التطبيق: اضغط «فتح في المتصفح». بعد التحويل نزّل الملف وأعده إلى التطبيق."});
+  const URL_SITE='https://www.online-convert.com/';
+  const btn=document.getElementById('siteConvBtn'); if(!btn) return;
+  const ov=document.createElement('div'); ov.id='siteOverlay';
+  ov.innerHTML='<div class="soBar"><button type="button" id="soClose"></button><span class="soTitle">online-convert.com</span><button type="button" id="soOpen"></button></div><div class="soHint" id="soHint"></div><iframe id="soFrame" referrerpolicy="no-referrer"></iframe>';
+  document.body.appendChild(ov);
+  const fr=ov.querySelector('#soFrame');
+  function texts(){ ov.querySelector('#soClose').textContent=t('siteClose'); ov.querySelector('#soOpen').textContent=t('siteOpen'); ov.querySelector('#soHint').textContent=t('siteHint'); }
+  btn.addEventListener('click',e=>{
+    e.stopPropagation(); texts();
+    try{ document.getElementById('settingsMenu').classList.remove('open'); document.querySelector('header').classList.remove('menu-open'); }catch(_){}
+    if(!fr.getAttribute('src')) fr.src=URL_SITE;
+    ov.style.display='flex';
+  });
+  ov.querySelector('#soClose').addEventListener('click',()=>{ ov.style.display='none'; });
+  ov.querySelector('#soOpen').addEventListener('click',()=>{ window.open(URL_SITE,'_blank'); });
 })();
 </script>
 </body>
