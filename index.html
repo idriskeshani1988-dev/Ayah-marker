@@ -1388,6 +1388,18 @@ body.dark #convDlg .convBtns button{border-color:var(--ink);}
 #convDlg .convBtns{flex-wrap:wrap;}
 #convDlg .convBtns #convLocalBtn{flex:1 1 100%;background:var(--teal);color:#fff;}
 </style>
+
+<style id="conv-box-2026-10-13">
+#convBox{border:1.5px solid #000;border-radius:10px;padding:8px 10px;background:var(--paper);}
+body.dark #convBox{border-color:var(--ink);}
+#convBoxTitle{font-size:13px;font-weight:700;margin-bottom:6px;text-align:center;}
+#convBar{height:12px;border-radius:999px;background:var(--paper-dim);border:1px solid rgba(0,0,0,.35);overflow:hidden;}
+body.dark #convBar{border-color:rgba(255,255,255,.35);}
+#convBarFill{height:100%;width:0%;background:var(--gold);transition:width .25s;}
+#convBoxMsg{font-size:12.5px;margin-top:6px;text-align:center;direction:ltr;word-break:break-all;}
+#convBoxCancel{display:block;margin:8px auto 0;border:1.5px solid #000;border-radius:8px;background:transparent;color:inherit;font-size:12.5px;font-weight:700;padding:5px 16px;cursor:pointer;}
+body.dark #convBoxCancel{border-color:var(--ink);}
+</style>
 </head>
 <body>
 <div class="wrap">
@@ -1428,7 +1440,13 @@ body.dark #convDlg .convBtns button{border-color:var(--ink);}
         <button class="menuAction" id="autoMarkBtn" data-i18n="autoMark" style="margin-top:0;">🤖 دیاریکردنی خۆکاری ئایەتەکان (لە دەنگەوە)</button>
         <button class="menuAction" id="onlineMarkBtn" data-i18n="onlineMark" style="margin-top:0;">🌐 دیاریکردنی ئۆنڵاین (Whisper — بێبەرامبەر بە Groq)</button>
         <input id="openaiKey" type="password" autocomplete="off" placeholder="کلیل: gsk_... (Groq بێبەرامبەر) یان sk-... (OpenAI)">
-        <button class="menuAction" id="convertMp3Btn" data-i18n="convMenu" style="margin-top:0;">🎚️ کۆنڤێرتی mp3 بۆ CBR (لێرە)</button>
+        <button class="menuAction" id="convertMp3Btn" data-i18n="convMenu" style="margin-top:0;">🔄 کۆنڤێرتی mp3 بۆ CBR (لێرە)</button>
+        <div id="convBox" style="display:none;">
+          <div id="convBoxTitle"></div>
+          <div id="convBar"><div id="convBarFill"></div></div>
+          <div id="convBoxMsg"></div>
+          <button id="convBoxCancel" type="button"></button>
+        </div>
         <p class="hint menuHint" id="masterStatus" data-i18n="masterStatusDefault" style="margin-top:4px;">هیچ داتابەیسێکی سەرجەم بارنەکراوە — ئەم بەشە ئیختیارییە</p>
         <button class="menuAction" id="exportMasterBtn" style="display:none;" data-i18n="exportMaster">دەرهێنانی هەموو داتابەیسەکە (.db)</button>
       </div>
@@ -17146,7 +17164,8 @@ function applyLanguage(lang){
 }
 
 const suraSelect = document.getElementById('suraSelect');
-const SURA_NAMES_BY_LANG = {ku:["فاتیحە", "بەقەرە", "ئاڵی عیمران", "نیسا", "مائیدە", "ئەنعام", "ئەعراف", "ئەنفال", "تەوبە", "یونس", "هود", "یوسف", "ڕەعد", "ئیبراهیم", "حیجر", "نەحل", "ئیسرا", "کەهف", "مەریەم", "تاها", "ئەنبیا", "حەج", "موئمینون", "نور", "فورقان", "شوعەرا", "نەمل", "قەسەس", "عەنکەبوت", "ڕووم", "لوقمان", "سەجدە", "ئەحزاب", "سەبەئ", "فاتیر", "یاسین", "سافات", "ساد", "زومەر", "غافر", "فوصسیلەت", "شورا", "زوخروف", "دوخان", "جاثیە", "ئەحقاف", "موحەمەد", "فەتح", "حوجورات", "قاف", "زاریات", "تور", "نەجم", "قەمەر", "ڕەحمان", "واقیعە", "حەدید", "موجادیلە", "حەشر", "مومتەحینە", "سەف", "جومعە", "مونافیقون", "تەغابون", "تەلاق", "تەحریم", "مولک", "قەلەم", "حاققە", "مەعاریج", "نوح", "جن", "موزەممیل", "موددەثیر", "قیامەت", "ئینسان", "مورسەلات", "نەبەئ", "نازیعات", "عەبەس", "تەکویر", "ئینفیتار", "موتەففیفین", "ئینشیقاق", "بوروج", "تاریق", "ئەعلا", "غاشیە", "فەجر", "بەلەد", "شەمس", "لەیل", "زوحا", "شەرح", "تین", "عەلەق", "قەدر", "بەییینە", "زەلزەلە", "عادیات", "قاریعە", "تەکاثور", "عەسر", "هومەزە", "فیل", "قورەیش", "ماعون", "کەوسەر", "کافیرون", "نەسر", "مەسەد", "ئیخلاس", "فەلەق", "ناس"], en:["Al-Fatihah", "Al-Baqarah", "Aal-Imran", "An-Nisa", "Al-Ma'idah", "Al-An'am", "Al-A'raf", "Al-Anfal", "At-Tawbah", "Yunus", "Hud", "Yusuf", "Ar-Ra'd", "Ibrahim", "Al-Hijr", "An-Nahl", "Al-Isra", "Al-Kahf", "Maryam", "Ta-Ha", "Al-Anbiya", "Al-Hajj", "Al-Mu'minun", "An-Nur", "Al-Furqan", "Ash-Shu'ara", "An-Naml", "Al-Qasas", "Al-Ankabut", "Ar-Rum", "Luqman", "As-Sajdah", "Al-Ahzab", "Saba", "Fatir", "Ya-Sin", "As-Saffat", "Sad", "Az-Zumar", "Ghafir", "Fussilat", "Ash-Shura", "Az-Zukhruf", "Ad-Dukhan", "Al-Jathiyah", "Al-Ahqaf", "Muhammad", "Al-Fath", "Al-Hujurat", "Qaf", "Adh-Dhariyat", "At-Tur", "An-Najm", "Al-Qamar", "Ar-Rahman", "Al-Waqi'ah", "Al-Hadid", "Al-Mujadila", "Al-Hashr", "Al-Mumtahanah", "As-Saff", "Al-Jumu'ah", "Al-Munafiqun", "At-Taghabun", "At-Talaq", "At-Tahrim", "Al-Mulk", "Al-Qalam", "Al-Haqqah", "Al-Ma'arij", "Nuh", "Al-Jinn", "Al-Muzzammil", "Al-Muddaththir", "Al-Qiyamah", "Al-Insan", "Al-Mursalat", "An-Naba", "An-Nazi'at", "Abasa", "At-Takwir", "Al-Infitar", "Al-Mutaffifin", "Al-Inshiqaq", "Al-Buruj", "At-Tariq", "Al-A'la", "Al-Ghashiyah", "Al-Fajr", "Al-Balad", "Ash-Shams", "Al-Layl", "Ad-Duha", "Ash-Sharh", "At-Tin", "Al-Alaq", "Al-Qadr", "Al-Bayyinah", "Az-Zalzalah", "Al-Adiyat", "Al-Qari'ah", "At-Takathur", "Al-Asr", "Al-Humazah", "Al-Fil", "Quraysh", "Al-Ma'un", "Al-Kawthar", "Al-Kafirun", "An-Nasr", "Al-Masad", "Al-Ikhlas", "Al-Falaq", "An-Nas"], ar:SURA_NAMES};
+const SURA_NAMES_EN = ["Al-Fatihah", "Al-Baqarah", "Aal-Imran", "An-Nisa", "Al-Ma'idah", "Al-An'am", "Al-A'raf", "Al-Anfal", "At-Tawbah", "Yunus", "Hud", "Yusuf", "Ar-Ra'd", "Ibrahim", "Al-Hijr", "An-Nahl", "Al-Isra", "Al-Kahf", "Maryam", "Ta-Ha", "Al-Anbiya", "Al-Hajj", "Al-Mu'minun", "An-Nur", "Al-Furqan", "Ash-Shu'ara", "An-Naml", "Al-Qasas", "Al-Ankabut", "Ar-Rum", "Luqman", "As-Sajdah", "Al-Ahzab", "Saba", "Fatir", "Ya-Sin", "As-Saffat", "Sad", "Az-Zumar", "Ghafir", "Fussilat", "Ash-Shura", "Az-Zukhruf", "Ad-Dukhan", "Al-Jathiyah", "Al-Ahqaf", "Muhammad", "Al-Fath", "Al-Hujurat", "Qaf", "Adh-Dhariyat", "At-Tur", "An-Najm", "Al-Qamar", "Ar-Rahman", "Al-Waqi'ah", "Al-Hadid", "Al-Mujadila", "Al-Hashr", "Al-Mumtahanah", "As-Saff", "Al-Jumu'ah", "Al-Munafiqun", "At-Taghabun", "At-Talaq", "At-Tahrim", "Al-Mulk", "Al-Qalam", "Al-Haqqah", "Al-Ma'arij", "Nuh", "Al-Jinn", "Al-Muzzammil", "Al-Muddaththir", "Al-Qiyamah", "Al-Insan", "Al-Mursalat", "An-Naba", "An-Nazi'at", "Abasa", "At-Takwir", "Al-Infitar", "Al-Mutaffifin", "Al-Inshiqaq", "Al-Buruj", "At-Tariq", "Al-A'la", "Al-Ghashiyah", "Al-Fajr", "Al-Balad", "Ash-Shams", "Al-Layl", "Ad-Duha", "Ash-Sharh", "At-Tin", "Al-Alaq", "Al-Qadr", "Al-Bayyinah", "Az-Zalzalah", "Al-Adiyat", "Al-Qari'ah", "At-Takathur", "Al-Asr", "Al-Humazah", "Al-Fil", "Quraysh", "Al-Ma'un", "Al-Kawthar", "Al-Kafirun", "An-Nasr", "Al-Masad", "Al-Ikhlas", "Al-Falaq", "An-Nas"];
+const SURA_NAMES_BY_LANG = {ku:SURA_NAMES, en:SURA_NAMES_EN, ar:SURA_NAMES};
 function suraNames(){ return SURA_NAMES_BY_LANG[(typeof currentLang!=='undefined' && SURA_NAMES_BY_LANG[currentLang])?currentLang:'ku'] || SURA_NAMES; }
 function refreshSuraNames(){ const sel=document.getElementById('suraSelect'); if(!sel) return; const N=suraNames(); Array.from(sel.options).forEach((o,i)=>{ o.textContent=(i+1)+'. '+N[i]; }); }
 SURA_NAMES.forEach((name,i)=>{
@@ -17509,6 +17528,7 @@ document.querySelectorAll('.langBtn').forEach(btn=>{
 });
 applyLanguage('ku');
 function loadAudioIntoPlayer(url, label){
+  window.__audioName = label;
   try{ if(window.__checkAudioFormat) window.__checkAudioFormat(url, label); }catch(e){}
   player.src = url;
   player.style.display='block';
@@ -17543,10 +17563,16 @@ fileInput.addEventListener('change', ()=>{
   if(!files.length) return;
   if(files.length===1){
     const one = files[0], url1 = URL.createObjectURL(one);
-    const sn = parseInt(suraSelect.value) || extractSuraNumber(one.name) || 1;
+    const cur = parseInt(suraSelect.value) || 1;
+    const sn = extractSuraNumber(one.name) || cur;      // the surah comes from the file name (for example 002 = Al-Baqarah)
     audioBySura.set(sn, {url: url1, name: one.name});
-    loadAudioIntoPlayer(url1, one.name);
     if(window.__persistAudioList) window.__persistAudioList([{sura:sn, name:one.name, blob:one}]);
+    if(sn !== cur){
+      suraSelect.value = String(sn);                      // open that surah: its Quran text, marks and this audio
+      suraSelect.dispatchEvent(new Event('change'));
+    } else {
+      loadAudioIntoPlayer(url1, one.name);
+    }
     return;
   }
   let matched = 0, unmatched = 0; const toSave = [];
@@ -17563,7 +17589,11 @@ fileInput.addEventListener('change', ()=>{
   fname.textContent = tf('audioMatched',{n:matched}) + (unmatched ? tf('audioUnmatched',{n:unmatched}) : '');
   if(toSave.length && window.__persistAudioList) window.__persistAudioList(toSave);
   const sura = parseInt(suraSelect.value);
-  if(audioBySura.has(sura)){
+  if(toSave.length && !toSave.some(x=>x.sura===sura)){
+    const first = Math.min.apply(null, toSave.map(x=>x.sura));   // the current surah is not among the files: open the first one
+    suraSelect.value = String(first);
+    suraSelect.dispatchEvent(new Event('change'));
+  } else if(audioBySura.has(sura)){
     loadAudioIntoPlayer(audioBySura.get(sura).url, audioBySura.get(sura).name);
   }
 });
@@ -19440,9 +19470,9 @@ async function analyzeAudio(blob){
 
 // ================= Convert mp3 -> CBR mp3 (original bitrate) on the phone, with lamejs =================
 (function(){
-  Object.assign(TRANSLATIONS.ku, {"convLocal": "🎚️ کۆنڤێرت لێرە (بێ ئینتەرنێت، CBR بە هەمان bitrate)", "convProg": "کۆنڤێرتکردن: {p}٪ — بۆ هەڵوەشاندنەوە بگوشە", "convDone": "کۆنڤێرت کرا (CBR {k}kbps) — دەنگی نوێ ئێستا بەکاردێت", "convFail": "کۆنڤێرت سەرنەکەوت. هۆکار: ", "convNoAudio": "سەرەتا فایلی mp3 هەڵبژێرە", "convSaveFail": "کۆنڤێرت کرا، بەڵام نەتوانرا فایلەکە لە Downloads هەڵبگیرێت: ", "convMenu": "🎚️ کۆنڤێرتی mp3 بۆ CBR (لێرە)"});
-  Object.assign(TRANSLATIONS.en, {"convLocal": "🎚️ Convert here (offline, CBR at the original bitrate)", "convProg": "Converting: {p}% — tap to cancel", "convDone": "Converted (CBR {k} kbps) — the new audio is now in use", "convFail": "Conversion failed. Reason: ", "convNoAudio": "Choose an mp3 file first", "convSaveFail": "Converted, but the file could not be saved to Downloads: ", "convMenu": "🎚️ Convert mp3 to CBR (here)"});
-  Object.assign(TRANSLATIONS.ar, {"convLocal": "🎚️ حوّل هنا (دون إنترنت، CBR بنفس معدل البت)", "convProg": "جارٍ التحويل: {p}٪ — اضغط للإلغاء", "convDone": "تم التحويل (CBR {k} kbps) — الصوت الجديد قيد الاستخدام", "convFail": "فشل التحويل. السبب: ", "convNoAudio": "اختر ملف mp3 أولًا", "convSaveFail": "تم التحويل لكن تعذر حفظ الملف في Downloads: ", "convMenu": "🎚️ تحويل mp3 إلى CBR (هنا)"});
+  Object.assign(TRANSLATIONS.ku, {"convLocal": "🔄 کۆنڤێرت لێرە (بێ ئینتەرنێت، CBR بە هەمان bitrate)", "convProg": "کۆنڤێرتکردن: {p}٪ — بۆ هەڵوەشاندنەوە بگوشە", "convDone": "کۆنڤێرت کرا (CBR {k}kbps) — دەنگی نوێ ئێستا بەکاردێت", "convFail": "کۆنڤێرت سەرنەکەوت. هۆکار: ", "convNoAudio": "سەرەتا فایلی mp3 هەڵبژێرە", "convSaveFail": "کۆنڤێرت کرا، بەڵام نەتوانرا فایلەکە لە Downloads هەڵبگیرێت: ", "convMenu": "🔄 کۆنڤێرتی mp3 بۆ CBR (لێرە)", "convBoxTitle": "کۆنڤێرتکردنی mp3 بۆ CBR", "convCancel": "هەڵوەشاندنەوە"});
+  Object.assign(TRANSLATIONS.en, {"convLocal": "🔄 Convert here (offline, CBR at the original bitrate)", "convProg": "Converting: {p}% — tap to cancel", "convDone": "Converted (CBR {k} kbps) — the new audio is now in use", "convFail": "Conversion failed. Reason: ", "convNoAudio": "Choose an mp3 file first", "convSaveFail": "Converted, but the file could not be saved to Downloads: ", "convMenu": "🔄 Convert mp3 to CBR (here)", "convBoxTitle": "Converting mp3 to CBR", "convCancel": "Cancel"});
+  Object.assign(TRANSLATIONS.ar, {"convLocal": "🔄 حوّل هنا (دون إنترنت، CBR بنفس معدل البت)", "convProg": "جارٍ التحويل: {p}٪ — اضغط للإلغاء", "convDone": "تم التحويل (CBR {k} kbps) — الصوت الجديد قيد الاستخدام", "convFail": "فشل التحويل. السبب: ", "convNoAudio": "اختر ملف mp3 أولًا", "convSaveFail": "تم التحويل لكن تعذر حفظ الملف في Downloads: ", "convMenu": "🔄 تحويل mp3 إلى CBR (هنا)", "convBoxTitle": "تحويل mp3 إلى CBR", "convCancel": "إلغاء"});
 
 // ===== shared core: mp3 -> CBR mp3 (original bitrate) =====
 const BR1=[0,32,40,48,56,64,80,96,112,128,160,192,224,256,320], BR2=[0,8,16,24,32,40,48,56,64,80,96,112,128,144,160];
@@ -19582,29 +19612,46 @@ self.onmessage=function(e){
   function say(msg,sticky){ if(!prog) return; prog.textContent=msg; prog.style.display='block'; clearTimeout(hideTimer); if(!sticky) hideTimer=setTimeout(()=>{prog.style.display='none';},8000); }
   if(prog) prog.addEventListener('click',()=>{ if(running) cancelled=true; });
 
+  const box=document.getElementById('convBox'), boxTitle=document.getElementById('convBoxTitle'),
+        fill=document.getElementById('convBarFill'), boxMsg=document.getElementById('convBoxMsg'),
+        boxCancel=document.getElementById('convBoxCancel');
+  let boxTimer=null;
+  function boxShow(title,pct,msg,canCancel){
+    if(!box) return;
+    clearTimeout(boxTimer);
+    box.style.display='block'; boxTitle.textContent=title;
+    fill.style.width=Math.max(0,Math.min(100,pct))+'%'; boxMsg.textContent=msg||'';
+    boxCancel.style.display=canCancel?'block':'none'; boxCancel.textContent=t('convCancel');
+  }
+  function boxHideLater(ms){ clearTimeout(boxTimer); boxTimer=setTimeout(()=>{ if(box) box.style.display='none'; },ms); }
+  if(boxCancel) boxCancel.addEventListener('click',e=>{ e.stopPropagation(); if(running) cancelled=true; });
+  function openMenu(){ try{ document.getElementById('settingsMenu').classList.add('open'); document.querySelector('header').classList.add('menu-open'); }catch(_){} }
+
   window.__runLocalConvert=async function(url,label){
     if(running || window.__ayahBusy) return;
     if(!url){ alert(t('convNoAudio')); return; }
     running=true; window.__ayahBusy=true; cancelled=false;
+    const origName=String(label||window.__audioName||'audio').trim();
     let enc=null;
+    openMenu();                                   // the progress box is under the convert button
     try{
-      say(tf('convProg',{p:0}),true);
+      boxShow(t('convBoxTitle'),0,origName,true);
       const blob=await (await fetch(url)).blob();
       enc=makeWorkerEnc();
-      const r=await cvConvert(blob,enc,decodeChunk,p=>say(tf('convProg',{p:Math.round(p*100)}),true),()=>cancelled);
+      const r=await cvConvert(blob,enc,decodeChunk,p=>boxShow(t('convBoxTitle')+' — '+Math.round(p*100)+'%',p*100,origName,true),()=>cancelled);
       const out=new Blob(r.parts,{type:'audio/mpeg'});
-      const base=String(label||'audio').replace(/\.mp3$/i,'');
-      window.__convSkipUrl=null;
       const cu=URL.createObjectURL(out), cs=parseInt(document.getElementById('suraSelect').value)||1;
-      audioBySura.set(cs,{url:cu,name:label||base});
-      loadAudioIntoPlayer(cu, label||base);   // the converted file is used from now on
-      if(window.__persistAudioList) window.__persistAudioList([{sura:cs,name:label||base,blob:out}]);
-      say(tf('convDone',{k:r.kbps}));
-      try{ await saveBlob(out, base+'_cbr.mp3'); }
-      catch(e){ alert(t('convSaveFail')+(e&&e.message?e.message:e)); }
+      audioBySura.set(cs,{url:cu,name:origName});
+      loadAudioIntoPlayer(cu, origName);          // the converted file is used from now on
+      if(window.__persistAudioList) window.__persistAudioList([{sura:cs,name:origName,blob:out}]);
+      boxShow(tf('convDone',{k:r.kbps}),100,origName,false);
+      try{ await saveBlob(out, origName); }        // saved with the SAME name as the original (for example mp3.001)
+      catch(e){ boxShow(t('convSaveFail')+(e&&e.message?e.message:e),100,origName,false); }
+      boxHideLater(12000);
     }catch(err){
-      if(cancelled || (err&&err.message==='cancelled')) say(t('autoMarkCancelled'));
-      else say(t('convFail')+(err&&err.message?err.message:err));
+      if(cancelled || (err&&err.message==='cancelled')) boxShow(t('autoMarkCancelled'),0,origName,false);
+      else boxShow(t('convFail')+(err&&err.message?err.message:err),0,origName,false);
+      boxHideLater(10000);
     }finally{ if(enc&&enc.close) enc.close(); running=false; window.__ayahBusy=false; }
   };
 
@@ -19613,9 +19660,7 @@ self.onmessage=function(e){
     e.stopPropagation();
     const pl=document.getElementById('player'); const src=pl&&(pl.currentSrc||pl.src);
     if(!src){ alert(t('convNoAudio')); return; }
-    try{ document.getElementById('settingsMenu').classList.remove('open'); document.querySelector('header').classList.remove('menu-open'); }catch(_){}
-    const lab=(document.getElementById('fname')||{}).textContent||'audio';
-    window.__runLocalConvert(src, lab.replace(/\s*\n\s*/g,'.').trim());
+    window.__runLocalConvert(src, window.__audioName);
   });
 })();
 
@@ -19650,10 +19695,8 @@ self.onmessage=function(e){
       try{
         db=await openDb();
         for(let i=0;i<list.length;i++){
-          if(list.length>1) say(tf('audioSaving',{i:i+1,n:list.length}),true);
           await putOne(db,list[i]);
         }
-        say(tf('audioSaved',{n:list.length}));
       }catch(e){
         say(t('audioSaveFail')+(e&&e.message?e.message:e));
       }finally{ if(db) db.close(); }
