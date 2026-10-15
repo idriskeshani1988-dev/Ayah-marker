@@ -1436,6 +1436,9 @@ body.bar-collapsed #barHandle{opacity:.6;}
 body.bottom-collapsed .bottomPart{display:none !important;}
 body.bottom-collapsed #barHandleBottom{opacity:.6;}
 </style>
+<style id="pinch-zoom-css">
+#textPanel{touch-action:pan-y;}
+</style>
 </head>
 <body>
 <div class="wrap">
@@ -19853,6 +19856,71 @@ self.onmessage=function(e){
   h.addEventListener('click',(e)=>{ e.stopPropagation(); set(!document.body.classList.contains('bottom-collapsed')); });
   let saved=null; try{ saved=localStorage.getItem('bottomCollapsed'); }catch(e){}
   set(saved==='1');
+})();
+
+// ---- pinch with two fingers on the Quran text = bigger / smaller text ----
+(function(){
+  const panel=document.getElementById('textPanel');
+  if(!panel || typeof setQuranFontSize!=='function') return;
+  let d0=0, size0=16, pinching=false, lastPinchEnd=0;
+  const dist=t=>Math.hypot(t[0].clientX-t[1].clientX, t[0].clientY-t[1].clientY);
+  panel.addEventListener('touchstart',e=>{
+    if(e.touches.length===2){ pinching=true; d0=dist(e.touches)||1; size0=quranFontSize; }
+  },{passive:true});
+  panel.addEventListener('touchmove',e=>{
+    if(pinching && e.touches.length===2){
+      e.preventDefault();
+      setQuranFontSize(size0*dist(e.touches)/d0);
+    }
+  },{passive:false});
+  function end(e){
+    if(pinching && e.touches.length<2){ pinching=false; lastPinchEnd=Date.now(); }
+  }
+  panel.addEventListener('touchend',end,{passive:true});
+  panel.addEventListener('touchcancel',end,{passive:true});
+  // a pinch must not be taken as a tap on an ayah
+  panel.addEventListener('click',e=>{ if(Date.now()-lastPinchEnd<400){ e.stopPropagation(); e.preventDefault(); } },true);
+})();
+
+// ---- remember settings (language, dark mode, text size, step ms, speed) ----
+(function(){
+  const KEY='uiPrefs_v1';
+  let prefs={}; try{ prefs=JSON.parse(localStorage.getItem(KEY)||'{}')||{}; }catch(e){ prefs={}; }
+  let ready=false, timer=null, last='';
+  const stepInp=document.getElementById('stepMsInput');
+  function snapshot(){
+    return { lang:currentLang, dark:document.body.classList.contains('dark'), font:quranFontSize,
+             step: stepInp? stepInp.value : prefs.step, rate: prefs.rate };
+  }
+  function save(){
+    if(!ready) return;
+    clearTimeout(timer);
+    timer=setTimeout(()=>{
+      const o=snapshot(); const j=JSON.stringify(o); if(j===last) return; last=j; prefs=o;
+      try{ localStorage.setItem(KEY,j); }catch(e){}
+    },150);
+  }
+  // restore
+  try{ if(prefs.lang && prefs.lang!==currentLang) applyLanguage(prefs.lang); }catch(e){}
+  try{ if(prefs.dark && !document.body.classList.contains('dark')) document.getElementById('darkToggle').click(); }catch(e){}
+  try{ if(prefs.font) setQuranFontSize(prefs.font); }catch(e){}
+  try{ if(prefs.step && stepInp) stepInp.value=prefs.step; }catch(e){}
+  try{
+    const r=parseFloat(prefs.rate);
+    if(r && r!==1){
+      const chip=Array.from(document.querySelectorAll('[data-r]')).find(c=>parseFloat(c.dataset.r)===r);
+      if(chip) chip.click();
+    }
+    if(r && typeof player!=='undefined') player.addEventListener('loadedmetadata',()=>{ if(player.playbackRate!==r && parseFloat(prefs.rate)===r) player.playbackRate=r; });
+  }catch(e){}
+  // watch for changes
+  new MutationObserver(save).observe(document.documentElement,{attributes:true,attributeFilter:['lang','style']});
+  new MutationObserver(save).observe(document.body,{attributes:true,attributeFilter:['class']});
+  if(stepInp){ stepInp.addEventListener('input',save); stepInp.addEventListener('change',save); }
+  document.querySelectorAll('[data-r]').forEach(c=>c.addEventListener('click',()=>{ prefs.rate=parseFloat(c.dataset.r); const r=prefs.rate;
+    if(typeof player!=='undefined'){ player.addEventListener('loadedmetadata',function f(){ player.removeEventListener('loadedmetadata',f); }); }
+    ready=true; last=''; save(); }));
+  ready=true; save();
 })();
 </script>
 </body>
