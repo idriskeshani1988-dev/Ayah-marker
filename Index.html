@@ -1422,17 +1422,52 @@ body.dark #ocBar button{border-color:var(--ink);}
 #siteOverlay .soHint{padding:6px 10px;font-size:11.5px;line-height:1.5;background:var(--paper-dim);color:var(--ink);}
 #siteOverlay iframe{flex:1 1 auto;width:100%;border:0;background:#fff;}
 </style>
-<style id="bar-handle-css">
-#barHandle{display:block;margin:0 auto 2px;width:46px;height:15px;border:none;border-radius:0 0 10px 10px;
-  background:var(--gold);color:#fff;font-size:9px;line-height:15px;padding:0;cursor:pointer;opacity:.9;
-  box-shadow:0 2px 5px rgba(0,0,0,.22);-webkit-tap-highlight-color:transparent;}
-body.bar-collapsed #hdrToggleBar{display:none !important;}
-body.bar-collapsed #barHandle{opacity:.6;}
+
+<style id="features2-2026-10-14">
+#reciterRow{display:flex;align-items:center;gap:6px;}
+#reciterRow span{font-size:12px;font-weight:700;white-space:nowrap;}
+#reciterRow select{flex:1 1 auto;min-width:0;height:36px;border:1.5px solid #000;border-radius:10px;background:var(--paper);color:var(--ink);font-size:13px;padding:0 6px;}
+#reciterRow button{height:36px;min-width:40px;border:1.5px solid #000;border-radius:10px;background:var(--paper);font-size:16px;}
+body.dark #reciterRow select, body.dark #reciterRow button{border-color:var(--ink);}
+#sumOverlay{display:none;position:fixed;inset:0;z-index:300;flex-direction:column;background:var(--paper);color:var(--ink);}
+#sumOverlay .sumBar{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:calc(env(safe-area-inset-top,0px) + 6px) 8px 6px;background:#0f3d3a;color:#fff;font-weight:700;font-size:14px;}
+#sumOverlay .sumBar button{border:0;border-radius:999px;padding:7px 14px;background:var(--gold);color:#fff;font-weight:700;font-size:13px;}
+#sumTop{padding:8px 12px;font-size:13px;font-weight:700;text-align:center;}
+#sumFilters{display:flex;gap:6px;padding:0 10px 8px;justify-content:center;flex-wrap:wrap;}
+#sumFilters button{border:1.5px solid #000;border-radius:999px;background:transparent;color:var(--ink);padding:4px 12px;font-size:12px;font-weight:700;}
+body.dark #sumFilters button{border-color:var(--ink);}
+#sumFilters button.on{background:var(--teal);color:#fff;}
+#sumList{flex:1 1 auto;overflow-y:auto;padding:0 10px 14px;}
+.sumRow{display:flex;align-items:center;gap:10px;width:100%;border:0;border-bottom:1px solid rgba(0,0,0,.12);background:transparent;color:var(--ink);padding:9px 6px;font-size:15px;text-align:start;}
+body.dark .sumRow{border-bottom-color:rgba(255,255,255,.14);}
+.sumRow .sn{min-width:30px;font-weight:700;opacity:.7;text-align:center;}
+.sumRow .nm{flex:1 1 auto;font-weight:600;}
+.sumRow .ct{font-size:13px;font-weight:700;direction:ltr;}
+.sumRow.full .ct{color:#2e8b57;} .sumRow.partial .ct{color:#c98a12;} .sumRow.empty .ct{opacity:.5;}
+body.dark .sumRow.full .ct{color:#7fdc9d;} body.dark .sumRow.partial .ct{color:#f0b84a;}
+#revBar{display:none;position:fixed;left:8px;right:8px;bottom:calc(env(safe-area-inset-bottom,0px) + 8px);z-index:250;background:var(--paper);color:var(--ink);border:1.5px solid #000;border-radius:14px;padding:8px;box-shadow:0 8px 22px rgba(0,0,0,.45);}
+body.dark #revBar{border-color:var(--ink);background:var(--paper-dim);}
+#revBar .r1,#revBar .r2,#revBar .r3{display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:6px;}
+#revBar .r3{margin-bottom:0;}
+#revBar button{min-width:44px;height:38px;border:1.5px solid #000;border-radius:10px;background:var(--paper);color:var(--ink);font-size:14px;font-weight:700;padding:0 10px;}
+body.dark #revBar button{border-color:var(--ink);background:transparent;}
+#revBar .r2 button{flex:1 1 0;background:var(--gold);color:#fff;border-color:#000;}
+#revNum{min-width:90px;text-align:center;font-size:15px;font-weight:700;}
+#revInfo{flex:1 1 auto;text-align:center;font-size:12px;font-weight:700;direction:ltr;}
+</style>
+
+<style id="next-sura-2026-10-16">
+#nextSuraBox{display:none;position:fixed;left:8px;right:8px;bottom:calc(env(safe-area-inset-bottom,0px) + 10px);z-index:260;align-items:center;gap:8px;
+  background:var(--paper);color:var(--ink);border:1.5px solid #000;border-radius:14px;padding:8px 10px;box-shadow:0 8px 22px rgba(0,0,0,.4);}
+body.dark #nextSuraBox{border-color:var(--ink);background:var(--paper-dim);}
+#nextSuraBox #nsMsg{flex:1 1 auto;font-size:13px;font-weight:700;}
+#nextSuraBox button{border:1.5px solid #000;border-radius:10px;height:38px;padding:0 12px;font-weight:700;font-size:13px;background:var(--paper);color:var(--ink);}
+body.dark #nextSuraBox button{border-color:var(--ink);background:transparent;}
+#nextSuraBox #nsGo{background:var(--gold);color:#fff;}
 </style>
 </head>
 <body>
 <div class="wrap">
-  <button id="barHandle" type="button" aria-label="hide / show top buttons">▲</button>
   <div id="hdrToggleBar"><button id="miniSpeed" type="button" aria-label="speed">1x</button><div id="miniSpeedList"><button type="button" data-r="1">1x</button><button type="button" data-r="1.25">1.25x</button><button type="button" data-r="1.5">1.5x</button><button type="button" data-r="2">2x</button><button type="button" data-r="2.5">2.5x</button><button type="button" data-r="3">3x</button></div><button id="miniMenuBtn" type="button" aria-label="menu">☰</button><span id="miniTime" dir="ltr"></span><button id="miniPlayBtn" type="button" aria-label="play/pause">▶</button><button id="hdrToggleBtn" type="button">▲ شاردنەوەی بوکسی سەرەوە</button></div>
   <header>
     <div class="topbar">
@@ -17240,7 +17275,10 @@ let marks = []; // {ayah, timeMs, isTotal, seq}
 let seqCounter = 0;
 
 // هەلگرتنا خۆکاری - بتنێ کاتەکان دمینن
-const LS_KEY = 'quran_marks_autosave';
+// Reciter profile: every reciter has its own marks, saved ayah, audio and db file (the default one keeps the old keys).
+const RECITER = (function(){ try{ return localStorage.getItem('reciter_profile') || ''; }catch(e){ return ''; } })();
+const RECITER_SUFFIX = RECITER ? ':' + RECITER : '';
+const LS_KEY = 'quran_marks_autosave' + RECITER_SUFFIX;
 // The surah the marks in memory belong to. While another surah is being opened the dropdown
 // already shows the NEW surah but `marks` still holds the OLD one, so never trust the dropdown here.
 function currentMarksSura(){
@@ -17349,7 +17387,7 @@ const stepMsInput = document.getElementById("stepMsInput");
 let quranFontSize = 16;               // always starts at 16
 const fontSizeDisplay = document.getElementById("fontSizeDisplay");
 function setQuranFontSize(value){
-  quranFontSize = Math.min(32, Math.max(12, Math.round(Number(value) || 16)));
+  quranFontSize = Math.min(40, Math.max(12, Math.round(Number(value) || 16)));
   document.documentElement.style.setProperty('--quran-font-size', quranFontSize + 'px');
   if(fontSizeDisplay) fontSizeDisplay.textContent = String(quranFontSize);
 }
@@ -18137,6 +18175,7 @@ player.addEventListener('ratechange', ()=>{
 player.addEventListener('timeupdate', checkPlaybackSync);
 let advancedFromSura = null;
 function advanceToNextSura(){
+  return false;   // a finished surah no longer moves to the next surah automatically
   if(audioBySura.size > 1){
     const current = parseInt(suraSelect.value)||1;
     const next = [...audioBySura.keys()].filter(n=>n>current).sort((a,b)=>a-b)[0];
@@ -18149,8 +18188,8 @@ function advanceToNextSura(){
     }
   }
   const currentSura = parseInt(suraSelect.value)||1;
-  const nextSura = currentSura + 1;
-  if(currentSura < 114 && audioBySura.has(nextSura)){
+  if(currentSura < 114){
+    const nextSura = currentSura + 1;
     if(masterDb && masterLoadedSura===currentSura) flushSuraToMaster(currentSura);
     autoPlayNextSura = true;
     suraSelect.value = String(nextSura);
@@ -18354,7 +18393,7 @@ function isSurahComplete(){
   for(let a=1; a<=total; a++){ if(!have.has(a)) return false; }
   return true;
 }
-const AUTO_DB_NAME = 'Quran-timing.db';   // the one database file kept in the Ayah-marker folder
+const AUTO_DB_NAME = (RECITER || 'Quran-timing') + '.db';   // the one database file kept in the Ayah-marker folder
 const APP_FOLDER = 'Ayah-marker';
 // Try Downloads/Ayah-marker/<name>; if the Android bridge cannot make sub-folders, fall back to Downloads/<name>.
 function saveIntoAppFolder(name, b64){
@@ -18442,7 +18481,7 @@ clearSuraBtn.addEventListener('click', clearCurrentSuraMarks);
 clearAllBtn.addEventListener('click', clearAllSuraMarks);
 
 // ---- هەڵگرتنی ئایەتی گەیشتوو بۆ پێداچوونەوە - لەگەڵ ناوی سورەت ----
-const BOOKMARK_KEY = 'quran_progress_bookmarks';
+const BOOKMARK_KEY = 'quran_progress_bookmarks' + RECITER_SUFFIX;
 function getBookmarks(){
   try{
     const obj = JSON.parse(localStorage.getItem(BOOKMARK_KEY) || '{}');
@@ -19691,12 +19730,22 @@ self.onmessage=function(e){
   Object.assign(TRANSLATIONS.ku, {"audioClear": "🗑 سڕینەوەی دەنگە هەڵگیراوەکان لە ناو ئەپەکە", "audioClearConfirm": "هەموو دەنگە هەڵگیراوەکان لە ناو ئەپەکە دەسڕێنەوە (فایلە ئەسڵییەکان لە مۆبایلەکەت نامێنن بەو شێوەیە). بەردەوام بیت؟", "audioCleared": "دەنگە هەڵگیراوەکان سڕانەوە", "audioSaving": "هەڵگرتنی دەنگ لە ناو ئەپەکە: {i}/{n}", "audioSaved": "{n} دەنگ لە ناو ئەپەکە هەڵگیرا — دووبارە داوای ناکرێتەوە", "audioSaveFail": "نەتوانرا دەنگەکە لە ناو ئەپەکە هەڵبگیرێت (شوێنی بەتاڵ کەمە؟): "});
   Object.assign(TRANSLATIONS.en, {"audioClear": "🗑 Delete audio saved inside the app", "audioClearConfirm": "All audio saved inside the app will be deleted (your original files on the phone are not touched). Continue?", "audioCleared": "Saved audio deleted", "audioSaving": "Saving audio inside the app: {i}/{n}", "audioSaved": "{n} audio file(s) saved inside the app — no need to pick them again", "audioSaveFail": "Could not save the audio inside the app (low storage?): "});
   Object.assign(TRANSLATIONS.ar, {"audioClear": "🗑 حذف الصوتيات المحفوظة داخل التطبيق", "audioClearConfirm": "سيتم حذف كل الصوتيات المحفوظة داخل التطبيق (ملفاتك الأصلية على الهاتف لن تُمسّ). هل تريد المتابعة؟", "audioCleared": "تم حذف الصوتيات المحفوظة", "audioSaving": "حفظ الصوت داخل التطبيق: {i}/{n}", "audioSaved": "تم حفظ {n} ملف صوتي داخل التطبيق — لا حاجة لاختيارها مرة أخرى", "audioSaveFail": "تعذر حفظ الصوت داخل التطبيق (مساحة قليلة؟): "});
-  const DB_NAME='ayahMarkerAudio', STORE='files';
+  const DB_NAME='ayahMarkerAudio', STORE='files2';
   function openDb(){
     return new Promise((res,rej)=>{
       if(!window.indexedDB){ rej(new Error('IndexedDB not available')); return; }
-      const r=indexedDB.open(DB_NAME,1);
-      r.onupgradeneeded=()=>{ r.result.createObjectStore(STORE,{keyPath:'sura'}); };
+      const r=indexedDB.open(DB_NAME,2);
+      r.onupgradeneeded=(ev)=>{
+        const db=r.result, tx=r.transaction;
+        if(!db.objectStoreNames.contains('files')) db.createObjectStore('files',{keyPath:'sura'});     // old store (version 1)
+        if(!db.objectStoreNames.contains('files2')){
+          const st=db.createObjectStore('files2',{keyPath:'key'});                                      // version 2: one set per reciter
+          if(ev.oldVersion>=1){                                                                          // move the old files to the default reciter
+            const cur=tx.objectStore('files').openCursor();
+            cur.onsuccess=()=>{ const c=cur.result; if(c){ const v=c.value; st.put({key:'|'+v.sura,profile:'',sura:v.sura,name:v.name,blob:v.blob,saved:v.saved}); c.continue(); } };
+          }
+        }
+      };
       r.onsuccess=()=>res(r.result);
       r.onerror=()=>rej(r.error||new Error('open failed'));
     });
@@ -19704,7 +19753,7 @@ self.onmessage=function(e){
   function putOne(db,rec){
     return new Promise((res,rej)=>{
       const tx=db.transaction(STORE,'readwrite');
-      tx.objectStore(STORE).put({sura:rec.sura,name:rec.name,blob:rec.blob,saved:Date.now()});
+      tx.objectStore(STORE).put({key:RECITER+'|'+rec.sura,profile:RECITER,sura:rec.sura,name:rec.name,blob:rec.blob,saved:Date.now()});
       tx.oncomplete=()=>res(); tx.onerror=()=>rej(tx.error||new Error('write failed')); tx.onabort=()=>rej(tx.error||new Error('write aborted'));
     });
   }
@@ -19733,7 +19782,7 @@ self.onmessage=function(e){
     try{
       db=await openDb();
       const all=await new Promise((res,rej)=>{ const r=db.transaction(STORE,'readonly').objectStore(STORE).getAll(); r.onsuccess=()=>res(r.result||[]); r.onerror=()=>rej(r.error); });
-      all.forEach(rec=>{ if(rec && rec.blob && !audioBySura.has(rec.sura)) audioBySura.set(rec.sura,{url:URL.createObjectURL(rec.blob),name:rec.name}); });
+      all.forEach(rec=>{ if(rec && rec.blob && (rec.profile||'')===RECITER && !audioBySura.has(rec.sura)) audioBySura.set(rec.sura,{url:URL.createObjectURL(rec.blob),name:rec.name}); });
       const cur=parseInt(document.getElementById('suraSelect').value);
       const pl=document.getElementById('player');
       if(audioBySura.has(cur) && pl && !pl.getAttribute('src')){
@@ -19750,7 +19799,7 @@ self.onmessage=function(e){
     if(!confirm(t('audioClearConfirm'))) return;
     try{
       const db=await openDb();
-      await new Promise((res,rej)=>{ const tx=db.transaction(STORE,'readwrite'); tx.objectStore(STORE).clear(); tx.oncomplete=()=>res(); tx.onerror=()=>rej(tx.error); });
+      await new Promise((res,rej)=>{ const tx=db.transaction(STORE,'readwrite'); const st=tx.objectStore(STORE); const cur=st.openCursor(); cur.onsuccess=()=>{ const c=cur.result; if(c){ if((c.value.profile||'')===RECITER) c.delete(); c.continue(); } }; tx.oncomplete=()=>res(); tx.onerror=()=>rej(tx.error); });
       db.close();
       say(t('audioCleared'));
     }catch(err){ say(t('audioSaveFail')+(err&&err.message?err.message:err)); }
@@ -19811,22 +19860,244 @@ self.onmessage=function(e){
   ov.querySelector('#soOpen').addEventListener('click',()=>{ window.open(URL_SITE,'_blank'); });
 })();
 
-// ---- ▲ / ▼ handle: hide / show all the top buttons ----
+// ================= Reciter profiles + progress summary + review of the ayah boundaries =================
 (function(){
-  const h=document.getElementById('barHandle'); if(!h) return;
-  function set(c){
-    document.body.classList.toggle('bar-collapsed',c);
-    h.textContent=c?'▼':'▲';
-    try{ localStorage.setItem('barCollapsed',c?'1':'0'); }catch(e){}
+  Object.assign(TRANSLATIONS.ku, {"reciterLabel": "قورئانخوێن:", "reciterDefault": "Quran-timing (بنەڕەتی)", "reciterPrompt": "ناوی قورئانخوێن (دەبێتە ناوی فایلی db، بێ بۆشایی):", "reciterSwitch": "ئەپەکە دووبارە دەست پێ دەکاتەوە بۆ گۆڕینی قورئانخوێن. بەردەوام بیت؟", "sumBtn": "📊 پوختەی پێشکەوتن", "sumTitle": "پوختەی پێشکەوتن", "sumDone": "تەواو: {d} / 114 سورەت · ئایەتی نیشانکراو: {a}", "sumAll": "هەموو", "sumFull": "تەواو", "sumPartial": "ناتەواو", "sumEmpty": "بەتاڵ", "sumClose": "داخستن", "revBtn": "🎧 پێداچوونەوەی ئایەتەکان", "revAyah": "ئایەت {n}", "revPlayAyah": "▶ ئایەت", "revBoundary": "▶ سنووری ٣ چرکە", "revNoAudio": "سەرەتا فایلی دەنگ بار بکە", "revNoMarks": "هیچ ئایەتێک نیشانە نەکراوە", "revTime": "کاتی ئایەتی {n}: {ms} ms"});
+  Object.assign(TRANSLATIONS.en, {"reciterLabel": "Reciter:", "reciterDefault": "Quran-timing (default)", "reciterPrompt": "Reciter name (becomes the db file name, no spaces):", "reciterSwitch": "The app will restart to switch the reciter. Continue?", "sumBtn": "📊 Progress summary", "sumTitle": "Progress summary", "sumDone": "Completed: {d} / 114 surahs · marked ayahs: {a}", "sumAll": "All", "sumFull": "Done", "sumPartial": "Partial", "sumEmpty": "Empty", "sumClose": "Close", "revBtn": "🎧 Review ayahs", "revAyah": "Ayah {n}", "revPlayAyah": "▶ Ayah", "revBoundary": "▶ 3 s boundary", "revNoAudio": "Load the audio file first", "revNoMarks": "No ayah has been marked yet", "revTime": "Start of ayah {n}: {ms} ms"});
+  Object.assign(TRANSLATIONS.ar, {"reciterLabel": "القارئ:", "reciterDefault": "Quran-timing (الافتراضي)", "reciterPrompt": "اسم القارئ (يصبح اسم ملف db، بدون مسافات):", "reciterSwitch": "سيعاد تشغيل التطبيق لتبديل القارئ. هل تريد المتابعة؟", "sumBtn": "📊 ملخص التقدم", "sumTitle": "ملخص التقدم", "sumDone": "المكتمل: {d} / 114 سورة · الآيات المحددة: {a}", "sumAll": "الكل", "sumFull": "مكتمل", "sumPartial": "جزئي", "sumEmpty": "فارغ", "sumClose": "إغلاق", "revBtn": "🎧 مراجعة الآيات", "revAyah": "الآية {n}", "revPlayAyah": "▶ الآية", "revBoundary": "▶ حدّ ٣ ثوانٍ", "revNoAudio": "حمّل ملف الصوت أولًا", "revNoMarks": "لم تُحدَّد أي آية بعد", "revTime": "بداية الآية {n}: {ms} ms"});
+  const $=id=>document.getElementById(id);
+
+  // ---------- reciter profiles ----------
+  (function(){
+    const sel=$('reciterSel'), add=$('reciterAdd'); if(!sel||!add) return;
+    function list(){ try{ return JSON.parse(localStorage.getItem('reciter_list')||'[]'); }catch(e){ return []; } }
+    function fill(){
+      const names=list(); if(RECITER && names.indexOf(RECITER)<0) names.push(RECITER);
+      sel.innerHTML='';
+      const d=document.createElement('option'); d.value=''; d.textContent=t('reciterDefault'); sel.appendChild(d);
+      names.forEach(n=>{ const o=document.createElement('option'); o.value=n; o.textContent=n; sel.appendChild(o); });
+      sel.value=RECITER;
+    }
+    function go(name){ try{ if(name) localStorage.setItem('reciter_profile',name); else localStorage.removeItem('reciter_profile'); }catch(e){} location.reload(); }
+    sel.addEventListener('click',e=>e.stopPropagation());
+    sel.addEventListener('change',()=>{ if(sel.value===RECITER) return; if(confirm(t('reciterSwitch'))) go(sel.value); else sel.value=RECITER; });
+    add.addEventListener('click',e=>{
+      e.stopPropagation();
+      let n=prompt(t('reciterPrompt'),'');
+      if(!n) return;
+      n=n.trim().replace(/\s+/g,'_').replace(/[\\/:*?"<>|]/g,'').replace(/\.db$/i,'');
+      if(!n) return;
+      const l=list(); if(l.indexOf(n)<0){ l.push(n); try{ localStorage.setItem('reciter_list',JSON.stringify(l)); }catch(_){} }
+      if(confirm(t('reciterSwitch'))) go(n);
+    });
+    fill();
+    window.__refreshReciterTexts=fill;
+  })();
+
+  // ---------- progress summary ----------
+  (function(){
+    const btn=$('sumBtn'); if(!btn) return;
+    const ov=document.createElement('div'); ov.id='sumOverlay';
+    ov.innerHTML='<div class="sumBar"><button type="button" id="sumClose"></button><span id="sumTitle"></span><span></span></div><div id="sumTop"></div><div id="sumFilters"></div><div id="sumList"></div>';
+    document.body.appendChild(ov);
+    let filter='all';
+    function stat(n){
+      const total=AYAH_COUNTS[n-1]||0; let list=null;
+      if(n===currentMarksSura()) list=marks;
+      else { try{ const d=JSON.parse(localStorage.getItem(LS_KEY)||'{}')['sura_'+n]; list=d&&d.marks; }catch(e){} }
+      if(!list||!list.length) return {m:0,total,full:false};
+      const ay=new Set(list.filter(x=>!x.isTotal).map(x=>Number(x.ayah)));
+      const only1=ay.size===1 && !list.some(x=>!x.isTotal && Number(x.timeMs)>0);   // just the automatic "1 / 0" row
+      const m=only1?0:ay.size;
+      const hasTotal=list.some(x=>x.isTotal && Number(x.timeMs)>0);
+      return {m,total,full:!!(total && m>=total && hasTotal)};
+    }
+    function render(){
+      const names=suraNames(); const box=$('sumList'); box.innerHTML='';
+      let done=0, ayahs=0; const rows=[];
+      for(let n=1;n<=114;n++){ const st=stat(n); ayahs+=st.m; if(st.full) done++; rows.push([n,st]); }
+      $('sumTop').textContent=tf('sumDone',{d:done,a:ayahs});
+      rows.forEach(([n,st])=>{
+        const kind=st.full?'full':(st.m>0?'partial':'empty');
+        if(filter!=='all' && filter!==kind) return;
+        const r=document.createElement('button'); r.type='button'; r.className='sumRow '+kind; r.dataset.n=n;
+        r.innerHTML='<span class="sn">'+n+'</span><span class="nm"></span><span class="ct"></span>';
+        r.querySelector('.nm').textContent=names[n-1];
+        r.querySelector('.ct').textContent=(st.full?'✔ ':'')+st.m+'/'+st.total;
+        box.appendChild(r);
+      });
+    }
+    function filters(){
+      const f=$('sumFilters'); f.innerHTML='';
+      [['all','sumAll'],['full','sumFull'],['partial','sumPartial'],['empty','sumEmpty']].forEach(([k,key])=>{
+        const b=document.createElement('button'); b.type='button'; b.textContent=t(key); if(k===filter) b.className='on';
+        b.addEventListener('click',()=>{ filter=k; filters(); render(); }); f.appendChild(b);
+      });
+    }
+    btn.addEventListener('click',e=>{
+      e.stopPropagation();
+      try{ $('settingsMenu').classList.remove('open'); document.querySelector('header').classList.remove('menu-open'); }catch(_){}
+      $('sumTitle').textContent=t('sumTitle'); $('sumClose').textContent=t('sumClose');
+      filters(); render(); ov.style.display='flex';
+    });
+    $('sumClose').addEventListener('click',()=>{ ov.style.display='none'; });
+    $('sumList').addEventListener('click',e=>{
+      const r=e.target.closest('.sumRow'); if(!r) return;
+      const n=parseInt(r.dataset.n); ov.style.display='none';
+      const sel=$('suraSelect'); if(parseInt(sel.value)!==n){ sel.value=String(n); sel.dispatchEvent(new Event('change')); }
+    });
+  })();
+
+  // ---------- review: play one ayah, or only the 3 seconds around the boundary ----------
+  (function(){
+    const btn=$('revBtn'); if(!btn) return;
+    const pl=$('player');
+    const bar=document.createElement('div'); bar.id='revBar';
+    bar.innerHTML='<div class="r1"><button type="button" id="revClose">✕</button><button type="button" id="revPrev">◀</button><span id="revNum"></span><button type="button" id="revNext">▶</button></div>'
+      +'<div class="r2"><button type="button" id="revAyah"></button><button type="button" id="revBound"></button></div>'
+      +'<div class="r3"><button type="button" id="revMinus">−</button><span id="revInfo"></span><button type="button" id="revPlus">+</button></div>';
+    document.body.appendChild(bar);
+    let cur=1, timer=null;
+    const sorted=()=>marks.filter(m=>!m.isTotal).sort((a,b)=>a.ayah-b.ayah);
+    function range(n){
+      const L=sorted(); const i=L.findIndex(m=>m.ayah===n); if(i<0) return null;
+      const tot=marks.find(m=>m.isTotal);
+      const next=(i+1<L.length)?L[i+1]:(tot||null);
+      const s=L[i].timeMs;
+      const e=next?next.timeMs:(isFinite(pl.duration)?Math.round(pl.duration*1000):s+5000);
+      return {s,e,mark:L[i],next};
+    }
+    function stopAt(endMs){
+      clearInterval(timer);
+      timer=setInterval(()=>{ if(pl.paused){ clearInterval(timer); return; } if(pl.currentTime*1000>=endMs){ pl.pause(); clearInterval(timer); } },25);
+    }
+    function playRange(s,e){ pl.currentTime=Math.max(0,s)/1000; pl.play().catch(()=>{}); stopAt(e); }
+    function show(){
+      const r=range(cur);
+      $('revNum').textContent=tf('revAyah',{n:cur});
+      $('revAyah').textContent=t('revPlayAyah'); $('revBound').textContent=t('revBoundary');
+      $('revInfo').textContent = r&&r.next ? tf('revTime',{n:(r.next.isTotal?'999':r.next.ayah),ms:r.next.timeMs}) : '';
+      try{ focusedAyah=cur; lastShownAyah=cur; renderAyahText(cur,true); renderMarksList(); }catch(e){}
+    }
+    function maxAyah(){ const L=sorted(); return L.length?L[L.length-1].ayah:1; }
+    function ready(){
+      if(!(pl.getAttribute('src')||pl.currentSrc)){ alert(t('revNoAudio')); return null; }
+      const r=range(cur); if(!r){ alert(t('revNoMarks')); return null; }
+      return r;
+    }
+    function playAyah(){ const r=ready(); if(r) playRange(r.s,r.e); }
+    function playBound(){ const r=ready(); if(!r||!r.next) return; playRange(r.next.timeMs-1500, r.next.timeMs+1500); }
+    function nudge(dir){
+      const r=ready(); if(!r||!r.next) return;
+      r.next.timeMs=Math.max(0, r.next.timeMs+dir*getStepMs());
+      renderMarksList(); saveMarks(); scheduleAutoSave(); show(); playBound();
+    }
+    btn.addEventListener('click',e=>{
+      e.stopPropagation();
+      try{ $('settingsMenu').classList.remove('open'); document.querySelector('header').classList.remove('menu-open'); }catch(_){}
+      const L=sorted(); if(!L.length){ alert(t('revNoMarks')); return; }
+      cur=(typeof lastShownAyah==='number' && L.some(m=>m.ayah===lastShownAyah)) ? lastShownAyah : L[0].ayah;
+      bar.style.display='block'; show();
+    });
+    $('revClose').addEventListener('click',()=>{ clearInterval(timer); pl.pause(); bar.style.display='none'; });
+    $('revPrev').addEventListener('click',()=>{ const L=sorted().map(m=>m.ayah); const i=L.indexOf(cur); if(i>0){ cur=L[i-1]; show(); } });
+    $('revNext').addEventListener('click',()=>{ const L=sorted().map(m=>m.ayah); const i=L.indexOf(cur); if(i>=0 && i<L.length-1){ cur=L[i+1]; show(); } });
+    $('revAyah').addEventListener('click',playAyah);
+    $('revBound').addEventListener('click',playBound);
+    $('revMinus').addEventListener('click',()=>nudge(-1));
+    $('revPlus').addEventListener('click',()=>nudge(1));
+  })();
+
+  try{ applyLanguage(currentLang); if(window.__refreshReciterTexts) window.__refreshReciterTexts(); }catch(e){}
+})();
+
+// ================= Remembered settings + pinch zoom on the Quran text =================
+(function(){
+  const KEY='ui_prefs_v1';
+  const load=()=>{ try{ return JSON.parse(localStorage.getItem(KEY)||'{}'); }catch(e){ return {}; } };
+  const save=patch=>{ try{ const p=load(); Object.assign(p,patch); localStorage.setItem(KEY,JSON.stringify(p)); }catch(e){} };
+  const player=document.getElementById('player'), speed=document.getElementById('speedrow');
+
+  // --- save the Quran text size every time it changes (+/- buttons and pinch) ---
+  const baseSetFont=setQuranFontSize;
+  setQuranFontSize=function(v){ baseSetFont(v); save({font:quranFontSize}); };
+
+  // --- dark / light, language, playback speed ---
+  const dt=document.getElementById('darkToggle');
+  if(dt) dt.addEventListener('click',()=>save({dark:document.body.classList.contains('dark')}));
+  document.querySelectorAll('.langBtn').forEach(b=>b.addEventListener('click',()=>save({lang:b.dataset.lang})));
+  function applyRate(r){
+    r=parseFloat(r); if(!(r>0) || !player) return;
+    player.defaultPlaybackRate=r; player.playbackRate=r;          // a new audio file keeps the chosen speed
+    if(speed) [...speed.children].forEach(c=>c.classList.toggle('active', parseFloat(c.dataset.r)===r));
   }
-  h.addEventListener('click',(e)=>{
-    e.stopPropagation();
-    const c=!document.body.classList.contains('bar-collapsed');
-    if(c){ try{ document.getElementById('settingsMenu').classList.remove('open'); document.querySelector('header').classList.remove('menu-open'); }catch(_){} }
-    set(c);
+  if(speed) speed.addEventListener('click',()=>{ if(player){ player.defaultPlaybackRate=player.playbackRate; save({rate:player.playbackRate}); } });
+
+  // --- restore everything when the app is opened again ---
+  const p=load();
+  if(p.font) baseSetFont(p.font);
+  if(p.dark){ document.body.classList.add('dark'); if(dt) dt.textContent='☀️'; }
+  if(p.lang==='ku'||p.lang==='en'||p.lang==='ar'){ try{ applyLanguage(p.lang); }catch(e){} }
+  if(p.rate) applyRate(p.rate);
+
+  // --- pinch with two fingers on the Quran text: bigger / smaller ---
+  const panel=document.getElementById('textPanel');
+  if(panel){
+    panel.style.touchAction='pan-y';
+    let d0=0, f0=16, on=false;
+    const dist=t=>Math.hypot(t[0].clientX-t[1].clientX, t[0].clientY-t[1].clientY);
+    panel.addEventListener('touchstart',e=>{ if(e.touches.length===2){ d0=dist(e.touches); f0=quranFontSize; on=true; } },{passive:true});
+    panel.addEventListener('touchmove',e=>{
+      if(on && e.touches.length===2 && d0>0){
+        const nf=Math.round(f0*dist(e.touches)/d0);
+        if(nf!==quranFontSize) setQuranFontSize(nf);
+        e.preventDefault();
+      }
+    },{passive:false});
+    const end=e=>{ if(e.touches.length<2) on=false; };
+    panel.addEventListener('touchend',end,{passive:true});
+    panel.addEventListener('touchcancel',end,{passive:true});
+  }
+})();
+
+// ================= "Next surah" box: appears by itself when a surah is complete =================
+(function(){
+  Object.assign(TRANSLATIONS.ku, {"nsDone": "✔ ئەم سورەتە تەواو بوو", "nsGo": "سورەتی دواتر: {s} ◀"});
+  Object.assign(TRANSLATIONS.en, {"nsDone": "✔ This surah is complete", "nsGo": "Next surah: {s} ▶"});
+  Object.assign(TRANSLATIONS.ar, {"nsDone": "✔ اكتملت هذه السورة", "nsGo": "السورة التالية: {s} ◀"});
+  const box=document.createElement('div'); box.id='nextSuraBox';
+  box.innerHTML='<span id="nsMsg"></span><button type="button" id="nsGo"></button><button type="button" id="nsX">✕</button>';
+  document.body.appendChild(box);
+  const sel=document.getElementById('suraSelect'), list=document.getElementById('marksList'), pl=document.getElementById('player');
+  let last=false, quietUntil=0;
+  function complete(){
+    const n=currentMarksSura(), total=AYAH_COUNTS[n-1]||0;
+    const ay=new Set(marks.filter(m=>!m.isTotal).map(m=>Number(m.ayah)));
+    const tot=marks.some(m=>m.isTotal && Number(m.timeMs)>0);
+    return !!(total && ay.size>=total && tot);
+  }
+  function hide(){ box.style.display='none'; }
+  function show(){
+    const n=currentMarksSura(); if(n>=114) return;
+    document.getElementById('nsMsg').textContent=t('nsDone');
+    document.getElementById('nsGo').textContent=tf('nsGo',{s:suraNames()[n]});     // names are 0-based: [n] is surah n+1
+    box.dataset.next=String(n+1); box.style.display='flex';
+  }
+  function check(){
+    const c=complete();
+    if(c && !last && Date.now()>quietUntil) show();
+    if(!c) hide();
+    last=c;
+  }
+  if(list) new MutationObserver(check).observe(list,{childList:true,subtree:true});
+  if(sel) sel.addEventListener('change',()=>{ hide(); quietUntil=Date.now()+3000; setTimeout(()=>{ last=complete(); },3200); });
+  if(pl) pl.addEventListener('ended',()=>{ if(complete()) show(); });
+  document.getElementById('nsGo').addEventListener('click',()=>{
+    const nx=parseInt(box.dataset.next); hide();
+    if(nx>=1 && nx<=114 && sel){ sel.value=String(nx); sel.dispatchEvent(new Event('change')); }
   });
-  let saved=null; try{ saved=localStorage.getItem('barCollapsed'); }catch(e){}
-  set(saved==='1');
+  document.getElementById('nsX').addEventListener('click',hide);
+  setTimeout(()=>{ last=complete(); },3500);
 })();
 </script>
 </body>
