@@ -1472,6 +1472,34 @@ body.dark #nextSuraBox button{border-color:var(--ink);background:transparent;}
 #nextSuraBox #nsMsg{display:flex;align-items:center;}
 body.menu-view #nextSuraBox{display:none !important;}
 </style>
+
+<style id="start-review-2026-10-18">
+#startRev{display:none;position:fixed;left:8px;right:8px;bottom:calc(env(safe-area-inset-bottom,0px) + 8px);z-index:250;
+  background:var(--paper);color:var(--ink);border:1.5px solid #000;border-radius:16px;padding:8px;box-shadow:0 8px 22px rgba(0,0,0,.4);}
+body.dark #startRev{border-color:var(--ink);background:var(--paper-dim);}
+body.menu-view #startRev{display:none !important;}
+#startRev .srHead{display:flex;align-items:center;gap:8px;margin-bottom:6px;font-weight:700;font-size:13px;}
+#startRev .srHead #srTitle{flex:1 1 auto;}
+#startRev .srHead #srTime{font-size:12px;direction:ltr;opacity:.9;}
+#startRev .srRow{display:flex;gap:6px;margin-top:6px;align-items:center;}
+#startRev button{flex:1 1 0;min-width:0;height:40px;border:1.5px solid #000;border-radius:10px;background:var(--paper);color:var(--ink);font-weight:700;font-size:12.5px;padding:0 4px;}
+body.dark #startRev button{border-color:var(--ink);background:transparent;}
+#startRev #srClose{flex:0 0 40px;}
+#startRev #srPlay{background:var(--gold);color:#fff;}
+#startRev .srNudge{direction:ltr;}
+#startRev .srNudge button{font-size:13px;}
+#startRev #srAuto{flex:1.4 1 0;}
+#startRev #srLenLbl{font-size:12px;font-weight:700;white-space:nowrap;}
+#startRev .srLen{flex:0 0 40px;}
+#startRev .srLen.on{background:var(--teal);color:#fff;}
+</style>
+
+<style id="start-review-tall-2026-10-19">
+#startRev{top:auto;flex-direction:column;box-sizing:border-box;}
+#startRev .srRow{flex:1 1 0;margin-top:6px;}
+#startRev .srRow button{height:auto !important;min-height:40px;align-self:stretch;}
+#startRev .srHead{flex:0 0 auto;}
+</style>
 </head>
 <body>
 <div class="wrap">
@@ -1516,6 +1544,7 @@ body.menu-view #nextSuraBox{display:none !important;}
         <button class="menuAction" id="loadProgressBtn" style="display:none;">▶️ دەستپێکردنەوە لە ئایەتی هەڵگیراو</button>
         <button class="menuAction" id="clearProgressBtn" data-i18n="progressClear" style="display:none;">🗑 سڕینەوەی ئایەتی گەیشتوو</button>
         <p class="hint menuHint" id="progressStatus" style="display:none;"></p>
+        <button class="menuAction" id="startRevBtn" data-i18n="revOpen">🎯 پێداچوونەوەی سەرەتای ئایەتەکان</button>
         <button class="menuAction" id="autoMarkBtn" data-i18n="autoMark" style="margin-top:0;">🤖 دیاریکردنی خۆکاری ئایەتەکان (لە دەنگەوە)</button>
         <button class="menuAction" id="onlineMarkBtn" data-i18n="onlineMark" style="margin-top:0;">🌐 دیاریکردنی ئۆنڵاین (Whisper — بێبەرامبەر بە Groq)</button>
         <input id="openaiKey" type="password" autocomplete="off" placeholder="کلیل: gsk_... (Groq بێبەرامبەر) یان sk-... (OpenAI)">
@@ -20114,6 +20143,111 @@ self.onmessage=function(e){
   });
   document.getElementById('nsX').addEventListener('click',hide);
   setTimeout(()=>{ last=complete(); },3500);
+})();
+
+// ================= Review the START of every ayah (short clips) with +/- millisecond nudges =================
+(function(){
+  Object.assign(TRANSLATIONS.ku, {"revOpen": "🎯 پێداچوونەوەی سەرەتای ئایەتەکان", "revTitle": "سەرەتای ئایەتی {n} / {c}", "revPrev": "◀ ئایەتی پێشوو", "revNext": "ئایەتی دواتر ▶", "revPlay": "▶ لێدانی سەرەتا", "revAuto": "⏩ هەموو سورەتەکە", "revStop": "⏹ ڕاگرتن", "revLen": "درێژی:", "revNone": "ئەم ئایەتە هێشتا نیشانە نەکراوە", "revNoAudio": "سەرەتا فایلی دەنگ بار بکە", "revMs": "میلی چرکە"});
+  Object.assign(TRANSLATIONS.en, {"revOpen": "🎯 Review the start of each ayah", "revTitle": "Start of ayah {n} / {c}", "revPrev": "◀ Previous ayah", "revNext": "Next ayah ▶", "revPlay": "▶ Play the start", "revAuto": "⏩ Whole surah", "revStop": "⏹ Stop", "revLen": "Length:", "revNone": "This ayah is not marked yet", "revNoAudio": "Load the audio file first", "revMs": "ms"});
+  Object.assign(TRANSLATIONS.ar, {"revOpen": "🎯 مراجعة بداية كل آية", "revTitle": "بداية الآية {n} / {c}", "revPrev": "◀ الآية السابقة", "revNext": "الآية التالية ▶", "revPlay": "▶ تشغيل البداية", "revAuto": "⏩ السورة كاملة", "revStop": "⏹ إيقاف", "revLen": "المدة:", "revNone": "هذه الآية لم تُحدَّد بعد", "revNoAudio": "حمّل ملف الصوت أولًا", "revMs": "م.ث"});
+  const $=id=>document.getElementById(id);
+  const player=$('player'), openBtn=$('startRevBtn');
+  if(!player||!openBtn) return;
+  const el=document.createElement('div'); el.id='startRev';
+  el.innerHTML=
+    '<div class="srHead"><button type="button" id="srClose">✕</button><span id="srTitle"></span></div>'+
+    '<div class="srRow"><button type="button" id="srPrev"></button><button type="button" id="srPlay"></button><button type="button" id="srNext"></button></div>'+
+    '<div class="srRow srNudge">'+[-100,-50,-25,25,50,100].map(d=>'<button type="button" data-d="'+d+'">'+(d>0?'+':'−')+Math.abs(d)+'</button>').join('')+'</div>'+
+    '<div class="srRow"><span id="srLenLbl"></span>'+[1,2,3].map(v=>'<button type="button" class="srLen" data-s="'+v+'">'+v+'s</button>').join('')+'</div>';
+  document.body.appendChild(el);
+
+  let k=1, len=2, auto=false, stopTimer=null, curRes=null, follow=null;
+  const markCard=$('markCard');
+  function place(){        // the panel starts exactly at the top of the "end of ayah" row and reaches the bottom of the screen
+    if(!markCard) return;
+    const r=markCard.getBoundingClientRect();
+    if(r.height) el.style.top=Math.max(0,r.top)+'px';
+  }
+  try{ const v=parseFloat(localStorage.getItem('rev_len')); if(v>0) len=v; }catch(e){}
+  const sura=()=>currentMarksSura();
+  const count=()=>AYAH_COUNTS[sura()-1]||1;
+  const list=()=>marks.filter(m=>!m.isTotal).sort((a,b)=>Number(a.ayah)-Number(b.ayah));
+  const totalMark=()=>marks.find(m=>m.isTotal);
+  const markOf=n=>marks.find(m=>!m.isTotal && Number(m.ayah)===n);
+  const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+  function fmt(ms){ const v=Math.max(0,Math.round(ms)), m=Math.floor(v/60000), s=Math.floor((v%60000)/1000), x=v%1000; return m+':'+String(s).padStart(2,'0')+'.'+String(x).padStart(3,'0'); }
+  function paint(){
+    $('srTitle').textContent=tf('revTitle',{n:k,c:count()});
+    $('srPrev').textContent=t('revPrev'); $('srNext').textContent=t('revNext'); $('srPlay').textContent=t('revPlay');
+    $('srLenLbl').textContent=t('revLen');
+    el.querySelectorAll('.srLen').forEach(b=>b.classList.toggle('on', parseFloat(b.dataset.s)===len));
+  }
+  function stopAll(){
+    auto=false; clearTimeout(stopTimer); stopTimer=null;
+    if(curRes){ curRes(false); curRes=null; }
+    try{ player.pause(); }catch(e){}
+  }
+  function playClip(n){
+    if(curRes){ curRes(false); curRes=null; }
+    clearTimeout(stopTimer);
+    return new Promise(res=>{
+      const m=markOf(n);
+      if(!m || !player.getAttribute('src')){ res(false); return; }
+      player.currentTime=Number(m.timeMs)/1000;
+      const pr=player.play(); if(pr&&pr.catch) pr.catch(()=>{});
+      curRes=res;
+      stopTimer=setTimeout(()=>{ try{ player.pause(); }catch(e){} curRes=null; res(true); }, len*1000/(player.playbackRate||1)+80);
+    });
+  }
+  function go(dk){
+    if(auto){ stopAll(); }
+    k=Math.min(count(),Math.max(1,k+dk)); paint(); playClip(k);
+  }
+  function nudge(d){
+    const m=markOf(k); if(!m) return;
+    const arr=list(), i=arr.indexOf(m), prev=arr[i-1], next=arr[i+1]||totalMark();
+    const lo=prev?Number(prev.timeMs)+1:0, hi=next?Number(next.timeMs)-1:Infinity;
+    const nt=Math.max(lo,Math.min(hi,Number(m.timeMs)+d));
+    if(nt===Number(m.timeMs)) return;
+    m.timeMs=nt;
+    render(); paint();
+    if(auto) stopAll();
+    playClip(k);                                  // hear the new start at once
+  }
+  async function runAuto(){
+    if(auto){ stopAll(); paint(); return; }
+    auto=true; paint();
+    while(auto && k<=count()){
+      if(!markOf(k)){ k++; continue; }
+      paint();
+      const ok=await playClip(k);
+      if(!auto || !ok) break;
+      await sleep(150);
+      if(!auto) break;
+      if(k>=count()) break;
+      k++;
+    }
+    auto=false; paint();
+  }
+  function initK(){
+    const ct=(player.currentTime||0)*1000; let kk=0;
+    if(ct>0) list().forEach(m=>{ if(Number(m.timeMs)<=ct+50) kk=Number(m.ayah); });
+    if(!kk) kk=parseInt(($('startAyah')||{}).value)||1;
+    return Math.min(count(),Math.max(1,kk));
+  }
+  openBtn.addEventListener('click',e=>{
+    e.stopPropagation();
+    if(!player.getAttribute('src')){ alert(t('revNoAudio')); return; }
+    try{ $('settingsMenu').classList.remove('open'); document.querySelector('header').classList.remove('menu-open'); }catch(_){}
+    k=initK(); paint(); el.style.display='flex'; place();
+    if(!follow) follow=setInterval(place,400);
+  });
+  $('srClose').addEventListener('click',()=>{ stopAll(); el.style.display='none'; if(follow){ clearInterval(follow); follow=null; } });
+  $('srPrev').addEventListener('click',()=>go(-1));
+  $('srNext').addEventListener('click',()=>go(1));
+  $('srPlay').addEventListener('click',()=>{ if(auto) stopAll(); paint(); playClip(k); });
+  el.querySelectorAll('.srNudge button').forEach(b=>b.addEventListener('click',()=>nudge(parseInt(b.dataset.d))));
+  el.querySelectorAll('.srLen').forEach(b=>b.addEventListener('click',()=>{ len=parseFloat(b.dataset.s); try{ localStorage.setItem('rev_len',String(len)); }catch(e){} paint(); }));
 })();
 </script>
 </body>
