@@ -1600,7 +1600,6 @@ body.dark #startRev .srMk.cur{background:rgba(84,200,190,.28);color:#d6f5f1;}
         <button class="menuAction" id="loadProgressBtn" style="display:none;">▶️ دەستپێکردنەوە لە ئایەتی هەڵگیراو</button>
         <button class="menuAction" id="clearProgressBtn" data-i18n="progressClear" style="display:none;">🗑 سڕینەوەی ئایەتی گەیشتوو</button>
         <p class="hint menuHint" id="progressStatus" style="display:none;"></p>
-        <button class="menuAction" id="autoMarkBtn" data-i18n="autoMark" style="margin-top:0;">🤖 دیاریکردنی خۆکاری ئایەتەکان (لە دەنگەوە)</button>
         <button class="menuAction" id="onlineMarkBtn" data-i18n="onlineMark" style="margin-top:0;">🌐 دیاریکردنی ئۆنڵاین (Whisper — بێبەرامبەر بە Groq)</button>
         <input id="openaiKey" type="password" autocomplete="off" placeholder="کلیل: gsk_... (Groq بێبەرامبەر) یان sk-... (OpenAI)">
         <div id="convBox" style="display:none;">
@@ -20812,6 +20811,20 @@ html body #startRev #srTextIn{font-size:calc(var(--review-font-size,16px)*1.7) !
   },true);
   // هەر جارێک مینیوی پێداچوونەوە دروست دەبێتەوە، دوگمەکانی هەڵگرتن بەپێی ئایەتی هەڵگیراوی پێداچوونەوە ڕێک بکە
   try{ new MutationObserver(function(){ patchMenu(); }).observe(panel,{childList:true}); }catch(e){}
+})();
+</script>
+
+<script>
+/* مینیوی پێداچوونەوە (⋮): دەست لێدان لە هەر شوێنێکی دەرەوەی کارتی مینیو دایدەخات، پێویست ناکات دووبارە ⋮ بپەستیت */
+(function(){
+  var panel=document.getElementById('startRev'); if(!panel) return;
+  panel.addEventListener('click',function(e){
+    var box=document.getElementById('srSettings'); if(!box) return;
+    var t=e.target; if(!t||!t.closest) return;
+    if(t.closest('#srSettings')||t.closest('#srMenuBtn')) return;
+    e.stopImmediatePropagation(); e.preventDefault();      // ئەو دەستلێدانە تەنها مینیو دادەخات و هیچ دوگمەیەکی ژێرەوە کار ناکات
+    var mb=document.getElementById('srMenuBtn'); if(mb) mb.click();
+  },true);
 })();
 </script>
 
