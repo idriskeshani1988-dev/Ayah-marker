@@ -49,6 +49,8 @@
   /* Preserve the original colors of audio selection and ayah-start controls in dark mode. */
   body.dark #audioPickBtn, body.dark #startAyah{color:inherit;}
   body.dark #audioPickBtn{background:var(--paper);border-color:var(--line);}
+  .mark-row.doubt{background:rgba(217,165,63,.30) !important;box-shadow:inset 0 0 0 2px var(--gold-bright);border-radius:10px;}
+  .mark-row.doubt .rownum::before{content:'⚠ ';}
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;overscroll-behavior-y:none;}
   /* inner scroll areas never pass their scroll to the page (no pull-to-refresh) */
@@ -1448,6 +1450,8 @@ body.dark #convBoxCancel{border-color:var(--ink);}
         <button class="menuAction" id="onlineMarkBtn" data-i18n="onlineMark" style="margin-top:0;">🌐 دیاریکردنی ئۆنڵاین (Whisper — بێبەرامبەر بە Groq)</button>
         <input id="openaiKey" type="password" autocomplete="off" placeholder="کلیل: gsk_... (Groq بێبەرامبەر) یان sk-... (OpenAI)">
         <div class="settingsRow" style="margin-top:6px;"><label for="batchAyahs" data-i18n="onlineBatch" style="font-size:12px;">ژمارەی ئایەت لە هەر جارێک</label><input id="batchAyahs" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" value="50" style="width:92px;padding:6px;border:1px solid var(--line);border-radius:8px;direction:ltr;text-align:center;background:var(--paper);color:var(--ink);"></div>
+        <div class="settingsRow"><label for="autoContinue" data-i18n="onlineAuto" style="font-size:12px;">بەردەوامبوونی خۆکار بۆ پارچەی دواتر</label><input id="autoContinue" type="checkbox" style="width:20px;height:20px;"></div>
+        <button class="menuAction" id="doubtBtn" type="button" style="display:none;"></button>
         <div id="convBox" style="display:none;">
           <div id="convBoxTitle"></div>
           <div id="convBar"><div id="convBarFill"></div></div>
@@ -17392,7 +17396,7 @@ function renderMarksList(){
     displayList.forEach(m=>{
       const row = document.createElement('div');
       const isActive = !m.isTotal && m.ayah===lastShownAyah;
-      row.className = 'mark-row' + (m.isTotal ? ' total-row' : '') + (isActive ? ' active-row' : '');
+      row.className = 'mark-row' + (m.isTotal ? ' total-row' : '') + (isActive ? ' active-row' : '') + ((!m.isTotal && m.doubt!==undefined && m.doubt===m.timeMs) ? ' doubt' : '');
       row.dataset.seq = m.seq;
       row.innerHTML = `
         <button type="button" class="rowbtn" data-act="play">▶</button>
@@ -17404,6 +17408,7 @@ function renderMarksList(){
       marksList.appendChild(row);
     });
   }
+  try{ if(window.__updateDoubtBtn) window.__updateDoubtBtn(); }catch(_){}
   if(!window._followOnly){
     if(masterDb && masterLoadedSura!==null){
       flushSuraToMaster(masterLoadedSura);
@@ -19089,6 +19094,10 @@ function autoBoundaries(env, frameSec, lens){
   Object.assign(TRANSLATIONS.en, {"onlineBatch": "Ayahs per run", "onlineRange": "Marking ayah {a} to {b}...", "onlinePart": "Ayahs {a}–{b} marked ({b}/{n}) — press the online button again for ayah {c} onwards", "onlineFinished": "The whole surah is marked ({n} ayahs) — please review", "onlineNoProg": "No new ayah found in this audio part — lower the number of ayahs and try again"});
   Object.assign(TRANSLATIONS.ar, {"onlineBatch": "عدد الآيات في كل مرة", "onlineRange": "تحديد الآيات {a} إلى {b}...", "onlinePart": "تم تحديد الآيات {a}–{b} ({b}/{n}) — اضغط زر التحديد عبر الإنترنت مرة أخرى للآية {c} وما بعدها", "onlineFinished": "تم تحديد السورة كاملة ({n} آية) — يرجى المراجعة", "onlineNoProg": "لم يتم العثور على آية جديدة في هذا الجزء الصوتي — قلّل عدد الآيات وحاول مرة أخرى"});
 
+  Object.assign(TRANSLATIONS.ku, {"onlineAuto": "بەردەوامبوونی خۆکار بۆ پارچەی دواتر", "onlineEst": "ناردنی نزیکەی {m} خولەک دەنگ بۆ Whisper (لە کاتژمێری ڕابردوودا: {h} خولەک لە ≈١٢٠)", "onlineBudgetWait": "سنووری کاتژمێری Groq پڕ دەبێت — چاوەڕێی {m}:{s} بۆ پارچەی دواتر (بۆ هەڵوەشاندنەوە بگوشە)", "onlineDoubt": "⚠ {k} ئایەت گومانییە (ڕەنگی زەرد) — پێداچوونەوەیان بکە", "doubtBtn": "⚠ ئایەتی گومانیی دواتر ({n})"});
+  Object.assign(TRANSLATIONS.en, {"onlineAuto": "Auto-continue with the next part", "onlineEst": "Sending about {m} min of audio to Whisper (last hour: {h} of ≈120 min)", "onlineBudgetWait": "Groq hourly limit would be exceeded — waiting {m}:{s} before the next part (tap to cancel)", "onlineDoubt": "⚠ {k} ayah(s) are doubtful (yellow) — please review them", "doubtBtn": "⚠ Next doubtful ayah ({n})"});
+  Object.assign(TRANSLATIONS.ar, {"onlineAuto": "المتابعة تلقائيًا إلى الجزء التالي", "onlineEst": "إرسال نحو {m} دقيقة صوت إلى Whisper (الساعة الماضية: {h} من ≈120)", "onlineBudgetWait": "سيُتجاوز حد Groq الساعي — انتظار {m}:{s} قبل الجزء التالي (اضغط للإلغاء)", "onlineDoubt": "⚠ {k} آية مشكوك فيها (باللون الأصفر) — يرجى مراجعتها", "doubtBtn": "⚠ الآية المشكوك فيها التالية ({n})"});
+
   function normAr(s){
   return String(s||'')
     .replace(/[\u064B-\u065F\u0670\u06D6-\u06ED\u0640\u200c\u200d]/g,'')
@@ -19160,11 +19169,12 @@ function ayahStartsFromWords(ayahWords, hypWords){
   ayahWords.forEach((ws,k)=>ws.forEach(w=>{ refs.push(w); owner.push(k); }));
   const m=alignWords(refs, hypWords.map(h=>h.n));
   const N=ayahWords.length;
-  const starts=new Array(N).fill(null), ends=new Array(N).fill(null);
+  const starts=new Array(N).fill(null), ends=new Array(N).fill(null), weak=new Array(N).fill(true);
   let idx=0;
   for(let k=0;k<N;k++){
-    const cnt=ayahWords[k].length; let firstQ=-1, firstJ=-1, lastJ=-1;
-    for(let q=0;q<cnt;q++){ const j=m[idx+q]; if(j>=0){ if(firstQ<0){firstQ=q;firstJ=j;} lastJ=j; } }
+    const cnt=ayahWords[k].length; let firstQ=-1, firstJ=-1, lastJ=-1, hit=0;
+    for(let q=0;q<cnt;q++){ const j=m[idx+q]; if(j>=0){ hit++; if(firstQ<0){firstQ=q;firstJ=j;} lastJ=j; } }
+    weak[k]=!(hit>=Math.max(1,cnt*0.5));
     if(firstQ>=0){
       const avg=0.35;
       starts[k]=hypWords[firstJ].start - (firstQ>0 ? Math.min(firstQ,3)*avg*0.5 : 0);
@@ -19172,7 +19182,7 @@ function ayahStartsFromWords(ayahWords, hypWords){
     }
     idx+=cnt;
   }
-  return {starts, ends, matched:starts.filter(x=>x!==null).length};
+  return {starts, ends, weak, matched:starts.filter(x=>x!==null).length};
 }
 function fillAndOrder(starts, lens, endAll){
   const N=starts.length, out=starts.slice();
@@ -19202,7 +19212,7 @@ function silenceList(env, frameSec, minSil){
   }
   return list;
 }
-function snapStarts(starts, sil, win){
+function snapStarts(starts, sil, win, found){
   const out=starts.slice();
   for(let k=1;k<out.length;k++){
     const B=out[k]; let best=null,bc=1e9;
@@ -19212,7 +19222,7 @@ function snapStarts(starts, sil, win){
       const cost=Math.abs(c.t-B)-0.5*Math.min(c.dur,1);
       if(cost<bc){bc=cost;best=c;}
     }
-    if(best) out[k]=best.t;
+    if(best){ out[k]=best.t; if(found) found[k]=true; }
   }
   for(let i=1;i<out.length;i++) if(!(out[i]>out[i-1]+0.15)) out[i]=out[i-1]+0.15;
   return out;
@@ -19288,6 +19298,55 @@ function snapStarts(starts, sil, win){
     batchInp.addEventListener('change',()=>{ try{ localStorage.setItem('batch_ayahs', batchInp.value.trim()); }catch(_){} });
     batchInp.addEventListener('click',ev=>ev.stopPropagation());
   }
+  const autoCb=document.getElementById('autoContinue');
+  if(autoCb){
+    try{ autoCb.checked=localStorage.getItem('auto_continue')==='1'; }catch(_){}
+    autoCb.addEventListener('change',()=>{ try{ localStorage.setItem('auto_continue',autoCb.checked?'1':'0'); }catch(_){} });
+    autoCb.addEventListener('click',ev=>ev.stopPropagation());
+  }
+
+  // ---- doubtful ayahs: highlighted in the list; the button walks through them ----
+  const dbtn=document.getElementById('doubtBtn');
+  const isDoubt=mk=>!mk.isTotal && mk.doubt!==undefined && mk.doubt===mk.timeMs;   // an edited mark is no longer doubtful
+  window.__updateDoubtBtn=function(){
+    if(!dbtn) return;
+    const n=marks.filter(isDoubt).length;
+    dbtn.style.display=n?'block':'none';
+    if(n) dbtn.textContent=tf('doubtBtn',{n:n});
+  };
+  if(dbtn) dbtn.addEventListener('click',ev=>{
+    ev.stopPropagation();
+    const list=marks.filter(isDoubt).sort((x,y)=>x.ayah-y.ayah);
+    if(!list.length){ window.__updateDoubtBtn(); return; }
+    const cur=(focusedAyah!==null && focusedAyah!==undefined)?focusedAyah:(lastShownAyah||0);
+    const curMark=marks.find(mk=>!mk.isTotal && mk.ayah===cur);
+    if(curMark && isDoubt(curMark)){ delete curMark.doubt; saveMarks(); }        // moving on = this one was reviewed
+    const rest=marks.filter(isDoubt).sort((x,y)=>x.ayah-y.ayah);
+    if(!rest.length){ renderMarksList(); return; }
+    const nxt=rest.find(mk=>mk.ayah>cur)||rest[0];
+    try{ document.getElementById('settingsMenu').classList.remove('open'); document.querySelector('header').classList.remove('menu-open'); }catch(_){}
+    startMarkedPlayback(nxt);
+  });
+
+  // ---- Groq free-tier budget (~7200 audio seconds per hour): estimate, count, and wait if needed ----
+  const USAGE_KEY='groq_usage', LIMIT_SEC=7000;
+  function usageLoad(){ try{ const arr=JSON.parse(localStorage.getItem(USAGE_KEY)||'[]'); const now=Date.now(); return arr.filter(x=>now-x[0]<3600000); }catch(_){ return []; } }
+  function usageAdd(sec){ const arr=usageLoad(); arr.push([Date.now(),sec]); try{ localStorage.setItem(USAGE_KEY,JSON.stringify(arr)); }catch(_){} }
+  async function waitBudget(est){
+    if(est>=LIMIT_SEC) return;
+    for(;;){
+      const arr=usageLoad(); const used=arr.reduce((q,x)=>q+x[1],0);
+      if(used+est<=LIMIT_SEC) return;
+      const need=used+est-LIMIT_SEC; let acc=0, until=Date.now();
+      for(const x of arr){ acc+=x[1]; until=x[0]+3600000; if(acc>=need) break; }
+      const sec=Math.max(1,Math.ceil((until-Date.now())/1000)+2);
+      for(let q=sec;q>0;q--){
+        if(cancelled) throw new Error('cancelled');
+        say(tf('onlineBudgetWait',{m:Math.floor(q/60),s:String(q%60).padStart(2,'0')}),true);
+        await new Promise(r=>setTimeout(r,1000));
+      }
+    }
+  }
 
   // exact playing time (seconds) of the audio before a byte position (counts mp3 frames)
   async function secBefore(blob,endPos){
@@ -19315,6 +19374,139 @@ function snapStarts(starts, sil, win){
     return sr ? frames*spf/sr : 0;
   }
 
+  // one run = one group of ayahs. returns {final:boolean}
+  async function runOnce(first, key, auto){
+    const pl=document.getElementById('player'), src=pl && (pl.currentSrc||pl.src);
+    const N=currentSurahAyahs.length;
+    let B=parseInt(batchInp?batchInp.value:'50',10); if(!(B>=1)) B=50; B=Math.min(B,500);
+    const hasTotal=marks.some(mk=>mk.isTotal);
+    const mx=marks.filter(mk=>!mk.isTotal).reduce((q,mk)=>Math.max(q,Number(mk.ayah)||0),0);
+    let from=1;
+    if(hasTotal){ if(first){ if(!confirm(t('autoMarkConfirm'))) return {final:true,aborted:true}; } else return {final:true}; }
+    else if(mx>1) from=Math.min(mx,N);
+    const fm = from>1 ? marks.find(mk=>!mk.isTotal && Number(mk.ayah)===from) : null;
+    if(from>1 && !(fm && fm.timeMs>0)) from=1;
+    const fromSec = from>1 ? fm.timeMs/1000 : 0;
+    const to=Math.min(N,from+B-1), final=(to>=N);
+
+    const T=window.__ayahTools;
+    say(tf('onlineRange',{a:from,b:to}),true);
+    const blob=await (await fetch(src)).blob();
+    const total=blob.size;
+    let durSec=pl.duration; if(!isFinite(durSec) || !(durSec>0)) durSec=await secBefore(blob,total);
+    if(!(durSec>0)) throw new Error(t('onlineOnlyMp3'));
+
+    // ---- audio window: from a little before ayah `from` to a bit after ayah `to`+1 ----
+    const lensAll=currentSurahAyahs.map(ay=>normAr(String(ay.text||'')).length||1);
+    const sum=(x,y)=>{ let q=0; for(let k=x;k<=y;k++) q+=lensAll[k-1]; return q; };
+    const refEnd=final?N:to+1;
+    let b0=0, secStart=0;
+    if(from>1){
+      let target=Math.max(0,fromSec-3);
+      for(let tries=0;tries<4;tries++){
+        b0=await T.findSync(blob,Math.max(0,Math.floor(target/durSec*total)));
+        secStart=await secBefore(blob,b0);
+        if(secStart<=fromSec-0.5) break;
+        target=Math.max(0,target-(secStart-fromSec)-3);
+      }
+    }
+    let b1=total;
+    if(!final){
+      const frac=sum(from,refEnd)/sum(from,N);
+      const s1=Math.min(durSec, fromSec+(durSec-fromSec)*frac*1.3+10);
+      b1=await T.findSync(blob,Math.floor(s1/durSec*total));
+      if(b1>=total*0.995 || b1<=b0+50000) b1=total;
+    }
+
+    // ---- 0) estimate the audio time that will be sent; wait if the free hourly limit would be passed ----
+    const isGroq=/^gsk_/.test(key);
+    const estSec=durSec*(b1-b0)/total;
+    if(isGroq){
+      await waitBudget(estSec);
+      const used=usageLoad().reduce((q,x)=>q+x[1],0);
+      say(tf('onlineRange',{a:from,b:to})+'\n'+tf('onlineEst',{m:Math.round(estSec/6)/10,h:Math.round(used/6)/10}),true);
+      await new Promise(r2=>setTimeout(r2,1200));
+    }
+
+    // ---- 1) send this window to Whisper in frame-aligned pieces (< 25 MB each) ----
+    const CH=18*1024*1024, pieces=[]; let a=b0;
+    while(a<b1){ let b=Math.min(b1,a+CH); if(b<b1) b=await T.findSync(blob,b); if(b<=a) b=Math.min(b1,a+CH); pieces.push([a,b]); a=b; }
+    let offset=secStart; const hyp=[];
+    for(let i=0;i<pieces.length;i++){
+      if(cancelled) throw new Error('cancelled');
+      say(tf('onlineRange',{a:from,b:to})+'  ('+tf('onlineUpload',{i:i+1,n:pieces.length})+')',true);
+      const bytes=new Uint8Array(await blob.slice(pieces[i][0],pieces[i][1]).arrayBuffer());
+      const dur=mp3Seconds(bytes,(b0===0 && i===0));
+      if(!dur) throw new Error(t('onlineOnlyMp3'));
+      const js=await transcribe(key,bytes,i+1);
+      if(isGroq) usageAdd(dur);
+      const words=js.words||[];
+      if(!words.length && i===0) throw new Error('Whisper returned no word timestamps');
+      words.forEach(w=>{
+        const n=normAr(w.word); if(!n) return;
+        const st=(w.start||0)+offset-fromSec, en=(w.end||0)+offset-fromSec;
+        if(st>=-0.8) hyp.push({n, start:st, end:en});      // times are relative to the start of ayah `from`
+      });
+      offset+=dur;
+    }
+
+    // ---- 2) match the Whisper words with the Quran text of these ayahs ----
+    say(t('onlineAlign'),true);
+    await new Promise(r2=>setTimeout(r2,30));
+    const ayahWords=currentSurahAyahs.slice(from-1,refEnd).map(ay=>String(ay.text||'').split(/\s+/).map(normAr).filter(Boolean));
+    const lens=ayahWords.map(w=>w.join('').length||1);
+    const m=ayahWords.length;
+    const res=ayahStartsFromWords(ayahWords,hyp);
+    if(res.matched < Math.max(1,Math.floor(m*0.4))) throw new Error('only '+res.matched+' of '+m+' ayahs recognised');
+    let lastOk=-1; for(let k=m-1;k>=0;k--){ if(res.starts[k]!==null){ lastOk=k; break; } }
+    const commit = final ? m-1 : lastOk;       // index of the last mark we write
+    if(!final && commit<1) throw new Error(t('onlineNoProg'));
+    const endsOk=res.ends.filter(x=>x!==null);
+    const lastEnd=Math.max.apply(null,endsOk);
+    const rel = final ? fillAndOrder(res.starts,lens,lastEnd)
+                      : fillAndOrder(res.starts.slice(0,commit+1),lens.slice(0,commit+1),res.ends[commit]!==null?res.ends[commit]:lastEnd);
+    let starts=rel.map(x=>x+fromSec);          // absolute seconds
+    starts[0]=fromSec;
+    let endSec=Math.min(durSec,lastEnd+fromSec+0.25);
+    const found=new Array(starts.length).fill(false);
+
+    // ---- 3) snap every boundary to the real silence in the audio (decode only this window) ----
+    try{
+      const r=await T.decodeEnvelope(blob.slice(b0,b1), p=>say(tf('onlineSnap',{p:Math.round(p*100)}),true), ()=>cancelled);
+      const sl=silenceList(r.env,r.frameSec,0.10).map(c=>({t:c.t+secStart,s:c.s+secStart,dur:c.dur}));
+      starts=snapStarts(starts,sl,0.7,found);
+      if(final){
+        const F=r.env.length, sorted=Float32Array.from(r.env).sort();
+        const q=pp=>sorted[Math.min(F-1,Math.floor(pp*(F-1)))], thr=q(0.10)+0.30*(q(0.92)-q(0.10));
+        let last=F-1; while(last>0 && r.env[last]<thr) last--;
+        endSec=Math.min(durSec,secStart+(last+1)*r.frameSec+0.3);
+      }
+    }catch(snapErr){ if(cancelled || (snapErr&&snapErr.message==='cancelled')) throw snapErr; /* keep the Whisper times */ }
+    starts[0]=fromSec;
+    for(let i=1;i<starts.length;i++) if(!(starts[i]>starts[i-1]+0.15)) starts[i]=starts[i-1]+0.15;
+    if(final && !(endSec>starts[starts.length-1]+0.1)) endSec=starts[starts.length-1]+0.5;
+
+    // ---- 4) write the marks: keep the earlier ayahs, replace from `from` onwards ----
+    if(from===1){ marks=[]; seqCounter=0; }
+    else marks=marks.filter(mk=>!mk.isTotal && Number(mk.ayah)<from);
+    starts.forEach((st,k)=>{
+      const mk={ayah:from+k, timeMs:(from+k===1)?0:Math.round(st*1000), isTotal:false, seq:seqCounter++};
+      // doubtful = text not recognised (time was estimated), poor word match, or no real silence found near the boundary
+      const provisional = (!final && k===commit);          // the last one is only the start of the next part (it is redone next time)
+      if(k>0 && !provisional && (res.starts[k]===null || res.weak[k] || !found[k])) mk.doubt=mk.timeMs;
+      marks.push(mk);
+    });
+    if(final) marks.push({ayah:999, timeMs:Math.round(endSec*1000), isTotal:true, seq:seqCounter++});
+    render();
+    const nd=marks.filter(isDoubt).length;
+    let msg;
+    if(final) msg=tf('onlineFinished',{n:N});
+    else { const nextFrom=from+commit; msg=tf('onlinePart',{a:from,b:nextFrom-1,n:N,c:nextFrom}); }
+    if(nd) msg+='\n'+tf('onlineDoubt',{k:nd});
+    say(msg, auto && !final);
+    return {final:final};
+  }
+
   btn.addEventListener('click', async (e)=>{
     e.stopPropagation();
     if(running || window.__ayahBusy) return;
@@ -19323,117 +19515,18 @@ function snapStarts(starts, sil, win){
     if(!src){ alert(t('autoMarkNoAudio')); return; }
     if(!currentSurahAyahs || !currentSurahAyahs.length){ alert(t('autoMarkNoText')); return; }
     if(!key){ alert(t('onlineNoKey')); return; }
-
-    // ---- which ayahs now? continue after the last marked ayah, N ayahs per run ----
-    const N=currentSurahAyahs.length;
-    let B=parseInt(batchInp?batchInp.value:'50',10); if(!(B>=1)) B=50; B=Math.min(B,500);
-    const hasTotal=marks.some(m=>m.isTotal);
-    const mx=marks.filter(m=>!m.isTotal).reduce((p,m)=>Math.max(p,Number(m.ayah)||0),0);
-    let from=1;
-    if(hasTotal){ if(!confirm(t('autoMarkConfirm'))) return; }
-    else if(mx>1) from=Math.min(mx,N);
-    const fm = from>1 ? marks.find(m=>!m.isTotal && Number(m.ayah)===from) : null;
-    if(from>1 && !(fm && fm.timeMs>0)) from=1;
-    const fromSec = from>1 ? fm.timeMs/1000 : 0;
-    const to=Math.min(N,from+B-1), final=(to>=N);
-
     try{ localStorage.setItem('openai_key', key); }catch(_){}
     try{ document.getElementById('settingsMenu').classList.remove('open'); document.querySelector('header').classList.remove('menu-open'); }catch(_){}
     running=true; window.__ayahBusy=true; cancelled=false;
     try{
-      const T=window.__ayahTools;
-      say(tf('onlineRange',{a:from,b:to}),true);
-      const blob=await (await fetch(src)).blob();
-      const total=blob.size;
-      let durSec=pl.duration; if(!isFinite(durSec) || !(durSec>0)) durSec=await secBefore(blob,total);
-      if(!(durSec>0)) throw new Error(t('onlineOnlyMp3'));
-
-      // ---- audio window: from a little before ayah `from` to a bit after ayah `to`+1 ----
-      const lensAll=currentSurahAyahs.map(ay=>normAr(String(ay.text||'')).length||1);
-      const sum=(x,y)=>{ let s=0; for(let k=x;k<=y;k++) s+=lensAll[k-1]; return s; };
-      const refEnd=final?N:to+1;
-      let b0=0, secStart=0;
-      if(from>1){
-        let target=Math.max(0,fromSec-3);
-        for(let tries=0;tries<4;tries++){
-          b0=await T.findSync(blob,Math.max(0,Math.floor(target/durSec*total)));
-          secStart=await secBefore(blob,b0);
-          if(secStart<=fromSec-0.5) break;
-          target=Math.max(0,target-(secStart-fromSec)-3);
-        }
+      const auto=!!(autoCb && autoCb.checked);
+      let first=true, guard=0;
+      for(;;){
+        const r=await runOnce(first,key,auto);
+        first=false;
+        if(r.final || !auto || cancelled || ++guard>200) break;
+        await new Promise(r2=>setTimeout(r2,400));
       }
-      let b1=total;
-      if(!final){
-        const frac=sum(from,refEnd)/sum(from,N);
-        const s1=Math.min(durSec, fromSec+(durSec-fromSec)*frac*1.3+10);
-        b1=await T.findSync(blob,Math.floor(s1/durSec*total));
-        if(b1>=total*0.995 || b1<=b0+50000) b1=total;
-      }
-
-      // ---- 1) send this window to Whisper in frame-aligned pieces (< 25 MB each) ----
-      const CH=18*1024*1024, pieces=[]; let a=b0;
-      while(a<b1){ let b=Math.min(b1,a+CH); if(b<b1) b=await T.findSync(blob,b); if(b<=a) b=Math.min(b1,a+CH); pieces.push([a,b]); a=b; }
-      let offset=secStart; const hyp=[];
-      for(let i=0;i<pieces.length;i++){
-        if(cancelled) throw new Error('cancelled');
-        say(tf('onlineRange',{a:from,b:to})+'  ('+tf('onlineUpload',{i:i+1,n:pieces.length})+')',true);
-        const bytes=new Uint8Array(await blob.slice(pieces[i][0],pieces[i][1]).arrayBuffer());
-        const dur=mp3Seconds(bytes,(b0===0 && i===0));
-        if(!dur) throw new Error(t('onlineOnlyMp3'));
-        const js=await transcribe(key,bytes,i+1);
-        const words=js.words||[];
-        if(!words.length && i===0) throw new Error('Whisper returned no word timestamps');
-        words.forEach(w=>{
-          const n=normAr(w.word); if(!n) return;
-          const st=(w.start||0)+offset-fromSec, en=(w.end||0)+offset-fromSec;
-          if(st>=-0.8) hyp.push({n, start:st, end:en});      // times are relative to the start of ayah `from`
-        });
-        offset+=dur;
-      }
-
-      // ---- 2) match the Whisper words with the Quran text of these ayahs ----
-      say(t('onlineAlign'),true);
-      await new Promise(r2=>setTimeout(r2,30));
-      const ayahWords=currentSurahAyahs.slice(from-1,refEnd).map(ay=>String(ay.text||'').split(/\s+/).map(normAr).filter(Boolean));
-      const lens=ayahWords.map(w=>w.join('').length||1);
-      const m=ayahWords.length;
-      const res=ayahStartsFromWords(ayahWords,hyp);
-      if(res.matched < Math.max(1,Math.floor(m*0.4))) throw new Error('only '+res.matched+' of '+m+' ayahs recognised');
-      let lastOk=-1; for(let k=m-1;k>=0;k--){ if(res.starts[k]!==null){ lastOk=k; break; } }
-      const commit = final ? m-1 : lastOk;       // index of the last mark we write
-      if(!final && commit<1) throw new Error(t('onlineNoProg'));
-      const endsOk=res.ends.filter(x=>x!==null);
-      const lastEnd=Math.max.apply(null,endsOk);
-      let rel = final ? fillAndOrder(res.starts,lens,lastEnd)
-                      : fillAndOrder(res.starts.slice(0,commit+1),lens.slice(0,commit+1),res.ends[commit]!==null?res.ends[commit]:lastEnd);
-      let starts=rel.map(x=>x+fromSec);          // absolute seconds
-      starts[0]=fromSec;
-      let endSec=Math.min(durSec,lastEnd+fromSec+0.25);
-
-      // ---- 3) snap every boundary to the real silence in the audio (decode only this window) ----
-      try{
-        const r=await T.decodeEnvelope(blob.slice(b0,b1), p=>say(tf('onlineSnap',{p:Math.round(p*100)}),true), ()=>cancelled);
-        const sl=silenceList(r.env,r.frameSec,0.10).map(c=>({t:c.t+secStart,s:c.s+secStart,dur:c.dur}));
-        starts=snapStarts(starts,sl,0.7);
-        if(final){
-          const F=r.env.length, sorted=Float32Array.from(r.env).sort();
-          const q=pp=>sorted[Math.min(F-1,Math.floor(pp*(F-1)))], thr=q(0.10)+0.30*(q(0.92)-q(0.10));
-          let last=F-1; while(last>0 && r.env[last]<thr) last--;
-          endSec=Math.min(durSec,secStart+(last+1)*r.frameSec+0.3);
-        }
-      }catch(snapErr){ if(cancelled || (snapErr&&snapErr.message==='cancelled')) throw snapErr; /* keep the Whisper times */ }
-      starts[0]=fromSec;
-      for(let i=1;i<starts.length;i++) if(!(starts[i]>starts[i-1]+0.15)) starts[i]=starts[i-1]+0.15;
-      if(final && !(endSec>starts[starts.length-1]+0.1)) endSec=starts[starts.length-1]+0.5;
-
-      // ---- 4) write the marks: keep the earlier ayahs, replace from `from` onwards ----
-      if(from===1){ marks=[]; seqCounter=0; }
-      else marks=marks.filter(mk=>!mk.isTotal && Number(mk.ayah)<from);
-      starts.forEach((st,k)=>marks.push({ayah:from+k, timeMs:(from+k===1)?0:Math.round(st*1000), isTotal:false, seq:seqCounter++}));
-      if(final) marks.push({ayah:999, timeMs:Math.round(endSec*1000), isTotal:true, seq:seqCounter++});
-      render();
-      if(final) say(tf('onlineFinished',{n:N}));
-      else { const nextFrom=from+commit; say(tf('onlinePart',{a:from,b:nextFrom-1,n:N,c:nextFrom})); }
     }catch(err){
       if(cancelled || (err&&err.message==='cancelled')) say(t('autoMarkCancelled'));
       else say(t('onlineFail')+(err&&err.message?err.message:err));
