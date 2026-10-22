@@ -1403,6 +1403,54 @@ body.dark #convBar{border-color:rgba(255,255,255,.35);}
 body.dark #convBoxCancel{border-color:var(--ink);}
 </style>
 
+<style id="wide-seek-buttons">
+/* ئایەتی پێشوو / دواتر فراوان، دوگمەی دیاریکردنی کۆتایی ئایەت بە قەبارەی نووسینەکەی (یەک دێڕ) */
+#markCard{gap:5px !important;}
+#markCard > #fwd1Btn, #markCard > #back1Btn{
+  flex:1 1 0 !important;width:auto !important;min-width:0 !important;
+  height:44px !important;font-size:clamp(10px,3.1vw,12.5px) !important;font-weight:700 !important;
+  padding:0 3px !important;white-space:nowrap !important;
+}
+#markCard > #markBtn{
+  flex:0 0 auto !important;width:auto !important;min-width:0 !important;
+  height:44px !important;font-size:clamp(9.5px,3vw,12px) !important;line-height:1.2 !important;
+  padding:0 10px !important;white-space:nowrap !important;overflow:visible !important;
+}
+</style>
+<style id="big-row-buttons">
+/* ▶ + − لە ڕیزی نیشانەکان: هێماکان گەورەتر */
+.mark-row .rowbtn[data-act="play"], .mark-row .rowbtn[data-act="plus"], .mark-row .rowbtn[data-act="minus"]{
+  font-size:36px !important;line-height:1 !important;
+  min-width:52px !important;min-height:42px !important;padding:0 6px !important;
+}
+.mark-row{min-height:46px !important;}
+#marksList:not(.all){max-height:104px !important;}
+</style>
+<style id="markcard-bottom">
+/* ئایەتی پێشوو / دیاریکردن / ئایەتی دواتر: لە خوارەوەی شاشە */
+body .wrap{padding-bottom:0 !important;}
+#markCard{
+  order:100 !important;
+  margin-top:auto !important;margin-bottom:0 !important;
+  position:sticky !important;bottom:0 !important;z-index:20 !important;
+  padding-bottom:calc(6px + env(safe-area-inset-bottom, 0px)) !important;
+  box-shadow:0 -6px 14px rgba(0,0,0,.18);
+}
+</style>
+<style id="layout-fit-marks5">
+/* دەقی قورئان خۆی بەپێی شوێنی ماوە دەبێتە گەورە/بچووک، بۆ ئەوەی لیستی نیشانەکان لەژێر دوگمەکان نەبڕێت */
+@media (orientation: portrait){
+  .wrap > .card:has(#textPanel){flex:1 1 0 !important;min-height:150px !important;display:flex !important;flex-direction:column !important;margin-bottom:4px !important;}
+  body #textPanel{flex:1 1 auto !important;max-height:none !important;min-height:0 !important;}
+  .wrap > .card:has(#marksList){margin-bottom:2px !important;padding-bottom:3px !important;}
+  /* هەموو ڕیزەکان بەرزییان وەک یەکە: داخراو = ٢ ڕیز، پیشاندانی هەموو = تەنها ٥ ڕیز */
+  body .mark-row{height:47px !important;min-height:47px !important;box-sizing:border-box !important;}
+  body #marksList{padding-top:0 !important;padding-bottom:0 !important;scroll-snap-type:y mandatory;}
+  body #marksList .mark-row{scroll-snap-align:start;}
+  body #marksList:not(.all){max-height:94px !important;}
+  body #marksList.all{max-height:235px !important;overflow-y:auto !important;}
+}
+</style>
 </head>
 <body>
 <div class="wrap">
@@ -1451,6 +1499,7 @@ body.dark #convBoxCancel{border-color:var(--ink);}
         <input id="openaiKey" type="password" autocomplete="off" placeholder="کلیل: gsk_... (Groq بێبەرامبەر) یان sk-... (OpenAI)">
         <div class="settingsRow" style="margin-top:6px;"><label for="batchAyahs" data-i18n="onlineBatch" style="font-size:12px;">ژمارەی ئایەت لە هەر جارێک</label><input id="batchAyahs" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" value="50" style="width:92px;padding:6px;border:1px solid var(--line);border-radius:8px;direction:ltr;text-align:center;background:var(--paper);color:var(--ink);"></div>
         <div class="settingsRow"><label for="autoContinue" data-i18n="onlineAuto" style="font-size:12px;">بەردەوامبوونی خۆکار بۆ پارچەی دواتر</label><input id="autoContinue" type="checkbox" style="width:20px;height:20px;"></div>
+        <div id="groqLeft" style="font-size:12px;line-height:1.7;text-align:center;padding:4px 8px;"></div>
         <button class="menuAction" id="doubtBtn" type="button" style="display:none;"></button>
         <div id="convBox" style="display:none;">
           <div id="convBoxTitle"></div>
@@ -1476,8 +1525,8 @@ body.dark #convBoxCancel{border-color:var(--ink);}
       <div class="chip" data-r="3">3x</div>
     </div>
     <div class="subactions" id="seekRow" style="display:none; margin-top:6px;">
-      <button class="btn2" id="fwd1Btn" data-i18n="fwd1">1 چرکە پاش ⏩</button>
-      <button class="btn2" id="back1Btn" data-i18n="back1">⏪ 1 چرکە پێش</button>
+      <button class="btn2" id="fwd1Btn" data-i18n="fwd1">ئایەتی دواتر ⏩</button>
+      <button class="btn2" id="back1Btn" data-i18n="back1">⏪ ئایەتی پێشوو</button>
     </div>
     <input type="file" id="fileInput" accept="audio/*" multiple>
   </header>
@@ -17063,7 +17112,7 @@ const TRANSLATIONS = {
   ku: {
     title:"دیاریکەری ئایەتی قورئان", darkMode:"دۆخی تاریک", language:"زمان",
     audioPick:"🎧 دەنگ", labelSura:"سورە", labelAyah:"ئایەت",
-    fwd1:"1 چرکە پاش ⏩", back1:"⏪ 1 چرکە پێش",
+    fwd1:"ئایەتی دواتر ⏩", back1:"⏪ ئایەتی پێشوو",
     loadingText:"داواکردنی دەقی سورە...",
     nextAyahPrefix:"ئایەتی داهاتوو کە سەرەتای دەستنیشان دەکرێت:",
     markStart:"دیاریکردنی کۆتایی ئایەت", markTotal:"دیاریکردنی کۆتایی ئایەت",
@@ -17087,7 +17136,7 @@ const TRANSLATIONS = {
   en: {
     title:"Quran Ayah Marker", darkMode:"Dark Mode", language:"Language",
     audioPick:"🎧 Audio", labelSura:"Surah", labelAyah:"Ayah",
-    fwd1:"Forward 1s ⏩", back1:"⏪ Back 1s",
+    fwd1:"Next ayah ⏩", back1:"⏪ Previous ayah",
     loadingText:"Loading surah text...",
     nextAyahPrefix:"Next ayah start to mark:",
     markStart:"Mark End of Ayah", markTotal:"Mark End of Ayah",
@@ -17111,7 +17160,7 @@ const TRANSLATIONS = {
   ar: {
     title:"محدد آيات القرآن", darkMode:"الوضع الداكن", language:"اللغة",
     audioPick:"🎧 الصوت", labelSura:"السورة", labelAyah:"الآية",
-    fwd1:"الأمام 1 ثانية ⏩", back1:"⏪ للخلف 1 ثانية",
+    fwd1:"الآية التالية ⏩", back1:"⏪ الآية السابقة",
     loadingText:"جارٍ تحميل نص السورة...",
     nextAyahPrefix:"الآية التالية لتحديد بدايتها:",
     markStart:"تحديد نهاية الآية", markTotal:"تحديد نهاية الآية",
@@ -17324,13 +17373,38 @@ const stepMsInput = document.getElementById("stepMsInput");
 let quranFontSize = 16;               // always starts at 16
 const fontSizeDisplay = document.getElementById("fontSizeDisplay");
 function setQuranFontSize(value){
-  quranFontSize = Math.min(32, Math.max(12, Math.round(Number(value) || 16)));
+  quranFontSize = Math.min(44, Math.max(12, Math.round(Number(value) || 16)));
   document.documentElement.style.setProperty('--quran-font-size', quranFontSize + 'px');
   if(fontSizeDisplay) fontSizeDisplay.textContent = String(quranFontSize);
 }
 document.getElementById('fontMinus')?.addEventListener('click', ()=>setQuranFontSize(quranFontSize-1));
 document.getElementById('fontPlus')?.addEventListener('click', ()=>setQuranFontSize(quranFontSize+1));
 setQuranFontSize(16);
+
+// ---- pinch with two fingers on the Quran text = bigger / smaller text ----
+(function(){
+  const panel=document.getElementById('textPanel'); if(!panel) return;
+  panel.style.touchAction='pan-y';                       // one finger still scrolls; two fingers are ours
+  let active=false, startDist=0, startSize=16, raf=0, want=16;
+  const dist=t=>Math.hypot(t[0].clientX-t[1].clientX, t[0].clientY-t[1].clientY);
+  panel.addEventListener('touchstart',e=>{
+    if(e.touches.length===2){ active=true; startDist=dist(e.touches)||1; startSize=quranFontSize; want=startSize; }
+    else active=false;
+  },{passive:true});
+  panel.addEventListener('touchmove',e=>{
+    if(!active || e.touches.length!==2) return;
+    e.preventDefault();
+    want=startSize*dist(e.touches)/startDist;
+    if(!raf) raf=requestAnimationFrame(()=>{ raf=0; if(Math.round(want)!==quranFontSize) setQuranFontSize(want); });
+  },{passive:false});
+  const end=()=>{
+    if(!active) return; active=false;
+    if(raf){ cancelAnimationFrame(raf); raf=0; setQuranFontSize(want); }
+    try{ if(typeof showAyahText==='function') showAyahText(true); }catch(_){}   // keep the current ayah in view
+  };
+  panel.addEventListener('touchend',end,{passive:true});
+  panel.addEventListener('touchcancel',end,{passive:true});
+})();
 
 
 
@@ -17341,7 +17415,9 @@ function getStepMs(){
 
 let focusedAyah = null;
 let playbackStopMs = null;
+let navAyah = null;          // the ayah last started with the ▶ / next / previous buttons
 function startMarkedPlayback(mark){
+  navAyah = mark.isTotal ? null : mark.ayah;
   const ordered = marks.filter(m=>!m.isTotal).sort((a,b)=>a.timeMs-b.timeMs);
   const idx = ordered.findIndex(m=>m.seq===mark.seq);
   let stop = null;
@@ -17409,6 +17485,7 @@ function renderMarksList(){
     });
   }
   try{ if(window.__updateDoubtBtn) window.__updateDoubtBtn(); }catch(_){}
+  try{ if(window.__updateGroqLeft) window.__updateGroqLeft(); }catch(_){}
   if(!window._followOnly){
     if(masterDb && masterLoadedSura!==null){
       flushSuraToMaster(masterLoadedSura);
@@ -17605,11 +17682,33 @@ speedrow.addEventListener('click',(e)=>{
   player.playbackRate = parseFloat(chip.dataset.r);
 });
 
+// Previous / next ayah: jump to the start of that ayah and play just that ayah (for reviewing the marks)
+function navList(){ return marks.filter(m=>!m.isTotal).sort((a,b)=>a.ayah-b.ayah); }
+function navCurrentIndex(list){
+  const tMs = player.currentTime*1000;
+  let idx = -1;
+  for(let i=0;i<list.length;i++){ if(list[i].timeMs <= tMs+5) idx = i; else break; }
+  // paused exactly at the end of an ayah that was just played: that ayah is still "the current one"
+  if(player.paused && navAyah !== null){
+    const j = list.findIndex(m=>m.ayah===navAyah);
+    if(j >= 0){
+      const tot = marks.find(m=>m.isTotal);
+      const lo = list[j].timeMs - 60;
+      const hi = (j+1<list.length ? list[j+1].timeMs : (tot ? tot.timeMs : Infinity)) + 120;
+      if(tMs >= lo && tMs <= hi) idx = j;
+    }
+  }
+  return idx;
+}
 back1Btn.addEventListener('click', ()=>{
-  player.currentTime = Math.max(0, player.currentTime - 1);
+  const list = navList(); if(!list.length) return;
+  const idx = navCurrentIndex(list);
+  startMarkedPlayback(list[Math.max(0, idx-1)]);
 });
 fwd1Btn.addEventListener('click', ()=>{
-  player.currentTime = Math.min(player.duration||Infinity, player.currentTime + 1);
+  const list = navList(); if(!list.length) return;
+  const idx = navCurrentIndex(list);
+  if(idx+1 < list.length) startMarkedPlayback(list[idx+1]);
 });
 
 // ---- Ayah text (fetched live, not stored in the app — needs internet) ----
@@ -19098,6 +19197,10 @@ function autoBoundaries(env, frameSec, lens){
   Object.assign(TRANSLATIONS.en, {"onlineAuto": "Auto-continue with the next part", "onlineEst": "Sending about {m} min of audio to Whisper (last hour: {h} of ≈120 min)", "onlineBudgetWait": "Groq hourly limit would be exceeded — waiting {m}:{s} before the next part (tap to cancel)", "onlineDoubt": "⚠ {k} ayah(s) are doubtful (yellow) — please review them", "doubtBtn": "⚠ Next doubtful ayah ({n})"});
   Object.assign(TRANSLATIONS.ar, {"onlineAuto": "المتابعة تلقائيًا إلى الجزء التالي", "onlineEst": "إرسال نحو {m} دقيقة صوت إلى Whisper (الساعة الماضية: {h} من ≈120)", "onlineBudgetWait": "سيُتجاوز حد Groq الساعي — انتظار {m}:{s} قبل الجزء التالي (اضغط للإلغاء)", "onlineDoubt": "⚠ {k} آية مشكوك فيها (باللون الأصفر) — يرجى مراجعتها", "doubtBtn": "⚠ الآية المشكوك فيها التالية ({n})"});
 
+  Object.assign(TRANSLATIONS.ku, {"groqLeft": "⏱ کاتی ماوەی Whisper: ≈ {left} خولەک لە {total}", "groqRefill": "پڕ دەبێتەوە دوای {r} خولەک", "groqNeed": "بۆ تەواوکردنی ئەم سورەتە نزیکەی {need} خولەک دەنگ ماوە"});
+  Object.assign(TRANSLATIONS.en, {"groqLeft": "⏱ Whisper time left: ≈ {left} of {total} min", "groqRefill": "refilled in {r} min", "groqNeed": "About {need} min of audio left to finish this surah"});
+  Object.assign(TRANSLATIONS.ar, {"groqLeft": "⏱ وقت Whisper المتبقي: ≈ {left} من {total} دقيقة", "groqRefill": "يتجدد بعد {r} دقيقة", "groqNeed": "يتبقى نحو {need} دقيقة صوت لإكمال هذه السورة"});
+
   function normAr(s){
   return String(s||'')
     .replace(/[\u064B-\u065F\u0670\u06D6-\u06ED\u0640\u200c\u200d]/g,'')
@@ -19348,6 +19451,39 @@ function snapStarts(starts, sil, win, found){
     }
   }
 
+  // ---- remaining free Whisper time, shown in the menu ----
+  const gl=document.getElementById('groqLeft');
+  window.__updateGroqLeft=function(){
+    if(!gl) return;
+    const arr=usageLoad(), used=arr.reduce((q,x)=>q+x[1],0);
+    const leftMin=Math.max(0,7200-used)/60;
+    let txt=tf('groqLeft',{left:Math.round(leftMin),total:120});
+    if(arr.length){
+      const newest=arr.reduce((q,x)=>Math.max(q,x[0]),0);
+      txt+=' — '+tf('groqRefill',{r:Math.max(1,Math.ceil((newest+3600000-Date.now())/60000))});
+    }
+    let needMin=0;
+    try{
+      const pl=document.getElementById('player');
+      if(pl && isFinite(pl.duration) && pl.duration>0 && currentSurahAyahs && currentSurahAyahs.length && !marks.some(mk=>mk.isTotal)){
+        const lastMk=marks.filter(mk=>!mk.isTotal).sort((x,y)=>y.ayah-x.ayah)[0];
+        const startSec=(lastMk && lastMk.ayah>1)?lastMk.timeMs/1000:0;
+        needMin=Math.max(0,pl.duration-startSec)*1.08/60;
+        txt+='\n'+tf('groqNeed',{need:Math.ceil(needMin)});
+      }
+    }catch(_){}
+    gl.style.whiteSpace='pre-line';
+    gl.style.color=(needMin>leftMin)?'#b3261e':'';
+    gl.textContent=txt;
+  };
+  try{
+    const menuEl=document.getElementById('settingsMenu');
+    if(menuEl) new MutationObserver(()=>{ if(menuEl.classList.contains('open')) window.__updateGroqLeft(); }).observe(menuEl,{attributes:true,attributeFilter:['class']});
+    new MutationObserver(()=>window.__updateGroqLeft()).observe(document.documentElement,{attributes:true,attributeFilter:['lang']});
+    setInterval(()=>{ if(menuEl && menuEl.classList.contains('open')) window.__updateGroqLeft(); },15000);
+  }catch(_){}
+  window.__updateGroqLeft();
+
   // exact playing time (seconds) of the audio before a byte position (counts mp3 frames)
   async function secBefore(blob,endPos){
     const T=window.__ayahTools; let pos=0, frames=0, sr=0, spf=1152, first=true;
@@ -19439,7 +19575,7 @@ function snapStarts(starts, sil, win, found){
       const dur=mp3Seconds(bytes,(b0===0 && i===0));
       if(!dur) throw new Error(t('onlineOnlyMp3'));
       const js=await transcribe(key,bytes,i+1);
-      if(isGroq) usageAdd(dur);
+      if(isGroq){ usageAdd(dur); window.__updateGroqLeft(); }
       const words=js.words||[];
       if(!words.length && i===0) throw new Error('Whisper returned no word timestamps');
       words.forEach(w=>{
