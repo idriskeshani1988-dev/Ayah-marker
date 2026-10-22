@@ -1451,6 +1451,16 @@ body .wrap{padding-bottom:0 !important;}
   body #marksList.all{max-height:235px !important;overflow-y:auto !important;}
 }
 </style>
+<style id="lang-pick-css">
+#langPickOverlay{position:fixed;inset:0;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;
+  padding:calc(24px + env(safe-area-inset-top,0px)) 24px calc(24px + env(safe-area-inset-bottom,0px));
+  background:#0c2e2c;color:#f6efe0;text-align:center;}
+#langPickOverlay.hide{display:none;}
+#langPickOverlay .lpTitle{font-size:22px;font-weight:800;line-height:1.5;margin-bottom:6px;}
+#langPickOverlay .lpSub{font-size:14px;opacity:.85;line-height:1.7;margin-bottom:10px;}
+#langPickOverlay button{width:100%;max-width:320px;min-height:58px;border-radius:16px;border:2px solid #d9a53f;background:#f6efe0;color:#0c2e2c;font-size:21px;font-weight:800;font-family:inherit;cursor:pointer;}
+#langPickOverlay button:active{background:#d9a53f;}
+</style>
 </head>
 <body>
 <div class="wrap">
@@ -17080,6 +17090,12 @@ lamejs.WavHeader = WavHeader;
 lamejs();
 </script>
 <script src="./quran-data.js"></script>
+<div id="langPickOverlay" role="dialog" aria-modal="true" aria-label="Language">
+  <div class="lpTitle">زمانی ئەپەکە هەڵبژێرە<br>Choose app language<br>اختر لغة التطبيق</div>
+  <button type="button" data-lang="ku">کوردی - سۆرانی</button>
+  <button type="button" data-lang="en">English</button>
+  <button type="button" data-lang="ar">عربي</button>
+</div>
 <script>
 // ---- Surah names (Arabic) ----
 const SURA_NAMES = ["الفاتحة","البقرة","آل عمران","النساء","المائدة","الأنعام","الأعراف","الأنفال","التوبة","يونس",
@@ -17603,6 +17619,14 @@ document.querySelectorAll('.langBtn').forEach(btn=>{
   btn.addEventListener('click', ()=>applyLanguage(btn.dataset.lang));
 });
 applyLanguage('ku');
+// ---- ask for the app language every time the app opens ----
+(function(){
+  const ov=document.getElementById('langPickOverlay'); if(!ov) return;
+  ov.querySelectorAll('button[data-lang]').forEach(b=>b.addEventListener('click',()=>{
+    applyLanguage(b.dataset.lang);
+    ov.classList.add('hide');
+  }));
+})();
 function loadAudioIntoPlayer(url, label){
   window.__audioName = label;
   try{ if(window.__checkAudioFormat) window.__checkAudioFormat(url, label); }catch(e){}
