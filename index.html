@@ -19792,6 +19792,25 @@ function snapStarts(starts, sil, win, found){
     if(ignorePop>0){ ignorePop--; return; }
     if(isOpen()){ pushed=false; closeMenu(); }        // the Back button was pressed
   });
+
+  // One entry point for the native Back button: returns true when it closed something (menu / list), false when the app may exit.
+  window.__idrisBack=function(){
+    try{
+      const ov=document.getElementById('langPickOverlay');
+      if(ov && !ov.classList.contains('hide')) return true;                       // language screen: Back does nothing
+      const pop=document.querySelectorAll('#pickList.open, #miniSpeedList.open');
+      if(pop.length){ pop.forEach(p=>p.classList.remove('open')); return true; }
+      if(isOpen()){ closeMenu(); return true; }
+    }catch(_){}
+    return false;
+  };
+  // Capacitor @capacitor/app plugin (when it is installed in the APK): handle Back ourselves
+  try{
+    const AppPl=window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.App;
+    if(AppPl && typeof AppPl.addListener==='function'){
+      AppPl.addListener('backButton',()=>{ if(!window.__idrisBack()){ try{ if(AppPl.exitApp) AppPl.exitApp(); }catch(_){} } });
+    }
+  }catch(_){}
 })();
 
 // ---- the header overlay can never stay open when the menu is closed (blank screen fix) ----
