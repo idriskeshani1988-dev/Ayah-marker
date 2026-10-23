@@ -1526,6 +1526,7 @@ body .settingsMenu #whisperOptsBox #groqLeft{border-top:1px dashed var(--line);p
         <input id="openaiKey" type="password" autocomplete="off" placeholder="کلیل: gsk_... (Groq بێبەرامبەر) یان sk-... (OpenAI)">
         <div class="settingsRow" ><label for="batchAyahs" data-i18n="onlineBatch" style="font-size:12px;">ژمارەی ئایەت لە هەر جارێک</label><input id="batchAyahs" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" value="50" style="width:92px;padding:6px;border:1px solid var(--line);border-radius:8px;direction:ltr;text-align:center;background:var(--paper);color:var(--ink);"></div>
         <div class="settingsRow"><label for="autoContinue" data-i18n="onlineAuto" style="font-size:12px;">بەردەوامبوونی خۆکار بۆ پارچەی دواتر</label><input id="autoContinue" type="checkbox" style="width:20px;height:20px;"></div>
+        <button class="menuAction" id="undoChunkBtn" type="button" style="display:none;"></button>
         <div id="groqLeft" style="font-size:12px;line-height:1.7;text-align:center;padding:4px 8px;"></div>
         </div>
         <div id="convBox" style="display:none;">
@@ -17519,6 +17520,7 @@ function renderMarksList(){
     });
   }
   try{ if(window.__updateGroqLeft) window.__updateGroqLeft(); }catch(_){}
+  try{ if(window.__updateUndoBtn) window.__updateUndoBtn(); }catch(_){}
   if(!window._followOnly){
     if(masterDb && masterLoadedSura!==null){
       flushSuraToMaster(masterLoadedSura);
@@ -19257,6 +19259,10 @@ function autoBoundaries(env, frameSec, lens){
   Object.assign(TRANSLATIONS.en, {"onlineMarkEleven": "🌐 Online marking (ElevenLabs Scribe)", "elevenKeyPh": "Key: sk_... (ElevenLabs API key)", "onlineNoKeyEleven": "First enter your ElevenLabs API key in the key field", "onlineEstOnly": "Sending about {m} min of audio to ElevenLabs Scribe"});
   Object.assign(TRANSLATIONS.ar, {"onlineMarkEleven": "🌐 التحديد عبر الإنترنت (ElevenLabs Scribe)", "elevenKeyPh": "المفتاح: sk_... (مفتاح ElevenLabs API)", "onlineNoKeyEleven": "أدخل مفتاح ElevenLabs API أولاً في خانة المفتاح", "onlineEstOnly": "إرسال نحو {m} دقيقة صوت إلى ElevenLabs Scribe"});
 
+  Object.assign(TRANSLATIONS.ku, {"undoChunk": "↩️ گەڕانەوەی دوایین پارچە (ئایەتی {a}–{b})", "undoConfirm": "نیشانەکان دەگەڕێنەوە بۆ پێش پارچەی ئایەتی {a}–{b}. دڵنیایت؟", "undoDone": "گەڕایەوە بۆ پێش پارچەی ئایەتی {a}–{b}"});
+  Object.assign(TRANSLATIONS.en, {"undoChunk": "↩️ Undo last chunk (ayahs {a}–{b})", "undoConfirm": "Restore the marks as they were before the chunk of ayahs {a}–{b}?", "undoDone": "Restored the state before ayahs {a}–{b}"});
+  Object.assign(TRANSLATIONS.ar, {"undoChunk": "↩️ التراجع عن آخر جزء (الآيات {a}–{b})", "undoConfirm": "هل تريد استعادة العلامات كما كانت قبل جزء الآيات {a}–{b}؟", "undoDone": "تمت الاستعادة إلى ما قبل الآيات {a}–{b}"});
+
   function normAr(s){
   return String(s||'')
     .replace(/[\u064B-\u065F\u0670\u06D6-\u06ED\u0640\u200c\u200d]/g,'')
@@ -19535,6 +19541,29 @@ function snapStarts(starts, sil, win, found){
     autoCb.addEventListener('click',ev=>ev.stopPropagation());
   }
 
+  // ---- undo the LAST online chunk (restores the marks as they were before that chunk) ----
+  const undoBtn=document.getElementById('undoChunkBtn');
+  const UNDO_KEY='undo_last_chunk';
+  function undoLoad(){ try{ return JSON.parse(localStorage.getItem(UNDO_KEY)||'null'); }catch(_){ return null; } }
+  function undoSave(o){ try{ if(o) localStorage.setItem(UNDO_KEY,JSON.stringify(o)); else localStorage.removeItem(UNDO_KEY); }catch(_){} }
+  window.__updateUndoBtn=function(){
+    if(!undoBtn) return;
+    const u=undoLoad(); let show=false;
+    try{ show=!!(u && u.sura===currentMarksSura() && Array.isArray(u.marks)); }catch(_){}
+    undoBtn.style.display=show?'block':'none';
+    if(show) undoBtn.textContent=tf('undoChunk',{a:u.a,b:u.b});
+  };
+  if(undoBtn) undoBtn.addEventListener('click',ev=>{
+    ev.stopPropagation();
+    if(running || window.__ayahBusy) return;
+    const u=undoLoad();
+    if(!u || u.sura!==currentMarksSura()){ window.__updateUndoBtn(); return; }
+    if(!confirm(tf('undoConfirm',{a:u.a,b:u.b}))) return;
+    marks=u.marks; seqCounter=u.seq; undoSave(null);
+    render();
+    say(tf('undoDone',{a:u.a,b:u.b}));
+  });
+
   // ---- Groq free-tier budget (~7200 audio seconds per hour): estimate, count, and wait if needed ----
   const USAGE_KEY='groq_usage', LIMIT_SEC=7000;
   function usageLoad(){ try{ const arr=JSON.parse(localStorage.getItem(USAGE_KEY)||'[]'); const now=Date.now(); return arr.filter(x=>now-x[0]<3600000); }catch(_){ return []; } }
@@ -19731,6 +19760,7 @@ function snapStarts(starts, sil, win, found){
     if(final && !(endSec>starts[starts.length-1]+0.1)) endSec=starts[starts.length-1]+0.5;
 
     // ---- 4) write the marks: keep the earlier ayahs, replace from `from` onwards ----
+    const backup={sura:currentMarksSura(), marks:JSON.parse(JSON.stringify(marks)), seq:seqCounter, a:from, b:(final?N:from+commit-1)};
     if(from===1){ marks=[]; seqCounter=0; }
     else marks=marks.filter(mk=>!mk.isTotal && Number(mk.ayah)<from);
     starts.forEach((st,k)=>{
@@ -19739,6 +19769,7 @@ function snapStarts(starts, sil, win, found){
     });
     if(final) marks.push({ayah:999, timeMs:Math.round(endSec*1000), isTotal:true, seq:seqCounter++});
     render();
+    undoSave(backup); window.__updateUndoBtn();
     let msg;
     if(final) msg=tf('onlineFinished',{n:N});
     else { const nextFrom=from+commit; msg=tf('onlinePart',{a:from,b:nextFrom-1,n:N,c:nextFrom}); }
