@@ -49,9 +49,7 @@
   /* Preserve the original colors of audio selection and ayah-start controls in dark mode. */
   body.dark #audioPickBtn, body.dark #startAyah{color:inherit;}
   body.dark #audioPickBtn{background:var(--paper);border-color:var(--line);}
-  .mark-row.doubt{background:rgba(217,165,63,.30) !important;box-shadow:inset 0 0 0 2px var(--gold-bright);border-radius:10px;}
-  .mark-row.doubt .rownum::before{content:'⚠ ';}
-  *{box-sizing:border-box;}
+    *{box-sizing:border-box;}
   html,body{margin:0;padding:0;overscroll-behavior-y:none;}
   /* inner scroll areas never pass their scroll to the page (no pull-to-refresh) */
   .settingsMenu, #marksList, .ayah-line-list, .mark-row, [style*="overflow"]{overscroll-behavior:contain;}
@@ -1355,13 +1353,15 @@ body.dark #showAllLabel{color:var(--ink);}
 </style>
 
 <style id="auto-mark-2026-10-12">
-#autoProg{display:none;position:fixed;left:8px;right:8px;top:calc(env(safe-area-inset-top,0px) + 44px);z-index:120;
-  background:#0f3d3a;color:#fff;border:1.5px solid #000;border-radius:12px;padding:8px 12px;font-size:13px;font-weight:700;text-align:center;
-  box-shadow:0 6px 16px rgba(0,0,0,.4);}
+#autoProg{display:none;position:fixed;left:8px;right:8px;top:calc(env(safe-area-inset-top,0px) + 6px);z-index:9000;
+  background:#0f3d3a;color:#fff;border:1.5px solid #000;border-radius:12px;padding:6px 10px;font-size:12.5px;line-height:1.45;font-weight:700;text-align:center;
+  box-shadow:0 6px 16px rgba(0,0,0,.4);max-height:34vh;overflow:auto;white-space:pre-line;}
 body.dark #autoProg{background:#30465e;border-color:var(--ink);}
 </style>
 
 <style id="online-mark-2026-10-12">
+#sttProvider{width:100%;height:40px;box-sizing:border-box;border:1.5px solid #000;border-radius:10px;padding:0 10px;background:var(--paper);color:var(--ink);font-size:14px;font-family:inherit;direction:ltr;}
+body.dark #sttProvider{border-color:var(--ink);}
 #openaiKey{width:100%;height:40px;box-sizing:border-box;border:1.5px solid #000;border-radius:10px;padding:0 10px;background:var(--paper);color:var(--ink);font-size:13px;direction:ltr;text-align:left;}
 body.dark #openaiKey{border-color:var(--ink);}
 </style>
@@ -1461,6 +1461,18 @@ body .wrap{padding-bottom:0 !important;}
 #langPickOverlay button{width:100%;max-width:320px;min-height:58px;border-radius:16px;border:2px solid #d9a53f;background:#f6efe0;color:#0c2e2c;font-size:21px;font-weight:800;font-family:inherit;cursor:pointer;}
 #langPickOverlay button:active{background:#d9a53f;}
 </style>
+<style id="whisper-opts-box">
+/* دوگمەی ئۆنڵاین + کلیل + ڕێکخستنەکان لە ناو یەک بۆردەر (هەمان بۆردەری بەشەکانی تر) */
+body .settingsMenu #whisperOptsBox{
+  padding:10px 12px !important;margin-top:0 !important;margin-bottom:0 !important;
+  display:flex !important;flex-direction:column !important;gap:10px !important;
+}
+body .settingsMenu #whisperOptsBox > *{margin-top:0 !important;margin-bottom:0 !important;}
+/* مەسافەی نێوان بۆکسەکان هەمووی یەکسان (١٠ پیکسەڵ) */
+body .settingsMenu .menuBox:has(#whisperOptsBox) + .menuDivider{display:none !important;}
+body .settingsMenu #whisperOptsBox .settingsRow{padding:0 !important;min-height:0 !important;margin:0 !important;}
+body .settingsMenu #whisperOptsBox #groqLeft{border-top:1px dashed var(--line);padding-top:8px !important;}
+</style>
 </head>
 <body>
 <div class="wrap">
@@ -1505,12 +1517,17 @@ body .wrap{padding-bottom:0 !important;}
         <button class="menuAction" id="loadProgressBtn" style="display:none;">▶️ دەستپێکردنەوە لە ئایەتی هەڵگیراو</button>
         <button class="menuAction" id="clearProgressBtn" data-i18n="progressClear" style="display:none;">🗑 سڕینەوەی ئایەتی گەیشتوو</button>
         <p class="hint menuHint" id="progressStatus" style="display:none;"></p>
+        <div class="menuBox" id="whisperOptsBox">
         <button class="menuAction" id="onlineMarkBtn" data-i18n="onlineMark" style="margin-top:0;">🌐 دیاریکردنی ئۆنڵاین (Whisper — بێبەرامبەر بە Groq)</button>
+        <select id="sttProvider" aria-label="Provider">
+          <option value="whisper">Groq / OpenAI — Whisper</option>
+          <option value="eleven">ElevenLabs — Scribe</option>
+        </select>
         <input id="openaiKey" type="password" autocomplete="off" placeholder="کلیل: gsk_... (Groq بێبەرامبەر) یان sk-... (OpenAI)">
-        <div class="settingsRow" style="margin-top:6px;"><label for="batchAyahs" data-i18n="onlineBatch" style="font-size:12px;">ژمارەی ئایەت لە هەر جارێک</label><input id="batchAyahs" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" value="50" style="width:92px;padding:6px;border:1px solid var(--line);border-radius:8px;direction:ltr;text-align:center;background:var(--paper);color:var(--ink);"></div>
+        <div class="settingsRow" ><label for="batchAyahs" data-i18n="onlineBatch" style="font-size:12px;">ژمارەی ئایەت لە هەر جارێک</label><input id="batchAyahs" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" value="50" style="width:92px;padding:6px;border:1px solid var(--line);border-radius:8px;direction:ltr;text-align:center;background:var(--paper);color:var(--ink);"></div>
         <div class="settingsRow"><label for="autoContinue" data-i18n="onlineAuto" style="font-size:12px;">بەردەوامبوونی خۆکار بۆ پارچەی دواتر</label><input id="autoContinue" type="checkbox" style="width:20px;height:20px;"></div>
         <div id="groqLeft" style="font-size:12px;line-height:1.7;text-align:center;padding:4px 8px;"></div>
-        <button class="menuAction" id="doubtBtn" type="button" style="display:none;"></button>
+        </div>
         <div id="convBox" style="display:none;">
           <div id="convBoxTitle"></div>
           <div id="convBar"><div id="convBarFill"></div></div>
@@ -17096,6 +17113,7 @@ lamejs();
   <button type="button" data-lang="en">English</button>
   <button type="button" data-lang="ar">عربي</button>
 </div>
+<script>try{ if(localStorage.getItem('app_lang')) document.getElementById('langPickOverlay').classList.add('hide'); }catch(e){}</script>
 <script>
 // ---- Surah names (Arabic) ----
 const SURA_NAMES = ["الفاتحة","البقرة","آل عمران","النساء","المائدة","الأنعام","الأعراف","الأنفال","التوبة","يونس",
@@ -17221,7 +17239,7 @@ function applyLanguage(lang){
     b.classList.toggle('active', b.dataset.lang===currentLang);
   });
   try{ refreshSuraNames(); }catch(e){}
-  try{ const ki=document.getElementById('openaiKey'); if(ki) ki.placeholder=t('onlineKeyPh'); }catch(e){}
+  try{ const ki=document.getElementById('openaiKey'); if(ki) ki.placeholder=t(window.__sttProvider==='eleven'?'elevenKeyPh':'onlineKeyPh'); }catch(e){}
   if(typeof refreshNextAyah==='function') refreshNextAyah();
   if(typeof render==='function') render();
 }
@@ -17488,7 +17506,7 @@ function renderMarksList(){
     displayList.forEach(m=>{
       const row = document.createElement('div');
       const isActive = !m.isTotal && m.ayah===lastShownAyah;
-      row.className = 'mark-row' + (m.isTotal ? ' total-row' : '') + (isActive ? ' active-row' : '') + ((!m.isTotal && m.doubt!==undefined && m.doubt===m.timeMs) ? ' doubt' : '');
+      row.className = 'mark-row' + (m.isTotal ? ' total-row' : '') + (isActive ? ' active-row' : '');
       row.dataset.seq = m.seq;
       row.innerHTML = `
         <button type="button" class="rowbtn" data-act="play">▶</button>
@@ -17500,7 +17518,6 @@ function renderMarksList(){
       marksList.appendChild(row);
     });
   }
-  try{ if(window.__updateDoubtBtn) window.__updateDoubtBtn(); }catch(_){}
   try{ if(window.__updateGroqLeft) window.__updateGroqLeft(); }catch(_){}
   if(!window._followOnly){
     if(masterDb && masterLoadedSura!==null){
@@ -17619,13 +17636,21 @@ document.querySelectorAll('.langBtn').forEach(btn=>{
   btn.addEventListener('click', ()=>applyLanguage(btn.dataset.lang));
 });
 applyLanguage('ku');
-// ---- ask for the app language every time the app opens ----
+// ---- ask for the app language only the first time; later launches use the saved language ----
 (function(){
-  const ov=document.getElementById('langPickOverlay'); if(!ov) return;
-  ov.querySelectorAll('button[data-lang]').forEach(b=>b.addEventListener('click',()=>{
-    applyLanguage(b.dataset.lang);
+  const ov=document.getElementById('langPickOverlay');
+  const save=l=>{ try{ localStorage.setItem('app_lang',l); }catch(_){} };
+  let saved=null; try{ saved=localStorage.getItem('app_lang'); }catch(_){}
+  if(saved && TRANSLATIONS[saved]){
+    applyLanguage(saved);
+    if(ov) ov.classList.add('hide');
+  }
+  if(ov) ov.querySelectorAll('button[data-lang]').forEach(b=>b.addEventListener('click',()=>{
+    applyLanguage(b.dataset.lang); save(b.dataset.lang);
     ov.classList.add('hide');
   }));
+  // changing the language from the menu is remembered too
+  document.querySelectorAll('.langBtn').forEach(btn=>btn.addEventListener('click',()=>save(btn.dataset.lang)));
 })();
 function loadAudioIntoPlayer(url, label){
   window.__audioName = label;
@@ -19217,13 +19242,20 @@ function autoBoundaries(env, frameSec, lens){
   Object.assign(TRANSLATIONS.en, {"onlineBatch": "Ayahs per run", "onlineRange": "Marking ayah {a} to {b}...", "onlinePart": "Ayahs {a}–{b} marked ({b}/{n}) — press the online button again for ayah {c} onwards", "onlineFinished": "The whole surah is marked ({n} ayahs) — please review", "onlineNoProg": "No new ayah found in this audio part — lower the number of ayahs and try again"});
   Object.assign(TRANSLATIONS.ar, {"onlineBatch": "عدد الآيات في كل مرة", "onlineRange": "تحديد الآيات {a} إلى {b}...", "onlinePart": "تم تحديد الآيات {a}–{b} ({b}/{n}) — اضغط زر التحديد عبر الإنترنت مرة أخرى للآية {c} وما بعدها", "onlineFinished": "تم تحديد السورة كاملة ({n} آية) — يرجى المراجعة", "onlineNoProg": "لم يتم العثور على آية جديدة في هذا الجزء الصوتي — قلّل عدد الآيات وحاول مرة أخرى"});
 
-  Object.assign(TRANSLATIONS.ku, {"onlineAuto": "بەردەوامبوونی خۆکار بۆ پارچەی دواتر", "onlineEst": "ناردنی نزیکەی {m} خولەک دەنگ بۆ Whisper (لە کاتژمێری ڕابردوودا: {h} خولەک لە ≈١٢٠)", "onlineBudgetWait": "سنووری کاتژمێری Groq پڕ دەبێت — چاوەڕێی {m}:{s} بۆ پارچەی دواتر (بۆ هەڵوەشاندنەوە بگوشە)", "onlineDoubt": "⚠ {k} ئایەت گومانییە (ڕەنگی زەرد) — پێداچوونەوەیان بکە", "doubtBtn": "⚠ ئایەتی گومانیی دواتر ({n})"});
-  Object.assign(TRANSLATIONS.en, {"onlineAuto": "Auto-continue with the next part", "onlineEst": "Sending about {m} min of audio to Whisper (last hour: {h} of ≈120 min)", "onlineBudgetWait": "Groq hourly limit would be exceeded — waiting {m}:{s} before the next part (tap to cancel)", "onlineDoubt": "⚠ {k} ayah(s) are doubtful (yellow) — please review them", "doubtBtn": "⚠ Next doubtful ayah ({n})"});
-  Object.assign(TRANSLATIONS.ar, {"onlineAuto": "المتابعة تلقائيًا إلى الجزء التالي", "onlineEst": "إرسال نحو {m} دقيقة صوت إلى Whisper (الساعة الماضية: {h} من ≈120)", "onlineBudgetWait": "سيُتجاوز حد Groq الساعي — انتظار {m}:{s} قبل الجزء التالي (اضغط للإلغاء)", "onlineDoubt": "⚠ {k} آية مشكوك فيها (باللون الأصفر) — يرجى مراجعتها", "doubtBtn": "⚠ الآية المشكوك فيها التالية ({n})"});
+  Object.assign(TRANSLATIONS.ku, {"onlineAuto": "بەردەوامبوونی خۆکار بۆ پارچەی دواتر", "onlineEst": "ناردنی نزیکەی {m} خولەک دەنگ بۆ Whisper (لە کاتژمێری ڕابردوودا: {h} خولەک لە ≈١٢٠)", "onlineBudgetWait": "سنووری کاتژمێری Groq پڕ دەبێت — چاوەڕێی {m}:{s} بۆ پارچەی دواتر (بۆ هەڵوەشاندنەوە بگوشە)"});
+  Object.assign(TRANSLATIONS.en, {"onlineAuto": "Auto-continue with the next part", "onlineEst": "Sending about {m} min of audio to Whisper (last hour: {h} of ≈120 min)", "onlineBudgetWait": "Groq hourly limit would be exceeded — waiting {m}:{s} before the next part (tap to cancel)"});
+  Object.assign(TRANSLATIONS.ar, {"onlineAuto": "المتابعة تلقائيًا إلى الجزء التالي", "onlineEst": "إرسال نحو {m} دقيقة صوت إلى Whisper (الساعة الماضية: {h} من ≈120)", "onlineBudgetWait": "سيُتجاوز حد Groq الساعي — انتظار {m}:{s} قبل الجزء التالي (اضغط للإلغاء)"});
 
   Object.assign(TRANSLATIONS.ku, {"groqLeft": "⏱ کاتی ماوەی Whisper: ≈ {left} خولەک لە {total}", "groqRefill": "پڕ دەبێتەوە دوای {r} خولەک", "groqNeed": "بۆ تەواوکردنی ئەم سورەتە نزیکەی {need} خولەک دەنگ ماوە"});
   Object.assign(TRANSLATIONS.en, {"groqLeft": "⏱ Whisper time left: ≈ {left} of {total} min", "groqRefill": "refilled in {r} min", "groqNeed": "About {need} min of audio left to finish this surah"});
   Object.assign(TRANSLATIONS.ar, {"groqLeft": "⏱ وقت Whisper المتبقي: ≈ {left} من {total} دقيقة", "groqRefill": "يتجدد بعد {r} دقيقة", "groqNeed": "يتبقى نحو {need} دقيقة صوت لإكمال هذه السورة"});
+
+  Object.assign(TRANSLATIONS.ku, {"elevenPerm": "ئەم کلیلەی ElevenLabs مۆڵەتی «Speech to Text»ی نییە. لە ElevenLabs بچۆ بۆ Developers ← API Keys، کلیلەکە دەستکاری بکە و «Speech to Text» بکە بە Access، یان کلیلێکی نوێ دروست بکە و هەموو مۆڵەتەکان چالاک بکە.", "elevenBadKey": "کلیلی ElevenLabs دروست نییە. دڵنیابە لە کلیلەکە (sk_...) و بە تەواوی لە ElevenLabs کۆپی کراوە."});
+  Object.assign(TRANSLATIONS.en, {"elevenPerm": "This ElevenLabs key does not have the “Speech to Text” permission. In ElevenLabs open Developers → API Keys, edit the key and set “Speech to Text” to Access, or create a new key with all permissions.", "elevenBadKey": "The ElevenLabs key is not valid. Check that the whole key (sk_...) was copied."});
+  Object.assign(TRANSLATIONS.ar, {"elevenPerm": "مفتاح ElevenLabs هذا لا يملك صلاحية «Speech to Text». افتح Developers ← API Keys في ElevenLabs وعدّل المفتاح وفعّل «Speech to Text»، أو أنشئ مفتاحًا جديدًا بكل الصلاحيات.", "elevenBadKey": "مفتاح ElevenLabs غير صالح. تأكد من نسخ المفتاح كاملًا (sk_...)."});
+  Object.assign(TRANSLATIONS.ku, {"onlineMarkEleven": "🌐 دیاریکردنی ئۆنڵاین (ElevenLabs Scribe)", "elevenKeyPh": "کلیل: sk_... (ElevenLabs API key)", "onlineNoKeyEleven": "سەرەتا کلیلی ElevenLabs API لە خانەی کلیلەکە بنووسە", "onlineEstOnly": "ناردنی نزیکەی {m} خولەک دەنگ بۆ ElevenLabs Scribe"});
+  Object.assign(TRANSLATIONS.en, {"onlineMarkEleven": "🌐 Online marking (ElevenLabs Scribe)", "elevenKeyPh": "Key: sk_... (ElevenLabs API key)", "onlineNoKeyEleven": "First enter your ElevenLabs API key in the key field", "onlineEstOnly": "Sending about {m} min of audio to ElevenLabs Scribe"});
+  Object.assign(TRANSLATIONS.ar, {"onlineMarkEleven": "🌐 التحديد عبر الإنترنت (ElevenLabs Scribe)", "elevenKeyPh": "المفتاح: sk_... (مفتاح ElevenLabs API)", "onlineNoKeyEleven": "أدخل مفتاح ElevenLabs API أولاً في خانة المفتاح", "onlineEstOnly": "إرسال نحو {m} دقيقة صوت إلى ElevenLabs Scribe"});
 
   function normAr(s){
   return String(s||'')
@@ -19380,14 +19412,85 @@ function snapStarts(starts, sil, win, found){
   const btn=document.getElementById('onlineMarkBtn'), keyInp=document.getElementById('openaiKey');
   const prog=document.getElementById('autoProg');
   if(!btn||!keyInp||!prog) return;
-  try{ keyInp.value=localStorage.getItem('openai_key')||''; }catch(e){}
-  keyInp.addEventListener('change',()=>{ try{ localStorage.setItem('openai_key', keyInp.value.trim()); }catch(e){} });
+  const provSel=document.getElementById('sttProvider');
+  const KEY_SLOT={whisper:'openai_key', eleven:'eleven_key'};
+  const prov=()=>(provSel && provSel.value==='eleven')?'eleven':'whisper';
+  window.__sttProvider='whisper';
+  function loadProvider(p){
+    window.__sttProvider=p;
+    try{ keyInp.value=localStorage.getItem(KEY_SLOT[p])||''; }catch(e){ keyInp.value=''; }
+    keyInp.placeholder=t(p==='eleven'?'elevenKeyPh':'onlineKeyPh');
+    btn.setAttribute('data-i18n', p==='eleven'?'onlineMarkEleven':'onlineMark');
+    btn.textContent=t(p==='eleven'?'onlineMarkEleven':'onlineMark');
+    try{ if(window.__updateGroqLeft) window.__updateGroqLeft(); }catch(_){}
+  }
+  if(provSel){
+    let saved=null; try{ saved=localStorage.getItem('stt_provider'); }catch(e){}
+    provSel.value=(saved==='eleven')?'eleven':'whisper';
+    let current=prov();
+    provSel.addEventListener('change',()=>{
+      try{ localStorage.setItem(KEY_SLOT[current], keyInp.value.trim()); localStorage.setItem('stt_provider', prov()); }catch(e){}
+      current=prov(); loadProvider(current);
+    });
+    provSel.addEventListener('click',e=>e.stopPropagation());
+  }
+  loadProvider(prov());
+  keyInp.addEventListener('change',()=>{ try{ localStorage.setItem(KEY_SLOT[prov()], keyInp.value.trim()); }catch(e){} });
   keyInp.addEventListener('click',e=>e.stopPropagation());
   let cancelled=false, running=false, hideTimer=null;
   function say(msg,sticky){ prog.textContent=msg; prog.style.display='block'; clearTimeout(hideTimer); if(!sticky) hideTimer=setTimeout(()=>{prog.style.display='none';},8000); }
   prog.addEventListener('click',()=>{ if(running) cancelled=true; });
 
+  // ElevenLabs Scribe: same result shape as Whisper ({words:[{word,start,end}]})
+  let elevenModel='scribe_v2';
+  async function transcribeEleven(key, bytes, idx){
+    const url='https://api.elevenlabs.io/v1/speech-to-text';
+    const models=elevenModel==='scribe_v2'?['scribe_v2','scribe_v1']:['scribe_v1'];
+    let lastErr=null;
+    for(const model of models){
+      const fd=new FormData();
+      fd.append('file', new Blob([bytes],{type:'audio/mpeg'}), 'chunk'+idx+'.mp3');
+      fd.append('model_id', model);
+      fd.append('language_code','ara');
+      fd.append('timestamps_granularity','word');
+      fd.append('tag_audio_events','false');
+      let waits=0, tryNext=false;
+      for(let attempt=0; attempt<8; attempt++){
+        if(cancelled) throw new Error('cancelled');
+        try{
+          const r=await fetch(url,{method:'POST',headers:{'xi-api-key':key},body:fd});
+          if((r.status===429 || r.status===503) && waits<8){     // busy / too many requests: wait and try again
+            waits++;
+            let sec=parseInt(r.headers.get('retry-after')||'',10); if(!(sec>0)) sec=15; sec=Math.min(sec+2,120);
+            for(let q=sec;q>0;q--){ if(cancelled) throw new Error('cancelled'); say(tf('onlineWait',{s:q}),true); await new Promise(res=>setTimeout(res,1000)); }
+            continue;
+          }
+          if(!r.ok){
+            let m=''; try{ const j=await r.json(); m=(j.detail&&(j.detail.message||j.detail))||(j.error&&j.error.message)||''; if(typeof m!=='string') m=JSON.stringify(m); }catch(_){}
+            let fm=m;
+            if(r.status===401) fm=/permission/i.test(m)?t('elevenPerm'):t('elevenBadKey');   // explain the two common key problems in the app language
+            const err=new Error('HTTP '+r.status+(fm?': '+fm:''));
+            if(model==='scribe_v2' && (r.status===400||r.status===404||r.status===422) && /model/i.test(m)){ tryNext=true; lastErr=err; break; }   // this account/API does not know scribe_v2: use scribe_v1
+            throw err;
+          }
+          const js=await r.json();
+          elevenModel=model;
+          const words=(js.words||[]).filter(w=>!w.type || w.type==='word').map(w=>({word:w.text, start:w.start, end:w.end}));
+          return {words:words, text:js.text||''};
+        }catch(e){
+          if(e && e.message==='cancelled') throw e;
+          lastErr=e;
+          if(/^HTTP 4/.test(String(e.message))) throw e;
+          await new Promise(res=>setTimeout(res,1500));
+        }
+      }
+      if(!tryNext) break;
+    }
+    throw lastErr||new Error('request failed');
+  }
+
   async function transcribe(key, bytes, idx){
+    if(prov()==='eleven') return transcribeEleven(key, bytes, idx);
     const groq=/^gsk_/.test(key);   // Groq keys (free tier) start with gsk_, OpenAI keys with sk-
     const url=groq ? 'https://api.groq.com/openai/v1/audio/transcriptions' : 'https://api.openai.com/v1/audio/transcriptions';
     const fd=new FormData();
@@ -19432,29 +19535,6 @@ function snapStarts(starts, sil, win, found){
     autoCb.addEventListener('click',ev=>ev.stopPropagation());
   }
 
-  // ---- doubtful ayahs: highlighted in the list; the button walks through them ----
-  const dbtn=document.getElementById('doubtBtn');
-  const isDoubt=mk=>!mk.isTotal && mk.doubt!==undefined && mk.doubt===mk.timeMs;   // an edited mark is no longer doubtful
-  window.__updateDoubtBtn=function(){
-    if(!dbtn) return;
-    const n=marks.filter(isDoubt).length;
-    dbtn.style.display=n?'block':'none';
-    if(n) dbtn.textContent=tf('doubtBtn',{n:n});
-  };
-  if(dbtn) dbtn.addEventListener('click',ev=>{
-    ev.stopPropagation();
-    const list=marks.filter(isDoubt).sort((x,y)=>x.ayah-y.ayah);
-    if(!list.length){ window.__updateDoubtBtn(); return; }
-    const cur=(focusedAyah!==null && focusedAyah!==undefined)?focusedAyah:(lastShownAyah||0);
-    const curMark=marks.find(mk=>!mk.isTotal && mk.ayah===cur);
-    if(curMark && isDoubt(curMark)){ delete curMark.doubt; saveMarks(); }        // moving on = this one was reviewed
-    const rest=marks.filter(isDoubt).sort((x,y)=>x.ayah-y.ayah);
-    if(!rest.length){ renderMarksList(); return; }
-    const nxt=rest.find(mk=>mk.ayah>cur)||rest[0];
-    try{ document.getElementById('settingsMenu').classList.remove('open'); document.querySelector('header').classList.remove('menu-open'); }catch(_){}
-    startMarkedPlayback(nxt);
-  });
-
   // ---- Groq free-tier budget (~7200 audio seconds per hour): estimate, count, and wait if needed ----
   const USAGE_KEY='groq_usage', LIMIT_SEC=7000;
   function usageLoad(){ try{ const arr=JSON.parse(localStorage.getItem(USAGE_KEY)||'[]'); const now=Date.now(); return arr.filter(x=>now-x[0]<3600000); }catch(_){ return []; } }
@@ -19479,6 +19559,8 @@ function snapStarts(starts, sil, win, found){
   const gl=document.getElementById('groqLeft');
   window.__updateGroqLeft=function(){
     if(!gl) return;
+    if(window.__sttProvider==='eleven'){ gl.style.display='none'; return; }
+    gl.style.display='';
     const arr=usageLoad(), used=arr.reduce((q,x)=>q+x[1],0);
     const leftMin=Math.max(0,7200-used)/60;
     let txt=tf('groqLeft',{left:Math.round(leftMin),total:120});
@@ -19579,12 +19661,15 @@ function snapStarts(starts, sil, win, found){
     }
 
     // ---- 0) estimate the audio time that will be sent; wait if the free hourly limit would be passed ----
-    const isGroq=/^gsk_/.test(key);
+    const isGroq=(prov()==='whisper') && /^gsk_/.test(key);
     const estSec=durSec*(b1-b0)/total;
     if(isGroq){
       await waitBudget(estSec);
       const used=usageLoad().reduce((q,x)=>q+x[1],0);
       say(tf('onlineRange',{a:from,b:to})+'\n'+tf('onlineEst',{m:Math.round(estSec/6)/10,h:Math.round(used/6)/10}),true);
+      await new Promise(r2=>setTimeout(r2,1200));
+    }else if(prov()==='eleven'){
+      say(tf('onlineRange',{a:from,b:to})+'\n'+tf('onlineEstOnly',{m:Math.round(estSec/6)/10}),true);
       await new Promise(r2=>setTimeout(r2,1200));
     }
 
@@ -19628,13 +19713,12 @@ function snapStarts(starts, sil, win, found){
     let starts=rel.map(x=>x+fromSec);          // absolute seconds
     starts[0]=fromSec;
     let endSec=Math.min(durSec,lastEnd+fromSec+0.25);
-    const found=new Array(starts.length).fill(false);
 
     // ---- 3) snap every boundary to the real silence in the audio (decode only this window) ----
     try{
       const r=await T.decodeEnvelope(blob.slice(b0,b1), p=>say(tf('onlineSnap',{p:Math.round(p*100)}),true), ()=>cancelled);
       const sl=silenceList(r.env,r.frameSec,0.10).map(c=>({t:c.t+secStart,s:c.s+secStart,dur:c.dur}));
-      starts=snapStarts(starts,sl,0.7,found);
+      starts=snapStarts(starts,sl,0.7);
       if(final){
         const F=r.env.length, sorted=Float32Array.from(r.env).sort();
         const q=pp=>sorted[Math.min(F-1,Math.floor(pp*(F-1)))], thr=q(0.10)+0.30*(q(0.92)-q(0.10));
@@ -19651,18 +19735,13 @@ function snapStarts(starts, sil, win, found){
     else marks=marks.filter(mk=>!mk.isTotal && Number(mk.ayah)<from);
     starts.forEach((st,k)=>{
       const mk={ayah:from+k, timeMs:(from+k===1)?0:Math.round(st*1000), isTotal:false, seq:seqCounter++};
-      // doubtful = text not recognised (time was estimated), poor word match, or no real silence found near the boundary
-      const provisional = (!final && k===commit);          // the last one is only the start of the next part (it is redone next time)
-      if(k>0 && !provisional && (res.starts[k]===null || res.weak[k] || !found[k])) mk.doubt=mk.timeMs;
       marks.push(mk);
     });
     if(final) marks.push({ayah:999, timeMs:Math.round(endSec*1000), isTotal:true, seq:seqCounter++});
     render();
-    const nd=marks.filter(isDoubt).length;
     let msg;
     if(final) msg=tf('onlineFinished',{n:N});
     else { const nextFrom=from+commit; msg=tf('onlinePart',{a:from,b:nextFrom-1,n:N,c:nextFrom}); }
-    if(nd) msg+='\n'+tf('onlineDoubt',{k:nd});
     say(msg, auto && !final);
     return {final:final};
   }
@@ -19674,8 +19753,8 @@ function snapStarts(starts, sil, win, found){
     const key=keyInp.value.trim();
     if(!src){ alert(t('autoMarkNoAudio')); return; }
     if(!currentSurahAyahs || !currentSurahAyahs.length){ alert(t('autoMarkNoText')); return; }
-    if(!key){ alert(t('onlineNoKey')); return; }
-    try{ localStorage.setItem('openai_key', key); }catch(_){}
+    if(!key){ alert(t(prov()==='eleven'?'onlineNoKeyEleven':'onlineNoKey')); return; }
+    try{ localStorage.setItem(KEY_SLOT[prov()], key); localStorage.setItem('stt_provider', prov()); }catch(_){}
     try{ document.getElementById('settingsMenu').classList.remove('open'); document.querySelector('header').classList.remove('menu-open'); }catch(_){}
     running=true; window.__ayahBusy=true; cancelled=false;
     try{
@@ -19691,6 +19770,27 @@ function snapStarts(starts, sil, win, found){
       if(cancelled || (err&&err.message==='cancelled')) say(t('autoMarkCancelled'));
       else say(t('onlineFail')+(err&&err.message?err.message:err));
     }finally{ running=false; window.__ayahBusy=false; }
+  });
+})();
+
+// ---- Back button (Android): while the menu is open it closes the menu and shows the main screen instead of leaving the app ----
+(function(){
+  const menu=document.getElementById('settingsMenu'), hdr=document.querySelector('header');
+  if(!menu||!hdr) return;
+  let pushed=false, ignorePop=0;
+  const isOpen=()=>menu.classList.contains('open') || hdr.classList.contains('menu-open');
+  const closeMenu=()=>{ menu.classList.remove('open'); hdr.classList.remove('menu-open'); };
+  new MutationObserver(()=>{
+    if(menu.classList.contains('open')){
+      if(!pushed){ try{ history.pushState({idrisMenu:true},''); pushed=true; }catch(_){} }
+    }else if(pushed){
+      pushed=false;                                   // closed by a button: drop our history entry quietly
+      if(history.state && history.state.idrisMenu){ ignorePop++; try{ history.back(); }catch(_){ ignorePop--; } }
+    }
+  }).observe(menu,{attributes:true,attributeFilter:['class']});
+  window.addEventListener('popstate',()=>{
+    if(ignorePop>0){ ignorePop--; return; }
+    if(isOpen()){ pushed=false; closeMenu(); }        // the Back button was pressed
   });
 })();
 
