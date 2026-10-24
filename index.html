@@ -1474,7 +1474,7 @@ body .settingsMenu #whisperOptsBox #groqLeft{border-top:1px dashed var(--line);p
 <style id="noAnim">
 /* no animation or press effect on any button, ayah, +/− or other control */
 *,*::before,*::after{transition:none !important;animation:none !important;scroll-behavior:auto !important;-webkit-tap-highlight-color:transparent !important;}
-button:active,.btn2:active,.rowbtn:active,.menuAction:active,.markbtn:active,.ayah-line-list:active{transform:none !important;filter:none !important;}
+button:active,.btn2:active,.rowbtn:active,.menuAction:active,.markbtn:active,.ayah-line-list:active{filter:none !important;}
 </style>
 </head>
 <body>
@@ -1522,11 +1522,8 @@ button:active,.btn2:active,.rowbtn:active,.menuAction:active,.markbtn:active,.ay
         <p class="hint menuHint" id="progressStatus" style="display:none;"></p>
         <div class="menuBox" id="whisperOptsBox">
         <button class="menuAction" id="onlineMarkBtn" data-i18n="onlineMark" style="margin-top:0;">🌐 دیاریکردنی ئۆنڵاین (Whisper — بێبەرامبەر بە Groq)</button>
-        <select id="sttProvider" aria-label="Provider">
-          <option value="whisper">Groq / OpenAI — Whisper</option>
-        </select>
         <input id="openaiKey" type="password" autocomplete="off" placeholder="کلیل: gsk_... (Groq بێبەرامبەر) یان sk-... (OpenAI)">
-        <div class="settingsRow" ><label for="batchAyahs" data-i18n="onlineBatch" style="font-size:12px;">ژمارەی ئایەت لە هەر جارێک</label><input id="batchAyahs" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" value="50" style="width:92px;padding:6px;border:1px solid var(--line);border-radius:8px;direction:ltr;text-align:center;background:var(--paper);color:var(--ink);"></div>
+        <div class="settingsRow" ><label for="batchAyahs" data-i18n="onlineBatch" style="font-size:12px;">ژمارەی ئایەت لە هەر جارێک</label><input id="batchAyahs" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" value="10" style="width:92px;padding:6px;border:1px solid var(--line);border-radius:8px;direction:ltr;text-align:center;background:var(--paper);color:var(--ink);"></div>
         <div class="settingsRow"><label for="autoContinue" data-i18n="onlineAuto" style="font-size:12px;">بەردەوامبوونی خۆکار بۆ پارچەی دواتر</label><input id="autoContinue" type="checkbox" style="width:20px;height:20px;"></div>
         <button class="menuAction" id="undoChunkBtn" type="button" style="display:none;"></button>
         <div id="groqLeft" style="font-size:12px;line-height:1.7;text-align:center;padding:4px 8px;"></div>
@@ -19630,8 +19627,8 @@ function snapStarts(starts, sil, win, found){
 
   const batchInp=document.getElementById('batchAyahs');
   if(batchInp){
-    try{ const v=localStorage.getItem('batch_ayahs'); if(v) batchInp.value=v; }catch(_){}
-    batchInp.addEventListener('change',()=>{ try{ localStorage.setItem('batch_ayahs', batchInp.value.trim()); }catch(_){} });
+    try{ localStorage.removeItem('batch_ayahs'); const v=localStorage.getItem('batch_ayahs_v2'); batchInp.value = v ? v : '10'; }catch(_){ batchInp.value='10'; }   // default 10 (the old saved 50 is dropped)
+    batchInp.addEventListener('change',()=>{ try{ localStorage.setItem('batch_ayahs_v2', batchInp.value.trim()); }catch(_){} });
     batchInp.addEventListener('click',ev=>ev.stopPropagation());
   }
   const autoCb=document.getElementById('autoContinue');
@@ -19748,7 +19745,7 @@ function snapStarts(starts, sil, win, found){
   async function runOnce(first, key, auto){
     const pl=document.getElementById('player'), src=pl && (pl.currentSrc||pl.src);
     const N=currentSurahAyahs.length;
-    let B=parseInt(batchInp?batchInp.value:'50',10); if(!(B>=1)) B=50; B=Math.min(B,500);
+    let B=parseInt(batchInp?batchInp.value:'10',10); if(!(B>=1)) B=10; B=Math.min(B,500);
     const hasTotal=marks.some(mk=>mk.isTotal);
     const mx=marks.filter(mk=>!mk.isTotal).reduce((q,mk)=>Math.max(q,Number(mk.ayah)||0),0);
     let from=1;
@@ -20305,9 +20302,8 @@ self.onmessage=function(e){
         for(let i=0;i<list.length;i++){
           await putOne(db,list[i]);
         }
-        say(tf('audioSaved',{n:list.length}));
       }catch(e){
-        say(t('audioSaveFail')+(e&&e.message?e.message:e));
+        try{ console.warn('audio save failed', e); }catch(_){}
       }finally{ if(db) db.close(); }
     });
     return queue;
@@ -20359,8 +20355,7 @@ self.onmessage=function(e){
         const db=await openDb();
         await new Promise((res,rej)=>{ const tx=db.transaction(STORE,'readwrite'); tx.objectStore(STORE).clear(); tx.oncomplete=()=>res(); tx.onerror=()=>rej(tx.error); tx.onabort=()=>rej(tx.error); });
         db.close();
-        say(t('audioCleared'));
-      }catch(err){ say(t('audioSaveFail')+(err&&err.message?err.message:err)); }
+      }catch(err){ try{ console.warn('audio delete failed', err); }catch(_){} }
     }
     async function askAndWipe(){
       if(asking) return; asking=true;
