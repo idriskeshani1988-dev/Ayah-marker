@@ -345,9 +345,7 @@
     color:#fff;
     cursor:pointer;
     box-shadow:0 4px 0 var(--gold-bright) inset, 0 6px 14px rgba(0,0,0,0.2);
-    transition:transform .06s;
   }
-  .markbtn:active{transform:scale(0.98);}
   .markbtn:disabled{
     background:#c9c1ad;
     box-shadow:none;
@@ -1473,6 +1471,11 @@ body .settingsMenu .menuBox:has(#whisperOptsBox) + .menuDivider{display:none !im
 body .settingsMenu #whisperOptsBox .settingsRow{padding:0 !important;min-height:0 !important;margin:0 !important;}
 body .settingsMenu #whisperOptsBox #groqLeft{border-top:1px dashed var(--line);padding-top:8px !important;}
 </style>
+<style id="noAnim">
+/* no animation or press effect on any button, ayah, +/− or other control */
+*,*::before,*::after{transition:none !important;animation:none !important;scroll-behavior:auto !important;-webkit-tap-highlight-color:transparent !important;}
+button:active,.btn2:active,.rowbtn:active,.menuAction:active,.markbtn:active,.ayah-line-list:active{transform:none !important;filter:none !important;}
+</style>
 </head>
 <body>
 <div class="wrap">
@@ -1521,7 +1524,6 @@ body .settingsMenu #whisperOptsBox #groqLeft{border-top:1px dashed var(--line);p
         <button class="menuAction" id="onlineMarkBtn" data-i18n="onlineMark" style="margin-top:0;">🌐 دیاریکردنی ئۆنڵاین (Whisper — بێبەرامبەر بە Groq)</button>
         <select id="sttProvider" aria-label="Provider">
           <option value="whisper">Groq / OpenAI — Whisper</option>
-          <option value="eleven">ElevenLabs — Scribe</option>
         </select>
         <input id="openaiKey" type="password" autocomplete="off" placeholder="کلیل: gsk_... (Groq بێبەرامبەر) یان sk-... (OpenAI)">
         <div class="settingsRow" ><label for="batchAyahs" data-i18n="onlineBatch" style="font-size:12px;">ژمارەی ئایەت لە هەر جارێک</label><input id="batchAyahs" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" value="50" style="width:92px;padding:6px;border:1px solid var(--line);border-radius:8px;direction:ltr;text-align:center;background:var(--paper);color:var(--ink);"></div>
@@ -17240,7 +17242,7 @@ function applyLanguage(lang){
     b.classList.toggle('active', b.dataset.lang===currentLang);
   });
   try{ refreshSuraNames(); }catch(e){}
-  try{ const ki=document.getElementById('openaiKey'); if(ki) ki.placeholder=t(window.__sttProvider==='eleven'?'elevenKeyPh':'onlineKeyPh'); }catch(e){}
+  try{ const ki=document.getElementById('openaiKey'); if(ki) ki.placeholder=t('onlineKeyPh'); }catch(e){}
   if(typeof refreshNextAyah==='function') refreshNextAyah();
   if(typeof render==='function') render();
 }
@@ -17447,6 +17449,20 @@ function getStepMs(){
   const value = Number(stepMsInput?.value);
   return Number.isFinite(value) ? Math.min(1000, Math.max(1, Math.round(value))) : 50;
 }
+// the step size typed in the menu stays saved, and + / − use it as soon as it is typed
+(function(){
+  if(!stepMsInput) return;
+  try{
+    const v = parseInt(localStorage.getItem('app_step_ms'), 10);
+    if(v>=1 && v<=1000) stepMsInput.value = v;
+  }catch(_){}
+  const save = ()=>{
+    const n = Math.round(Number(stepMsInput.value));
+    if(Number.isFinite(n) && n>=1 && n<=1000){ try{ localStorage.setItem('app_step_ms', String(n)); }catch(_){} }
+  };
+  ['input','change'].forEach(ev=>stepMsInput.addEventListener(ev, save));
+  stepMsInput.addEventListener('blur', ()=>{ stepMsInput.value = getStepMs(); save(); });   // an empty or out-of-range value is corrected
+})();
 
 let focusedAyah = null;
 let playbackStopMs = null;
@@ -17575,6 +17591,7 @@ marksList.addEventListener('click', (e)=>{
   const mark = marks.find(m=>m.seq===seq);
   if(!mark) return;
   const act = btn.dataset.act;
+  if((act==='plus' || act==='minus') && Date.now() < (window.__pmIgnoreClickUntil||0)) return;   // that click only ends a hold-repeat
   if(act==='del'){
     marks = marks.filter(m=>m.seq!==seq);
     render();
@@ -17612,6 +17629,75 @@ marksList.addEventListener('click', (e)=>{
     if(player.src){ player.currentTime = mark.timeMs/1000; player.play().catch(()=>{}); }
   }
 });
+
+// ---- + / − : the first step happens the moment the button is touched (50);
+//      keep holding and it goes on: 100, 150 ... and gets faster the longer it is held ----
+(function(){
+  const DELAY = 380;                                   // after this the repeat starts (the first step is already done)
+  const interval = n => n<4 ? 260 : n<9 ? 140 : n<21 ? 80 : 45;
+  const mult = n => n>=31 ? 5 : 1;                     // after a long hold the step grows
+  let st = null;
+  const css = document.createElement('style');
+  css.textContent = '.mark-row .rowbtn[data-act="plus"], .mark-row .rowbtn[data-act="minus"]{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;}';
+  document.head.appendChild(css);
+  function showTime(){ const inp = st.row.querySelector('.rowtime'); if(inp) inp.value = st.mark.timeMs; }   // update in place: the buttons stay under the finger
+  function step(){
+    st.count++;
+    st.mark.timeMs = Math.max(0, st.mark.timeMs + st.dir * getStepMs() * mult(st.count));
+    showTime();
+  }
+  function tick(){
+    if(!st) return;
+    step();
+    st.timer = setTimeout(tick, interval(st.count));
+  }
+  function stop(){
+    if(!st) return;
+    const s0 = st; st = null;
+    clearTimeout(s0.timer);
+    window.__pmIgnoreClickUntil = Date.now() + 700;      // the click that follows this touch is already handled here
+    // finishing steps: save, refresh the text, play from the new time
+    const keepAyah = s0.mark.ayah;
+    renderMarksList();
+    saveMarks();
+    scheduleAutoSave();
+    focusedAyah = keepAyah;
+    lastShownAyah = keepAyah;
+    renderAyahText(keepAyah, true);
+    if(player.src){ player.currentTime = s0.mark.timeMs/1000; player.play().catch(()=>{}); }
+  }
+  function abort(){                                      // the finger turned out to be scrolling: undo the first step
+    if(!st) return;
+    clearTimeout(st.timer);
+    st.mark.timeMs = st.orig;
+    showTime();
+    st = null;
+  }
+  marksList.addEventListener('pointerdown', e=>{
+    const btn = e.target.closest('.rowbtn');
+    if(!btn) return;
+    const act = btn.dataset.act;
+    if(act!=='plus' && act!=='minus') return;
+    const row = btn.closest('.mark-row'); if(!row) return;
+    const mark = marks.find(m=>m.seq===parseInt(row.dataset.seq));
+    if(!mark) return;
+    if(st) stop();
+    st = {mark, row, dir: act==='plus' ? 1 : -1, count:0, repeating:false, orig:mark.timeMs, x:e.clientX, y:e.clientY, timer:null};
+    step();                                              // 50 at once
+    st.timer = setTimeout(()=>{ if(!st) return; st.repeating = true; tick(); }, DELAY);   // still held: 100, 150 ...
+  });
+  marksList.addEventListener('pointermove', e=>{
+    if(!st) return;
+    const d = Math.max(Math.abs(e.clientX-st.x), Math.abs(e.clientY-st.y));
+    if(!st.repeating){ if(d>10) abort(); }               // scrolling the list, not pressing
+    else if(d>60) stop();                                // dragged far away while repeating
+  });
+  marksList.addEventListener('pointerup', stop);
+  marksList.addEventListener('pointercancel', ()=>{ if(st && !st.repeating) abort(); });   // a started repeat ends only when the finger lifts
+  marksList.addEventListener('contextmenu', e=>{ if(e.target.closest('.rowbtn')) e.preventDefault(); });
+  ['touchend','touchcancel','pointerup','blur'].forEach(ev=>window.addEventListener(ev, stop, true));
+  document.addEventListener('visibilitychange', ()=>{ if(document.hidden) stop(); });
+})();
 marksList.addEventListener('change', (e)=>{
   if(e.target.dataset.act==='edit'){
     const row = e.target.closest('.mark-row');
@@ -19329,12 +19415,6 @@ function autoBoundaries(env, frameSec, lens){
   Object.assign(TRANSLATIONS.en, {"groqLeft": "⏱ Whisper time left: ≈ {left} of {total} min", "groqRefill": "refilled in {r} min", "groqNeed": "About {need} min of audio left to finish this surah"});
   Object.assign(TRANSLATIONS.ar, {"groqLeft": "⏱ وقت Whisper المتبقي: ≈ {left} من {total} دقيقة", "groqRefill": "يتجدد بعد {r} دقيقة", "groqNeed": "يتبقى نحو {need} دقيقة صوت لإكمال هذه السورة"});
 
-  Object.assign(TRANSLATIONS.ku, {"elevenPerm": "ئەم کلیلەی ElevenLabs مۆڵەتی «Speech to Text»ی نییە. لە ElevenLabs بچۆ بۆ Developers ← API Keys، کلیلەکە دەستکاری بکە و «Speech to Text» بکە بە Access، یان کلیلێکی نوێ دروست بکە و هەموو مۆڵەتەکان چالاک بکە.", "elevenBadKey": "کلیلی ElevenLabs دروست نییە. دڵنیابە لە کلیلەکە (sk_...) و بە تەواوی لە ElevenLabs کۆپی کراوە."});
-  Object.assign(TRANSLATIONS.en, {"elevenPerm": "This ElevenLabs key does not have the “Speech to Text” permission. In ElevenLabs open Developers → API Keys, edit the key and set “Speech to Text” to Access, or create a new key with all permissions.", "elevenBadKey": "The ElevenLabs key is not valid. Check that the whole key (sk_...) was copied."});
-  Object.assign(TRANSLATIONS.ar, {"elevenPerm": "مفتاح ElevenLabs هذا لا يملك صلاحية «Speech to Text». افتح Developers ← API Keys في ElevenLabs وعدّل المفتاح وفعّل «Speech to Text»، أو أنشئ مفتاحًا جديدًا بكل الصلاحيات.", "elevenBadKey": "مفتاح ElevenLabs غير صالح. تأكد من نسخ المفتاح كاملًا (sk_...)."});
-  Object.assign(TRANSLATIONS.ku, {"onlineMarkEleven": "🌐 دیاریکردنی ئۆنڵاین (ElevenLabs Scribe)", "elevenKeyPh": "کلیل: sk_... (ElevenLabs API key)", "onlineNoKeyEleven": "سەرەتا کلیلی ElevenLabs API لە خانەی کلیلەکە بنووسە", "onlineEstOnly": "ناردنی نزیکەی {m} خولەک دەنگ بۆ ElevenLabs Scribe"});
-  Object.assign(TRANSLATIONS.en, {"onlineMarkEleven": "🌐 Online marking (ElevenLabs Scribe)", "elevenKeyPh": "Key: sk_... (ElevenLabs API key)", "onlineNoKeyEleven": "First enter your ElevenLabs API key in the key field", "onlineEstOnly": "Sending about {m} min of audio to ElevenLabs Scribe"});
-  Object.assign(TRANSLATIONS.ar, {"onlineMarkEleven": "🌐 التحديد عبر الإنترنت (ElevenLabs Scribe)", "elevenKeyPh": "المفتاح: sk_... (مفتاح ElevenLabs API)", "onlineNoKeyEleven": "أدخل مفتاح ElevenLabs API أولاً في خانة المفتاح", "onlineEstOnly": "إرسال نحو {m} دقيقة صوت إلى ElevenLabs Scribe"});
 
   Object.assign(TRANSLATIONS.ku, {"undoChunk": "↩️ گەڕانەوەی دوایین پارچە (ئایەتی {a}–{b})", "undoConfirm": "نیشانەکان دەگەڕێنەوە بۆ پێش پارچەی ئایەتی {a}–{b}. دڵنیایت؟", "undoDone": "گەڕایەوە بۆ پێش پارچەی ئایەتی {a}–{b}"});
   Object.assign(TRANSLATIONS.en, {"undoChunk": "↩️ Undo last chunk (ayahs {a}–{b})", "undoConfirm": "Restore the marks as they were before the chunk of ayahs {a}–{b}?", "undoDone": "Restored the state before ayahs {a}–{b}"});
@@ -19496,27 +19576,19 @@ function snapStarts(starts, sil, win, found){
   const prog=document.getElementById('autoProg');
   if(!btn||!keyInp||!prog) return;
   const provSel=document.getElementById('sttProvider');
-  const KEY_SLOT={whisper:'openai_key', eleven:'eleven_key'};
-  const prov=()=>(provSel && provSel.value==='eleven')?'eleven':'whisper';
+  const KEY_SLOT={whisper:'openai_key'};
+  const prov=()=>'whisper';
   window.__sttProvider='whisper';
+  try{ localStorage.removeItem('eleven_key'); localStorage.removeItem('stt_provider'); }catch(e){}   // old ElevenLabs settings are no longer used
   function loadProvider(p){
     window.__sttProvider=p;
     try{ keyInp.value=localStorage.getItem(KEY_SLOT[p])||''; }catch(e){ keyInp.value=''; }
-    keyInp.placeholder=t(p==='eleven'?'elevenKeyPh':'onlineKeyPh');
-    btn.setAttribute('data-i18n', p==='eleven'?'onlineMarkEleven':'onlineMark');
-    btn.textContent=t(p==='eleven'?'onlineMarkEleven':'onlineMark');
+    keyInp.placeholder=t('onlineKeyPh');
+    btn.setAttribute('data-i18n','onlineMark');
+    btn.textContent=t('onlineMark');
     try{ if(window.__updateGroqLeft) window.__updateGroqLeft(); }catch(_){}
   }
-  if(provSel){
-    let saved=null; try{ saved=localStorage.getItem('stt_provider'); }catch(e){}
-    provSel.value=(saved==='eleven')?'eleven':'whisper';
-    let current=prov();
-    provSel.addEventListener('change',()=>{
-      try{ localStorage.setItem(KEY_SLOT[current], keyInp.value.trim()); localStorage.setItem('stt_provider', prov()); }catch(e){}
-      current=prov(); loadProvider(current);
-    });
-    provSel.addEventListener('click',e=>e.stopPropagation());
-  }
+  if(provSel){ provSel.value='whisper'; provSel.addEventListener('click',e=>e.stopPropagation()); }
   loadProvider(prov());
   keyInp.addEventListener('change',()=>{ try{ localStorage.setItem(KEY_SLOT[prov()], keyInp.value.trim()); }catch(e){} });
   keyInp.addEventListener('click',e=>e.stopPropagation());
@@ -19524,56 +19596,7 @@ function snapStarts(starts, sil, win, found){
   function say(msg,sticky){ prog.textContent=msg; prog.style.display='block'; clearTimeout(hideTimer); if(!sticky) hideTimer=setTimeout(()=>{prog.style.display='none';},8000); }
   prog.addEventListener('click',()=>{ if(running) cancelled=true; });
 
-  // ElevenLabs Scribe: same result shape as Whisper ({words:[{word,start,end}]})
-  let elevenModel='scribe_v2';
-  async function transcribeEleven(key, bytes, idx){
-    const url='https://api.elevenlabs.io/v1/speech-to-text';
-    const models=elevenModel==='scribe_v2'?['scribe_v2','scribe_v1']:['scribe_v1'];
-    let lastErr=null;
-    for(const model of models){
-      const fd=new FormData();
-      fd.append('file', new Blob([bytes],{type:'audio/mpeg'}), 'chunk'+idx+'.mp3');
-      fd.append('model_id', model);
-      fd.append('language_code','ara');
-      fd.append('timestamps_granularity','word');
-      fd.append('tag_audio_events','false');
-      let waits=0, tryNext=false;
-      for(let attempt=0; attempt<8; attempt++){
-        if(cancelled) throw new Error('cancelled');
-        try{
-          const r=await fetch(url,{method:'POST',headers:{'xi-api-key':key},body:fd});
-          if((r.status===429 || r.status===503) && waits<8){     // busy / too many requests: wait and try again
-            waits++;
-            let sec=parseInt(r.headers.get('retry-after')||'',10); if(!(sec>0)) sec=15; sec=Math.min(sec+2,120);
-            for(let q=sec;q>0;q--){ if(cancelled) throw new Error('cancelled'); say(tf('onlineWait',{s:q}),true); await new Promise(res=>setTimeout(res,1000)); }
-            continue;
-          }
-          if(!r.ok){
-            let m=''; try{ const j=await r.json(); m=(j.detail&&(j.detail.message||j.detail))||(j.error&&j.error.message)||''; if(typeof m!=='string') m=JSON.stringify(m); }catch(_){}
-            let fm=m;
-            if(r.status===401) fm=(/permission/i.test(m)?t('elevenPerm'):t('elevenBadKey'))+(m?' ['+m+']':'');   // explain the two common key problems in the app language
-            const err=new Error('HTTP '+r.status+(fm?': '+fm:''));
-            if(model==='scribe_v2' && (r.status===400||r.status===404||r.status===422) && /model/i.test(m)){ tryNext=true; lastErr=err; break; }   // this account/API does not know scribe_v2: use scribe_v1
-            throw err;
-          }
-          const js=await r.json();
-          elevenModel=model;
-          const words=(js.words||[]).filter(w=>!w.type || w.type==='word').map(w=>({word:w.text, start:w.start, end:w.end}));
-          return {words:words, text:js.text||''};
-        }catch(e){
-          if(e && e.message==='cancelled') throw e;
-          lastErr=e;
-          if(/^HTTP 4/.test(String(e.message))) throw e;
-          await new Promise(res=>setTimeout(res,1500));
-        }
-      }
-      if(!tryNext) break;
-    }
-    throw lastErr||new Error('request failed');
-  }
-
   async function transcribe(key, bytes, idx){
-    if(prov()==='eleven') return transcribeEleven(key, bytes, idx);
     const groq=/^gsk_/.test(key);   // Groq keys (free tier) start with gsk_, OpenAI keys with sk-
     const url=groq ? 'https://api.groq.com/openai/v1/audio/transcriptions' : 'https://api.openai.com/v1/audio/transcriptions';
     const fd=new FormData();
@@ -19665,7 +19688,6 @@ function snapStarts(starts, sil, win, found){
   const gl=document.getElementById('groqLeft');
   window.__updateGroqLeft=function(){
     if(!gl) return;
-    if(window.__sttProvider==='eleven'){ gl.style.display='none'; return; }
     gl.style.display='';
     const arr=usageLoad(), used=arr.reduce((q,x)=>q+x[1],0);
     const leftMin=Math.max(0,7200-used)/60;
@@ -19774,9 +19796,6 @@ function snapStarts(starts, sil, win, found){
       const used=usageLoad().reduce((q,x)=>q+x[1],0);
       say(tf('onlineRange',{a:from,b:to})+'\n'+tf('onlineEst',{m:Math.round(estSec/6)/10,h:Math.round(used/6)/10}),true);
       await new Promise(r2=>setTimeout(r2,1200));
-    }else if(prov()==='eleven'){
-      say(tf('onlineRange',{a:from,b:to})+'\n'+tf('onlineEstOnly',{m:Math.round(estSec/6)/10}),true);
-      await new Promise(r2=>setTimeout(r2,1200));
     }
 
     // ---- 1) send this window to Whisper in frame-aligned pieces (< 25 MB each) ----
@@ -19861,7 +19880,7 @@ function snapStarts(starts, sil, win, found){
     const key=keyInp.value.trim();
     if(!src){ appAlert(t('autoMarkNoAudio')); return; }
     if(!currentSurahAyahs || !currentSurahAyahs.length){ appAlert(t('autoMarkNoText')); return; }
-    if(!key){ appAlert(t(prov()==='eleven'?'onlineNoKeyEleven':'onlineNoKey')); return; }
+    if(!key){ appAlert(t('onlineNoKey')); return; }
     try{ localStorage.setItem(KEY_SLOT[prov()], key); localStorage.setItem('stt_provider', prov()); }catch(_){}
     try{ document.getElementById('settingsMenu').classList.remove('open'); document.querySelector('header').classList.remove('menu-open'); }catch(_){}
     running=true; window.__ayahBusy=true; cancelled=false;
