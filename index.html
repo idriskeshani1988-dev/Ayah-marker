@@ -17451,6 +17451,20 @@ function getStepMs(){
 let focusedAyah = null;
 let playbackStopMs = null;
 let navAyah = null;          // the ayah last started with the ▶ / next / previous buttons
+// While the full list is open: keep the current ayah's row (or the closest marked ayah before it) on top
+function followCurrentRow(instant){
+  if(!showAllMarks) return;
+  const rows=[...marksList.querySelectorAll('.mark-row:not(.total-row)')];
+  if(!rows.length) return;
+  const anchor=(focusedAyah!==null && focusedAyah!==undefined)?focusedAyah:lastShownAyah;
+  if(anchor===null || anchor===undefined) return;
+  const num=r=>parseInt((r.querySelector('.rownum')||{}).textContent,10);
+  let row=null;
+  for(const r of rows){ if(num(r)<=anchor) row=r; else break; }
+  if(!row) return;
+  rows.forEach(r=>r.classList.toggle('active-row', r===row && num(r)===lastShownAyah));
+  scrollInsideToTop(marksList,row,instant!==false);
+}
 function startMarkedPlayback(mark){
   navAyah = mark.isTotal ? null : mark.ayah;
   const ordered = marks.filter(m=>!m.isTotal).sort((a,b)=>a.timeMs-b.timeMs);
@@ -17468,11 +17482,13 @@ function startMarkedPlayback(mark){
   renderAyahText(lastShownAyah);
   focusedAyah = mark.isTotal ? null : mark.ayah;
   renderMarksList();
+  if(showAllMarks){ followCurrentRow(true); requestAnimationFrame(()=>followCurrentRow(true)); }
 }
 function renderMarksList(){
   const nonTotal = marks.filter(m=>!m.isTotal).sort((a,b)=>a.ayah-b.ayah);
   const totals = marks.filter(m=>m.isTotal);
   const sorted = [...nonTotal, ...totals];
+  const keepScroll = showAllMarks ? marksList.scrollTop : 0;
   marksList.innerHTML = '';
   if(sorted.length===0){
     emptyMsg.style.display='block';
@@ -17518,6 +17534,7 @@ function renderMarksList(){
         <span class="rownum">${m.isTotal ? '999' : m.ayah}</span>`;
       marksList.appendChild(row);
     });
+    if(showAllMarks && keepScroll) marksList.scrollTop = keepScroll;
   }
   try{ if(window.__updateGroqLeft) window.__updateGroqLeft(); }catch(_){}
   try{ if(window.__updateUndoBtn) window.__updateUndoBtn(); }catch(_){}
@@ -17618,6 +17635,49 @@ marksList.addEventListener('change', (e)=>{
 // ---- Audio loading ----
 audioPickBtn.addEventListener('click', ()=>fileInput.click());
 
+// ---- translated dialogs (replace the native alert/confirm so OK / Cancel follow the app language) ----
+Object.assign(TRANSLATIONS.ku, {"dlgOk": "باشە", "dlgCancel": "هەڵوەشاندنەوە"});
+Object.assign(TRANSLATIONS.en, {"dlgOk": "OK", "dlgCancel": "Cancel"});
+Object.assign(TRANSLATIONS.ar, {"dlgOk": "موافق", "dlgCancel": "إلغاء"});
+(function(){
+  const st=document.createElement('style');
+  st.textContent=`
+  #appDlgOv{position:fixed;inset:0;z-index:2147483000;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:24px;}
+  #appDlgBox{background:var(--paper-dim,#fffaf0);color:var(--ink,#152420);border:1px solid var(--line,#d8cdb0);border-radius:16px;max-width:420px;width:100%;padding:20px 18px 14px;box-shadow:0 10px 40px rgba(0,0,0,.45);}
+  #appDlgMsg{font-size:17px;line-height:1.7;margin:0 0 16px;white-space:pre-wrap;text-align:start;}
+  #appDlgBtns{display:flex;gap:10px;justify-content:flex-end;}
+  #appDlgBtns button{flex:1;font:inherit;font-size:16px;font-weight:700;padding:10px 12px;border-radius:12px;border:1px solid var(--teal,#0f3d3a);background:transparent;color:var(--teal,#0f3d3a);cursor:pointer;}
+  #appDlgBtns button.primary{background:var(--teal,#0f3d3a);color:var(--paper,#f6f1e4);}
+  body.dark #appDlgBtns button.primary{background:var(--gold,#d9b85f);border-color:var(--gold,#d9b85f);color:#17120a;}`;
+  document.head.appendChild(st);
+  function dlg(msg, withCancel, okText, cancelText){
+    return new Promise(resolve=>{
+      const old=document.getElementById('appDlgOv'); if(old) old.remove();
+      const ov=document.createElement('div'); ov.id='appDlgOv';
+      ov.setAttribute('dir', document.documentElement.dir||'rtl');
+      const box=document.createElement('div'); box.id='appDlgBox'; box.setAttribute('role','alertdialog');
+      const m=document.createElement('p'); m.id='appDlgMsg'; m.textContent=String(msg);
+      const bs=document.createElement('div'); bs.id='appDlgBtns';
+      const t0=Date.now();
+      const done=v=>{ if(Date.now()-t0<250) return; ov.remove(); resolve(v); };   // ignore the tap that opened it (finger still lifting)
+      const ok=document.createElement('button'); ok.type='button'; ok.className='primary'; ok.textContent=okText||t('dlgOk');
+      ok.addEventListener('click',e=>{ e.stopPropagation(); done(true); });
+      bs.appendChild(ok);
+      if(withCancel){
+        const no=document.createElement('button'); no.type='button'; no.textContent=cancelText||t('dlgCancel');
+        no.addEventListener('click',e=>{ e.stopPropagation(); done(false); });
+        bs.appendChild(no);
+      }
+      box.append(m,bs); ov.appendChild(box);
+      ov.addEventListener('click',e=>e.stopPropagation());
+      document.body.appendChild(ov);
+      ok.focus();
+    });
+  }
+  window.appConfirm=(msg,okText,cancelText)=>dlg(msg,true,okText,cancelText);
+  window.appAlert=msg=>{ dlg(msg,false); };
+})();
+
 // ---- Settings menu: dark mode + language ----
 const menuBtn = document.getElementById('menuBtn');
 const settingsMenu = document.getElementById('settingsMenu');
@@ -17633,7 +17693,15 @@ document.addEventListener('click', (e)=>{
 darkToggle.addEventListener('click', ()=>{
   const isDark = document.body.classList.toggle('dark');
   darkToggle.textContent = isDark ? '☀️' : '🌙';
+  try{ localStorage.setItem('app_dark', isDark ? '1' : '0'); }catch(_){}
 });
+// restore the saved dark / light mode on every launch
+try{
+  if(localStorage.getItem('app_dark')==='1'){
+    document.body.classList.add('dark');
+    darkToggle.textContent = '☀️';
+  }
+}catch(_){}
 document.querySelectorAll('.langBtn').forEach(btn=>{
   btn.addEventListener('click', ()=>applyLanguage(btn.dataset.lang));
 });
@@ -18037,10 +18105,10 @@ masterDbInput.addEventListener('change', ()=>{
       importMasterIntoSavedMarks();
       loadSuraFromMaster(parseInt(suraSelect.value));
     }catch(err){
-      alert(t('errReadDb') + (err && err.message ? err.message : err) + '\n' + t('errReadDbHint'));
+      appAlert(t('errReadDb') + (err && err.message ? err.message : err) + '\n' + t('errReadDbHint'));
     }
   };
-  reader.onerror = ()=>alert(t('errReadFile'));
+  reader.onerror = ()=>appAlert(t('errReadFile'));
   reader.readAsArrayBuffer(file);
   masterDbInput.value = '';
 });
@@ -18052,13 +18120,13 @@ async function exportAllSurahs(){
   if(IS_NATIVE && window.AndroidSave && typeof window.AndroidSave.saveToDownloadsOverwrite === 'function'){
     const b64 = await blobToBase64(blob);
     const r = saveIntoAppFolder(AUTO_DB_NAME, b64);
-    if(r === 'ok'){ alert(t('savedOk') + AUTO_DB_NAME); return; }
+    if(r === 'ok'){ appAlert(t('savedOk') + AUTO_DB_NAME); return; }
   }
   await saveBlob(blob, AUTO_DB_NAME);
 }
 exportMasterBtn.addEventListener('click', async ()=>{
   try{ await exportAllSurahs(); }
-  catch(err){ alert(t('errSaveDb') + (err && err.message ? err.message : err)); }
+  catch(err){ appAlert(t('errSaveDb') + (err && err.message ? err.message : err)); }
 });
 
 // Scroll `el` to the top of its OWN scroll box. scrollIntoView() also scrolls the whole page, which
@@ -18066,7 +18134,7 @@ exportMasterBtn.addEventListener('click', async ()=>{
 function scrollInsideToTop(box, el, instant){
   if(!box || !el) return;
   const top = box.scrollTop + (el.getBoundingClientRect().top - box.getBoundingClientRect().top);
-  box.scrollTo({top: top, behavior: instant ? 'auto' : 'smooth'});
+  box.scrollTo({top: top, behavior: 'auto'});   // never animated
 }
 // Keep the top of the Quran text box on the screen (page scrolled / bars hidden or shown).
 function keepTextPanelOnScreen(){
@@ -18088,9 +18156,12 @@ function renderAyahText(ayahNum, syncInstant=false){
   if(textPanel._ayahsRef === currentSurahAyahs && textPanel.dataset.sura === String(sNum) &&
      textPanel.dataset.bm === bmKey && textPanel.childElementCount === currentSurahAyahs.length){
     const old = textPanel.querySelector('.ayah-line-list.active');
+    const oldNum = old ? parseInt(old.dataset.ayah, 10) : NaN;
     if(old) old.classList.remove('active');
     const nu = textPanel.querySelector(`.ayah-line-list[data-ayah="${ayahNum}"]`);
-    if(nu){ nu.classList.add('active'); scrollInsideToTop(textPanel, nu, syncInstant); keepTextPanelOnScreen(); }
+    // a jump to a far ayah (tapping a row of the list) is instant; only a step of 1-2 ayahs may animate
+    const near = !isNaN(oldNum) && Math.abs(oldNum - ayahNum) <= 2;
+    if(nu){ nu.classList.add('active'); scrollInsideToTop(textPanel, nu, syncInstant || !near); keepTextPanelOnScreen(); }
     return;
   }
   textPanel.innerHTML = '';
@@ -18114,7 +18185,7 @@ function renderAyahText(ayahNum, syncInstant=false){
   });
   const activeEl = textPanel.querySelector('.ayah-line-list.active');
   if(activeEl){
-    scrollInsideToTop(textPanel, activeEl, syncInstant);
+    scrollInsideToTop(textPanel, activeEl, true);      // the text was just rebuilt (starts at the top): never animate from there
     keepTextPanelOnScreen();
   }
 }
@@ -18138,13 +18209,13 @@ function scrollMarkRowToTop(seq, syncInstant=false){
   if(row){
     // Never animate the list while audio is running: at 3x the animation
     // itself makes the marked row visibly trail behind the audio.
-    scrollInsideToTop(marksList, row, syncInstant);
+    scrollInsideToTop(marksList, row, true);
   } else {
-    marksList.scrollIntoView({block:'nearest', behavior: syncInstant ? 'auto' : 'smooth'});
+    marksList.scrollIntoView({block:'nearest', behavior: 'auto'});
   }
   if(!syncInstant){
     setTimeout(()=>{
-      markCard.scrollIntoView({block:'center', behavior:'smooth'});
+      markCard.scrollIntoView({block:'center', behavior:'auto'});
     }, 350);
   }
 }
@@ -18185,6 +18256,7 @@ function showAyahText(syncInstant=false){
     const activeMark = marks.find(m=>!m.isTotal && m.ayah===ayahNum);
     if(activeMark) scrollMarkRowToTop(activeMark.seq, syncInstant);
   }
+  if(showAllMarks) followCurrentRow(true);
 }
 startAyahInput.addEventListener('change', ()=>{
   const num = parseInt(startAyahInput.value)||1;
@@ -18331,6 +18403,11 @@ addTotalBtn.addEventListener('click', markTotal);
 showAllBtn.addEventListener('click', ()=>{
   showAllMarks = !showAllMarks;
   render();
+  if(showAllMarks){
+    // bring the current mark to the top of the full list, ready for editing
+    followCurrentRow(true);
+    setTimeout(()=>followCurrentRow(true),60);
+  }
 });
 
 document.addEventListener('keydown',(e)=>{
@@ -18386,11 +18463,11 @@ async function saveBlob(blob, filename){
     try{
       if(window.AndroidSave && typeof window.AndroidSave.saveToDownloads === 'function'){
         const r = String(window.AndroidSave.saveToDownloads(filename, data, 'application/octet-stream'));
-        if(r === 'ok'){ alert(t('savedOk') + filename); return; }
+        if(r === 'ok'){ appAlert(t('savedOk') + filename); return; }
         errs.push('Downloads: ' + r);
       }else{
         await nativePlugin('SaveFile').saveToDownloads({name: filename, data, mime: 'application/octet-stream'});
-        alert(t('savedOk') + filename);
+        appAlert(t('savedOk') + filename);
         return;
       }
     }catch(e){ errs.push('Downloads: ' + (e && e.message ? e.message : e)); }
@@ -18455,7 +18532,7 @@ exportDb.addEventListener('click', async ()=>{
     const blob = new Blob([data], {type:'application/x-sqlite3'});
     await saveBlob(blob, 'quran_timings.db');
   }catch(err){
-    alert(t('errSaveDb') + (err && err.message ? err.message : err));
+    appAlert(t('errSaveDb') + (err && err.message ? err.message : err));
   }finally{
     exportDb.textContent = originalText;
     exportDb.disabled = false;
@@ -18532,9 +18609,9 @@ window.addEventListener('pagehide', ()=>{ saveMarks(); });
 window.addEventListener('beforeunload', ()=>{ saveMarks(); });
 
 // ---- Import (resume previous session) ----
-function clearCurrentSuraMarks(){
+async function clearCurrentSuraMarks(){
   const sura = parseInt(suraSelect.value);
-  if(!confirm(t('confirmClearSura'))) return;
+  if(!(await appConfirm(t('confirmClearSura')))) return;
   marks = [];
   seqCounter = 0;
   marks.push({ayah: parseInt(startAyahInput.value)||1, timeMs:0, isTotal:false, seq:seqCounter++});
@@ -18546,8 +18623,8 @@ function clearCurrentSuraMarks(){
   render();
   showToast(t('clearedSura'));
 }
-function clearAllSuraMarks(){
-  if(!confirm(t('confirmClearAll'))) return;
+async function clearAllSuraMarks(){
+  if(!(await appConfirm(t('confirmClearAll')))) return;
   marks = [];
   seqCounter = 0;
   marks.push({ayah: parseInt(startAyahInput.value)||1, timeMs:0, isTotal:false, seq:seqCounter++});
@@ -19202,9 +19279,9 @@ function autoBoundaries(env, frameSec, lens){
     if(running || window.__ayahBusy) return;
     const pl=document.getElementById('player');
     const src=pl && (pl.currentSrc||pl.src);
-    if(!src){ alert(t('autoMarkNoAudio')); return; }
-    if(!currentSurahAyahs || !currentSurahAyahs.length){ alert(t('autoMarkNoText')); return; }
-    if(marks.filter(m=>!m.isTotal).length>1 && !confirm(t('autoMarkConfirm'))) return;
+    if(!src){ appAlert(t('autoMarkNoAudio')); return; }
+    if(!currentSurahAyahs || !currentSurahAyahs.length){ appAlert(t('autoMarkNoText')); return; }
+    if(marks.filter(m=>!m.isTotal).length>1 && !(await appConfirm(t('autoMarkConfirm')))) return;
     // close the menu so the progress is visible
     try{ document.getElementById('settingsMenu').classList.remove('open'); document.querySelector('header').classList.remove('menu-open'); }catch(_){}
     running=true; window.__ayahBusy=true; cancelled=false;
@@ -19474,7 +19551,7 @@ function snapStarts(starts, sil, win, found){
           if(!r.ok){
             let m=''; try{ const j=await r.json(); m=(j.detail&&(j.detail.message||j.detail))||(j.error&&j.error.message)||''; if(typeof m!=='string') m=JSON.stringify(m); }catch(_){}
             let fm=m;
-            if(r.status===401) fm=/permission/i.test(m)?t('elevenPerm'):t('elevenBadKey');   // explain the two common key problems in the app language
+            if(r.status===401) fm=(/permission/i.test(m)?t('elevenPerm'):t('elevenBadKey'))+(m?' ['+m+']':'');   // explain the two common key problems in the app language
             const err=new Error('HTTP '+r.status+(fm?': '+fm:''));
             if(model==='scribe_v2' && (r.status===400||r.status===404||r.status===422) && /model/i.test(m)){ tryNext=true; lastErr=err; break; }   // this account/API does not know scribe_v2: use scribe_v1
             throw err;
@@ -19553,12 +19630,12 @@ function snapStarts(starts, sil, win, found){
     undoBtn.style.display=show?'block':'none';
     if(show) undoBtn.textContent=tf('undoChunk',{a:u.a,b:u.b});
   };
-  if(undoBtn) undoBtn.addEventListener('click',ev=>{
+  if(undoBtn) undoBtn.addEventListener('click',async ev=>{
     ev.stopPropagation();
     if(running || window.__ayahBusy) return;
     const u=undoLoad();
     if(!u || u.sura!==currentMarksSura()){ window.__updateUndoBtn(); return; }
-    if(!confirm(tf('undoConfirm',{a:u.a,b:u.b}))) return;
+    if(!(await appConfirm(tf('undoConfirm',{a:u.a,b:u.b})))) return;
     marks=u.marks; seqCounter=u.seq; undoSave(null);
     render();
     say(tf('undoDone',{a:u.a,b:u.b}));
@@ -19653,7 +19730,7 @@ function snapStarts(starts, sil, win, found){
     const hasTotal=marks.some(mk=>mk.isTotal);
     const mx=marks.filter(mk=>!mk.isTotal).reduce((q,mk)=>Math.max(q,Number(mk.ayah)||0),0);
     let from=1;
-    if(hasTotal){ if(first){ if(!confirm(t('autoMarkConfirm'))) return {final:true,aborted:true}; } else return {final:true}; }
+    if(hasTotal){ if(first){ if(!(await appConfirm(t('autoMarkConfirm')))) return {final:true,aborted:true}; } else return {final:true}; }
     else if(mx>1) from=Math.min(mx,N);
     const fm = from>1 ? marks.find(mk=>!mk.isTotal && Number(mk.ayah)===from) : null;
     if(from>1 && !(fm && fm.timeMs>0)) from=1;
@@ -19782,9 +19859,9 @@ function snapStarts(starts, sil, win, found){
     if(running || window.__ayahBusy) return;
     const pl=document.getElementById('player'), src=pl && (pl.currentSrc||pl.src);
     const key=keyInp.value.trim();
-    if(!src){ alert(t('autoMarkNoAudio')); return; }
-    if(!currentSurahAyahs || !currentSurahAyahs.length){ alert(t('autoMarkNoText')); return; }
-    if(!key){ alert(t(prov()==='eleven'?'onlineNoKeyEleven':'onlineNoKey')); return; }
+    if(!src){ appAlert(t('autoMarkNoAudio')); return; }
+    if(!currentSurahAyahs || !currentSurahAyahs.length){ appAlert(t('autoMarkNoText')); return; }
+    if(!key){ appAlert(t(prov()==='eleven'?'onlineNoKeyEleven':'onlineNoKey')); return; }
     try{ localStorage.setItem(KEY_SLOT[prov()], key); localStorage.setItem('stt_provider', prov()); }catch(_){}
     try{ document.getElementById('settingsMenu').classList.remove('open'); document.querySelector('header').classList.remove('menu-open'); }catch(_){}
     running=true; window.__ayahBusy=true; cancelled=false;
@@ -20121,7 +20198,7 @@ self.onmessage=function(e){
 
   window.__runLocalConvert=async function(url,label){
     if(running || window.__ayahBusy) return;
-    if(!url){ alert(t('convNoAudio')); return; }
+    if(!url){ appAlert(t('convNoAudio')); return; }
     running=true; window.__ayahBusy=true; cancelled=false;
     const origName=String(label||window.__audioName||'audio').trim();
     let enc=null;
@@ -20151,18 +20228,45 @@ self.onmessage=function(e){
 
 // ================= Audio files stay inside the app (IndexedDB) =================
 (function(){
-  Object.assign(TRANSLATIONS.ku, {"audioClear": "🗑 سڕینەوەی دەنگە هەڵگیراوەکان لە ناو ئەپەکە", "audioClearConfirm": "هەموو دەنگە هەڵگیراوەکان لە ناو ئەپەکە دەسڕێنەوە (فایلە ئەسڵییەکان لە مۆبایلەکەت نامێنن بەو شێوەیە). بەردەوام بیت؟", "audioCleared": "دەنگە هەڵگیراوەکان سڕانەوە", "audioSaving": "هەڵگرتنی دەنگ لە ناو ئەپەکە: {i}/{n}", "audioSaved": "{n} دەنگ لە ناو ئەپەکە هەڵگیرا — دووبارە داوای ناکرێتەوە", "audioSaveFail": "نەتوانرا دەنگەکە لە ناو ئەپەکە هەڵبگیرێت (شوێنی بەتاڵ کەمە؟): "});
-  Object.assign(TRANSLATIONS.en, {"audioClear": "🗑 Delete audio saved inside the app", "audioClearConfirm": "All audio saved inside the app will be deleted (your original files on the phone are not touched). Continue?", "audioCleared": "Saved audio deleted", "audioSaving": "Saving audio inside the app: {i}/{n}", "audioSaved": "{n} audio file(s) saved inside the app — no need to pick them again", "audioSaveFail": "Could not save the audio inside the app (low storage?): "});
-  Object.assign(TRANSLATIONS.ar, {"audioClear": "🗑 حذف الصوتيات المحفوظة داخل التطبيق", "audioClearConfirm": "سيتم حذف كل الصوتيات المحفوظة داخل التطبيق (ملفاتك الأصلية على الهاتف لن تُمسّ). هل تريد المتابعة؟", "audioCleared": "تم حذف الصوتيات المحفوظة", "audioSaving": "حفظ الصوت داخل التطبيق: {i}/{n}", "audioSaved": "تم حفظ {n} ملف صوتي داخل التطبيق — لا حاجة لاختيارها مرة أخرى", "audioSaveFail": "تعذر حفظ الصوت داخل التطبيق (مساحة قليلة؟): "});
+  Object.assign(TRANSLATIONS.ku, {"audioClear": "🗑 سڕینەوەی دەنگە هەڵگیراوەکان لە ناو ئەپەکە", "audioClearHold": "بۆ سڕینەوە، دەستت لەسەر دوگمەکە بهێڵەرەوە", "audioClearAsk": "دڵنیایت لە سڕینەوەی دەنگەکان لە ناو ئەپەکەدا؟\n(تەنها لە ناو ئەپەکە دەسڕدرێنەوە، نەک لە زاکیرەی مۆبایلەکەت)", "dlgYes": "بەڵێ", "audioClearConfirm": "هەموو دەنگە هەڵگیراوەکان لە ناو ئەپەکە دەسڕێنەوە (فایلە ئەسڵییەکان لە مۆبایلەکەت نامێنن بەو شێوەیە). بەردەوام بیت؟", "audioCleared": "دەنگە هەڵگیراوەکان سڕانەوە", "audioSaving": "هەڵگرتنی دەنگ لە ناو ئەپەکە: {i}/{n}", "audioSaved": "{n} دەنگ لە ناو ئەپەکە هەڵگیرا — دووبارە داوای ناکرێتەوە", "audioSaveFail": "نەتوانرا دەنگەکە لە ناو ئەپەکە هەڵبگیرێت (شوێنی بەتاڵ کەمە؟): "});
+  Object.assign(TRANSLATIONS.en, {"audioClear": "🗑 Delete audio saved inside the app", "audioClearHold": "Press and hold the button to delete", "audioClearAsk": "Delete the audio from inside the app?\n(Only the copy inside the app is deleted, not the files in your phone storage.)", "dlgYes": "Yes", "audioClearConfirm": "All audio saved inside the app will be deleted (your original files on the phone are not touched). Continue?", "audioCleared": "Saved audio deleted", "audioSaving": "Saving audio inside the app: {i}/{n}", "audioSaved": "{n} audio file(s) saved inside the app — no need to pick them again", "audioSaveFail": "Could not save the audio inside the app (low storage?): "});
+  Object.assign(TRANSLATIONS.ar, {"audioClear": "🗑 حذف الصوتيات المحفوظة داخل التطبيق", "audioClearHold": "اضغط مطولًا على الزر للحذف", "audioClearAsk": "هل أنت متأكد من حذف الصوتيات من داخل التطبيق؟\n(يُحذف ما داخل التطبيق فقط، وليس من ذاكرة هاتفك)", "dlgYes": "نعم", "audioClearConfirm": "سيتم حذف كل الصوتيات المحفوظة داخل التطبيق (ملفاتك الأصلية على الهاتف لن تُمسّ). هل تريد المتابعة؟", "audioCleared": "تم حذف الصوتيات المحفوظة", "audioSaving": "حفظ الصوت داخل التطبيق: {i}/{n}", "audioSaved": "تم حفظ {n} ملف صوتي داخل التطبيق — لا حاجة لاختيارها مرة أخرى", "audioSaveFail": "تعذر حفظ الصوت داخل التطبيق (مساحة قليلة؟): "});
   const DB_NAME='ayahMarkerAudio', STORE='files';
-  function openDb(){
+  // Open the database WITHOUT asking for a version, so a database that already exists with a higher
+  // version (for example made by another build) opens normally. The 'files' store (keyPath 'sura') is
+  // created when it is missing; if a store with that name exists with another layout, a second
+  // database name is used instead.
+  const DB_NAMES=[DB_NAME, DB_NAME+'_sura'];
+  function openNamed(name){
     return new Promise((res,rej)=>{
-      if(!window.indexedDB){ rej(new Error('IndexedDB not available')); return; }
-      const r=indexedDB.open(DB_NAME,1);
-      r.onupgradeneeded=()=>{ r.result.createObjectStore(STORE,{keyPath:'sura'}); };
-      r.onsuccess=()=>res(r.result);
+      const r=indexedDB.open(name);
+      r.onupgradeneeded=()=>{ if(!r.result.objectStoreNames.contains(STORE)) r.result.createObjectStore(STORE,{keyPath:'sura'}); };
       r.onerror=()=>rej(r.error||new Error('open failed'));
+      r.onblocked=()=>rej(new Error('database blocked'));
+      r.onsuccess=()=>{
+        const db=r.result;
+        if(db.objectStoreNames.contains(STORE)){
+          let ok=false;
+          try{ ok = db.transaction(STORE,'readonly').objectStore(STORE).keyPath==='sura'; }catch(e){ ok=false; }
+          if(ok){ res(db); return; }
+          db.close(); rej(new Error('store layout differs')); return;
+        }
+        const v=db.version+1; db.close();                       // the store is missing: add it with the next version
+        const r2=indexedDB.open(name,v);
+        r2.onupgradeneeded=()=>{ if(!r2.result.objectStoreNames.contains(STORE)) r2.result.createObjectStore(STORE,{keyPath:'sura'}); };
+        r2.onsuccess=()=>res(r2.result);
+        r2.onerror=()=>rej(r2.error||new Error('upgrade failed'));
+        r2.onblocked=()=>rej(new Error('database blocked'));
+      };
     });
+  }
+  async function openDb(){
+    if(!window.indexedDB) throw new Error('IndexedDB not available');
+    let last=null;
+    for(const n of DB_NAMES){
+      try{ return await openNamed(n); }catch(e){ last=e; }
+    }
+    throw last||new Error('open failed');
   }
   function putOne(db,rec){
     return new Promise((res,rej)=>{
@@ -20182,6 +20286,7 @@ self.onmessage=function(e){
         for(let i=0;i<list.length;i++){
           await putOne(db,list[i]);
         }
+        say(tf('audioSaved',{n:list.length}));
       }catch(e){
         say(t('audioSaveFail')+(e&&e.message?e.message:e));
       }finally{ if(db) db.close(); }
@@ -20207,17 +20312,49 @@ self.onmessage=function(e){
     finally{ if(db) db.close(); }
   })();
 
+  // Delete the audio saved inside the app: press and HOLD the button (a short tap only shows a hint)
   const cb=document.getElementById('clearAudioBtn');
-  if(cb) cb.addEventListener('click',async e=>{
-    e.stopPropagation();
-    if(!confirm(t('audioClearConfirm'))) return;
-    try{
-      const db=await openDb();
-      await new Promise((res,rej)=>{ const tx=db.transaction(STORE,'readwrite'); tx.objectStore(STORE).clear(); tx.oncomplete=()=>res(); tx.onerror=()=>rej(tx.error); });
-      db.close();
-      say(t('audioCleared'));
-    }catch(err){ say(t('audioSaveFail')+(err&&err.message?err.message:err)); }
-  });
+  if(cb){
+    const css=document.createElement('style');
+    css.textContent=`#clearAudioBtn{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;}`;
+    document.head.appendChild(css);
+    let asking=false;
+    // take the imported audio out of the player and out of memory, so it is visibly gone
+    function unloadAudio(){
+      try{ player.pause(); }catch(_){}
+      const urls=new Set(); audioBySura.forEach(v=>{ if(v && v.url) urls.add(v.url); });
+      if(player.currentSrc) urls.add(player.currentSrc);
+      audioBySura.clear();
+      try{ player.removeAttribute('src'); player.load(); }catch(_){}
+      urls.forEach(u=>{ try{ if(String(u).indexOf('blob:')===0) URL.revokeObjectURL(u); }catch(_){} });
+      try{
+        player.style.display='none';
+        speedrow.style.display='none'; seekRow.style.display='none';
+        fname.textContent=''; markBtn.disabled=true; window.__audioName=null;
+      }catch(_){}
+    }
+    async function wipe(){
+      unloadAudio();
+      try{ if(navigator.vibrate) navigator.vibrate(60); }catch(_){}
+      try{
+        const db=await openDb();
+        await new Promise((res,rej)=>{ const tx=db.transaction(STORE,'readwrite'); tx.objectStore(STORE).clear(); tx.oncomplete=()=>res(); tx.onerror=()=>rej(tx.error); tx.onabort=()=>rej(tx.error); });
+        db.close();
+        say(t('audioCleared'));
+      }catch(err){ say(t('audioSaveFail')+(err&&err.message?err.message:err)); }
+    }
+    async function askAndWipe(){
+      if(asking) return; asking=true;
+      try{
+        const yes=await appConfirm(t('audioClearAsk'), t('dlgYes'), t('dlgCancel'));
+        if(yes) await wipe();
+      } finally { asking=false; }
+    }
+    // the question appears the moment the button is touched (Yes / Cancel decides)
+    cb.addEventListener('pointerdown',e=>{ e.stopPropagation(); askAndWipe(); });
+    cb.addEventListener('contextmenu',e=>e.preventDefault());
+    cb.addEventListener('click',e=>{ e.stopPropagation(); });
+  }
 
   // all texts follow the chosen language (also the buttons added later)
   try{ applyLanguage(currentLang); }catch(e){}
