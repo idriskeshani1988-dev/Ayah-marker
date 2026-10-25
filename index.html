@@ -1539,6 +1539,17 @@ button:active,.btn2:active,.rowbtn:active,.menuAction:active,.markbtn:active,.ay
       </div>
       <div class="menuDivider"></div>
       <div class="menuBox"><div class="settingsRow"><label for="stepMsInput" data-i18n="stepLabel" style="font-size:12px;">هەنگاوی گۆڕینی کات (1–1000 ms)</label><input id="stepMsInput" type="text" inputmode="numeric" pattern="[0-9]*" lang="en" maxlength="4" value="50" style="width:92px;padding:6px;border:1px solid var(--line);border-radius:8px;direction:ltr;"></div></div>
+      <div class="menuBox" id="bulkBox">
+        <div data-i18n="bulkTitle" style="font-size:12px;font-weight:700;margin-bottom:6px;">جووڵاندنی کۆمەڵێک نیشانە بە یەکجار</div>
+        <div class="settingsRow"><label for="bulkFrom" data-i18n="bulkFrom" style="font-size:12px;">لە ئایەتی</label><input id="bulkFrom" type="text" inputmode="numeric" pattern="[0-9]*" lang="en" maxlength="3" value="1" style="width:92px;padding:6px;border:1px solid var(--line);border-radius:8px;direction:ltr;"></div>
+        <div class="settingsRow"><label for="bulkTo" data-i18n="bulkTo" style="font-size:12px;">تا ئایەتی</label><input id="bulkTo" type="text" inputmode="numeric" pattern="[0-9]*" lang="en" maxlength="3" value="" style="width:92px;padding:6px;border:1px solid var(--line);border-radius:8px;direction:ltr;"></div>
+        <div class="settingsRow"><label for="bulkMs" data-i18n="bulkMs" style="font-size:12px;">بڕی کات (ms)</label><input id="bulkMs" type="text" inputmode="numeric" pattern="[0-9]*" lang="en" maxlength="6" value="200" style="width:92px;padding:6px;border:1px solid var(--line);border-radius:8px;direction:ltr;"></div>
+        <div style="display:flex;gap:8px;">
+          <button class="menuAction" id="bulkPlus" type="button" data-i18n="bulkPlus" style="flex:1;">➕ زیاد بکە</button>
+          <button class="menuAction" id="bulkMinus" type="button" data-i18n="bulkMinus" style="flex:1;">➖ کەم بکە</button>
+        </div>
+        <button class="menuAction" id="bulkUndo" type="button" data-i18n="bulkUndo">↩ گەڕانەوەی دوایین جووڵاندن</button>
+      </div>
       <div class="menuBox"><div class="settingsRow"><label data-i18n="fontLabel" style="font-size:12px;">گەورە و بچووککردنی دەقی قورئان</label><div class="fontAdjust" style="display:flex;align-items:center;gap:6px;direction:ltr;"><button class="fontBtn" id="fontMinus" type="button">−</button><span id="fontSizeDisplay" style="min-width:34px;text-align:center;direction:ltr;">16</span><button class="fontBtn" id="fontPlus" type="button">+</button></div></div></div>
     </div>
     <div class="filename" id="fname"></div>
@@ -17479,6 +17490,7 @@ function followCurrentRow(instant){
   scrollInsideToTop(marksList,row,instant!==false);
 }
 function startMarkedPlayback(mark){
+  advancedFromSura = null;
   navAyah = mark.isTotal ? null : mark.ayah;
   const ordered = marks.filter(m=>!m.isTotal).sort((a,b)=>a.timeMs-b.timeMs);
   const idx = ordered.findIndex(m=>m.seq===mark.seq);
@@ -17761,6 +17773,48 @@ Object.assign(TRANSLATIONS.ar, {"dlgOk": "موافق", "dlgCancel": "إلغاء"
   window.appAlert=msg=>{ dlg(msg,false); };
 })();
 
+// ---- shift many marks at once ----
+Object.assign(TRANSLATIONS.ku, {"bulkTitle":"جووڵاندنی کۆمەڵێک نیشانە بە یەکجار","bulkFrom":"لە ئایەتی","bulkTo":"تا ئایەتی","bulkMs":"بڕی کات (ms)","bulkPlus":"➕ زیاد بکە","bulkMinus":"➖ کەم بکە","bulkUndo":"↩ گەڕانەوەی دوایین جووڵاندن","bulkAsk":"کاتی {n} نیشانە (ئایەتی {a} تا {b}) بە {d} ms بگۆڕدرێت؟","bulkNone":"هیچ نیشانەیەک لەم ماوەیەدا نییە","bulkBad":"ژمارەی کات بنووسە (ms)","bulkNoUndo":"هیچ جووڵاندنێک نییە بۆ گەڕانەوە","askNextSura":"سورەتەکە تەواو بوو. دەچیت بۆ سورەتی دواتر ({s})؟","dlgNo":"نەخێر"});
+Object.assign(TRANSLATIONS.en, {"bulkTitle":"Move many marks at once","bulkFrom":"From ayah","bulkTo":"To ayah","bulkMs":"Amount (ms)","bulkPlus":"➕ Add","bulkMinus":"➖ Subtract","bulkUndo":"↩ Undo last shift","bulkAsk":"Change the time of {n} marks (ayah {a} to {b}) by {d} ms?","bulkNone":"There are no marks in this range","bulkBad":"Enter the amount of time (ms)","bulkNoUndo":"There is no shift to undo","askNextSura":"This surah is finished. Go to the next surah ({s})?","dlgNo":"No"});
+Object.assign(TRANSLATIONS.ar, {"bulkTitle":"تحريك عدة علامات دفعة واحدة","bulkFrom":"من الآية","bulkTo":"إلى الآية","bulkMs":"المقدار (ms)","bulkPlus":"➕ زيادة","bulkMinus":"➖ إنقاص","bulkUndo":"↩ التراجع عن آخر تحريك","bulkAsk":"تغيير وقت {n} علامة (الآيات {a} إلى {b}) بمقدار {d} ms؟","bulkNone":"لا توجد علامات في هذا النطاق","bulkBad":"أدخل مقدار الوقت (ms)","bulkNoUndo":"لا يوجد تحريك للتراجع عنه","askNextSura":"انتهت هذه السورة. الانتقال إلى السورة التالية ({s})؟","dlgNo":"لا"});
+(function(){
+  const bf=document.getElementById('bulkFrom'), bt=document.getElementById('bulkTo'), bm=document.getElementById('bulkMs');
+  const bp=document.getElementById('bulkPlus'), bn=document.getElementById('bulkMinus'), bu=document.getElementById('bulkUndo');
+  if(!bf||!bt||!bm||!bp||!bn||!bu) return;
+  // accept Kurdish / Arabic / Persian digits too
+  const toEn=v=>String(v==null?'':v).replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/[۰-۹]/g,d=>'۰۱۲۳۴۵۶۷۸۹'.indexOf(d)).replace(/\s+/g,'');
+  const toInt=v=>{ const n=parseInt(toEn(v).replace(/[^0-9]/g,''),10); return Number.isFinite(n)?n:NaN; };
+  let last=null;                                       // the last shift, for the undo button
+  [bf,bt,bm].forEach(el=>el.addEventListener('click',e=>e.stopPropagation()));
+  async function shift(sign){
+    const ms=toInt(bm.value);
+    if(!(ms>0)){ appAlert(t('bulkBad')); return; }
+    const own=marks.filter(m=>!m.isTotal);
+    if(!own.length){ appAlert(t('bulkNone')); return; }
+    const maxAyah=Math.max(...own.map(m=>m.ayah));
+    let a=toInt(bf.value); if(!(a>=1)) a=1;
+    let b=toInt(bt.value); if(!(b>=1)) b=maxAyah;
+    if(a>b){ const x=a; a=b; b=x; }
+    const hit=own.filter(m=>m.ayah>=a && m.ayah<=b);
+    if(!hit.length){ appAlert(t('bulkNone')); return; }
+    const d=(sign>0?'+':'−')+ms;
+    const yes=await appConfirm(tf('bulkAsk',{n:hit.length,a:a,b:b,d:d}), t('dlgYes'), t('dlgCancel'));
+    if(!yes) return;
+    last={sura:parseInt(suraSelect.value)||0, times:hit.map(m=>({seq:m.seq, timeMs:m.timeMs}))};
+    hit.forEach(m=>{ m.timeMs=Math.max(0, m.timeMs+sign*ms); });
+    renderMarksList(); saveMarks(); scheduleAutoSave();
+  }
+  bp.addEventListener('click',e=>{ e.stopPropagation(); shift(1); });
+  bn.addEventListener('click',e=>{ e.stopPropagation(); shift(-1); });
+  bu.addEventListener('click',e=>{
+    e.stopPropagation();
+    if(!last || last.sura!==(parseInt(suraSelect.value)||0)){ appAlert(t('bulkNoUndo')); return; }
+    last.times.forEach(o=>{ const m=marks.find(x=>x.seq===o.seq); if(m) m.timeMs=o.timeMs; });
+    last=null;
+    renderMarksList(); saveMarks(); scheduleAutoSave();
+  });
+})();
+
 // ---- Settings menu: dark mode + language ----
 const menuBtn = document.getElementById('menuBtn');
 const settingsMenu = document.getElementById('settingsMenu');
@@ -17911,6 +17965,7 @@ fwd1Btn.addEventListener('click', ()=>{
   const list = navList(); if(!list.length) return;
   const idx = navCurrentIndex(list);
   if(idx+1 < list.length) startMarkedPlayback(list[idx+1]);
+  else if(marks.some(m=>m.isTotal)) askNextSura();      // already on the last ayah of a finished surah
 });
 
 // ---- Ayah text (fetched live, not stored in the app — needs internet) ----
@@ -18377,8 +18432,11 @@ function checkPlaybackSync(){
     const lookAheadMs = 8 * (player.playbackRate || 1);
     if(player.currentTime*1000 + lookAheadMs >= playbackStopMs){
       player.pause();
+      const stopAt = playbackStopMs;
       player.currentTime = playbackStopMs/1000;
       playbackStopMs = null;
+      const endM = marks.find(m=>m.isTotal), cs = parseInt(suraSelect.value)||1;
+      if(endM && Math.abs(stopAt - endM.timeMs) <= 30 && advancedFromSura !== cs){ advancedFromSura = cs; askNextSura(); }
       return;
     }
   }
@@ -18417,35 +18475,34 @@ player.addEventListener('ratechange', ()=>{
 // kept as a fallback (e.g. background tabs where rAF is paused)
 player.addEventListener('timeupdate', checkPlaybackSync);
 let advancedFromSura = null;
-function advanceToNextSura(){
-  return false;   // a finished surah no longer moves to the next surah automatically
+let nextSuraAsking = false;
+// A finished surah (it has its end mark): ask first, then move on only if the answer is yes
+async function askNextSura(){
+  if(nextSuraAsking) return false;
+  const current = parseInt(suraSelect.value)||1;
+  if(current >= 114) return false;
+  let next = current + 1;
   if(audioBySura.size > 1){
-    const current = parseInt(suraSelect.value)||1;
-    const next = [...audioBySura.keys()].filter(n=>n>current).sort((a,b)=>a-b)[0];
-    if(next){
-      if(masterDb && masterLoadedSura===current) flushSuraToMaster(current);
-      autoPlayNextSura = true;
-      suraSelect.value = String(next);
-      suraSelect.dispatchEvent(new Event('change'));
-      return true;
-    }
+    const n = [...audioBySura.keys()].filter(x=>x>current).sort((x,y)=>x-y)[0];
+    if(n) next = n;
   }
-  const currentSura = parseInt(suraSelect.value)||1;
-  if(currentSura < 114){
-    const nextSura = currentSura + 1;
-    if(masterDb && masterLoadedSura===currentSura) flushSuraToMaster(currentSura);
-    autoPlayNextSura = true;
-    suraSelect.value = String(nextSura);
-    suraSelect.dispatchEvent(new Event('change'));
-    showToast(tf('movedNext',{s:getSuraName(nextSura)}));
-    return true;
-  }
-  return false;
+  nextSuraAsking = true;
+  let yes = false;
+  try{ yes = await appConfirm(tf('askNextSura',{s:getSuraName(next)}), t('dlgYes'), t('dlgNo')); }
+  finally{ nextSuraAsking = false; }
+  if(!yes) return false;
+  try{ if(masterDb && masterLoadedSura===current) flushSuraToMaster(current); }catch(_){}
+  autoPlayNextSura = false;
+  suraSelect.value = String(next);
+  suraSelect.dispatchEvent(new Event('change'));
+  return true;
 }
+function advanceToNextSura(){ askNextSura(); return true; }
 player.addEventListener('ended', ()=>{
   stopSyncLoop();
   playbackStopMs = null;
-  advanceToNextSura();
+  const cur = parseInt(suraSelect.value)||1;
+  if(marks.some(m=>m.isTotal) && advancedFromSura !== cur){ advancedFromSura = cur; askNextSura(); }
 });
 
 // ---- Hand-delay compensation for marking at high speed ----
@@ -18464,14 +18521,17 @@ function markCurrent(){
   unmarkSuraCleared(currentMarksSura());
   refreshNextAyah();
   const timeMs = getMarkTimeMs();
+  let justEnded = false;
   if(pendingTotal){
     marks = marks.filter(m=>!m.isTotal);
     marks.push({ayah:999, timeMs, isTotal:true, seq:seqCounter++});
     showToast(t('surahComplete'));
+    justEnded = true;
   } else {
     marks.push({ayah: currentAyah, timeMs, isTotal:false, seq:seqCounter++});
   }
   render();
+  if(justEnded){ advancedFromSura = parseInt(suraSelect.value)||1; askNextSura(); }   // the surah is finished: go to the next one? (yes / no)
 }
 markBtn.addEventListener('click', markCurrent);
 function markTotal(){
@@ -18481,6 +18541,7 @@ function markTotal(){
   marks.push({ayah:999, timeMs, isTotal:true, seq:seqCounter++});
   showToast(t('surahComplete'));
   render();
+  advancedFromSura = parseInt(suraSelect.value)||1; askNextSura();   // the surah is finished: go to the next one? (yes / no)
 }
 addTotalBtn.addEventListener('click', markTotal);
 showAllBtn.addEventListener('click', ()=>{
