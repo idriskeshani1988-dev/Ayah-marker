@@ -3622,21 +3622,49 @@ if(loadProgressBtn){
   const css=document.createElement('style');
   css.textContent='body.reading-mode #hdrToggleBar, body.reading-mode header, body.reading-mode #markCard, body.reading-mode .wrap > .card:has(#marksList){display:none !important;} #textPanel{touch-action:manipulation;}';
   document.head.appendChild(css);
-  let lastT=0, lx=0, ly=0, sx=0, sy=0, moved=false, swallow=false;
+  // Hide / show the Android status bar (top) and the button bar (bottom / side). A web page can only ask; three ways are tried:
+  //  1) the app's own bridge  window.AndroidSave.setImmersive(true|false)   (needs a small native method, see the note I gave)
+  //  2) the Capacitor StatusBar plugin, if the APK has it
+  //  3) the browser full-screen mode (works in Chrome; in an APK only if its WebView allows it)
+  function setImmersive(on){
+    try{ const A=window.AndroidSave; if(A && typeof A.setImmersive==='function') A.setImmersive(!!on); }catch(_){}
+    try{ const SB=window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.StatusBar; if(SB){ if(on) SB.hide(); else SB.show(); } }catch(_){}
+    try{
+      const el=document.documentElement;
+      if(on){ const f=el.requestFullscreen||el.webkitRequestFullscreen; if(f && !document.fullscreenElement){ const r=f.call(el,{navigationUI:'hide'}); if(r && r.catch) r.catch(()=>{}); } }
+      else if(document.fullscreenElement){ const r=document.exitFullscreen(); if(r && r.catch) r.catch(()=>{}); }
+    }catch(_){}
+  }
+  const DBL_MS=300, HOLD_MS=320;                         // two taps within 300 ms = a double tap; a single tap waits a little to be sure
+  let lastT=0, lx=0, ly=0, sx=0, sy=0, moved=false, swallow=false, pending=null, passThrough=false;
   textPanel.addEventListener('pointerdown',e=>{ sx=e.clientX; sy=e.clientY; moved=false; });
   textPanel.addEventListener('pointermove',e=>{ if(Math.abs(e.clientX-sx)>10 || Math.abs(e.clientY-sy)>10) moved=true; });
   textPanel.addEventListener('pointerup',e=>{
     if(e.pointerType==='mouse' && e.button!==0) return;
     if(moved){ lastT=0; return; }                                   // a scroll, not a tap
     const now=Date.now();
-    if(lastT && now-lastT<350 && Math.abs(e.clientX-lx)<35 && Math.abs(e.clientY-ly)<35){
+    if(lastT && now-lastT<DBL_MS && Math.abs(e.clientX-lx)<35 && Math.abs(e.clientY-ly)<35){
       lastT=0; swallow=true; setTimeout(()=>{ swallow=false; },400);
+      clearTimeout(pending); pending=null;                            // the first tap of this double tap must not play the ayah
       document.body.classList.toggle('reading-mode');
+      setImmersive(document.body.classList.contains('reading-mode'));    // also hide the phone's own status bar and button bar
       try{ if(navigator.vibrate) navigator.vibrate(15); }catch(_){}
     } else { lastT=now; lx=e.clientX; ly=e.clientY; }
   });
-  // the click that belongs to the second tap must not play the ayah once more
-  textPanel.addEventListener('click',e=>{ if(swallow){ swallow=false; e.stopImmediatePropagation(); e.preventDefault(); } }, true);
+  // A single tap on an ayah plays it, but only after a short wait: if a second tap comes, it was a double tap and the ayah is NOT played.
+  textPanel.addEventListener('click',e=>{
+    if(passThrough) return;                                          // the held click, sent on after the wait
+    e.stopImmediatePropagation(); e.preventDefault();
+    if(swallow){ swallow=false; return; }                            // the click of the second tap
+    const target=e.target, init={bubbles:true,cancelable:true,clientX:e.clientX,clientY:e.clientY,view:window};
+    clearTimeout(pending);
+    pending=setTimeout(()=>{
+      pending=null;
+      if(!target.isConnected) return;
+      passThrough=true;
+      try{ target.dispatchEvent(new MouseEvent('click',init)); } finally { passThrough=false; }
+    }, HOLD_MS);
+  }, true);
 })();
 setTimeout(updateProgressButtons, 500);
 suraSelect.addEventListener('change', ()=>{ setTimeout(updateProgressButtons, 600); });
