@@ -1512,6 +1512,7 @@ body.theme-sepia .mark-row.total-row{background:#efdcb0;}
   .settingsMenu button, .settingsMenu .menuAction, .settingsMenu .themeBtn, .settingsMenu .langBtn, .settingsMenu .toggleBtn, .settingsMenu .fontBtn, .settingsMenu .chip{transition:none;}
   .settingsMenu button:active, .settingsMenu .menuAction:active, .settingsMenu .themeBtn:active, .settingsMenu .langBtn:active, .settingsMenu .toggleBtn:active, .settingsMenu .fontBtn:active, .settingsMenu .chip:active{transform:none;}
 }
+.settingsMenu .pressFx{transform:scale(.975);filter:brightness(.94);}
 </style>
 </head>
 <body>
@@ -3511,14 +3512,16 @@ function updateProgressButtons(){
     if(sub){
       const line = document.createElement('div');
       line.id = 'progressSubLine';
-      line.textContent = sub;
-      line.style.cssText = 'font-size:0.88em;opacity:.9;margin-top:6px;padding-top:6px;border-top:1px solid var(--line);';
-      saveBtn.appendChild(line);
-      const del = document.createElement('div');
+      line.style.cssText = 'position:relative;display:flex;align-items:center;justify-content:center;min-height:30px;font-size:0.88em;opacity:.95;margin-top:6px;padding-top:6px;border-top:1px solid var(--line);';
+      const txt = document.createElement('span'); txt.textContent = sub; line.appendChild(txt);
+      // small square trash button beside the text: deletes the saved ayah
+      const del = document.createElement('span');
       del.id = 'progressClearLine';
-      del.textContent = t('progressClear');
-      del.style.cssText = 'margin-top:6px;padding-top:6px;border-top:1px solid var(--line);';
-      saveBtn.appendChild(del);
+      del.setAttribute('role','button');
+      del.textContent = '🗑';
+      del.style.cssText = 'position:absolute;left:0;top:calc(50% + 5px);transform:translateY(-50%);display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border:1px solid var(--line);border-radius:8px;font-size:15px;line-height:1;';
+      line.appendChild(del);
+      saveBtn.appendChild(line);
     }
   }
   if(lastSura && lastAyah){
@@ -3539,8 +3542,9 @@ const loadProgressBtn = document.getElementById('loadProgressBtn');
 if(saveProgressBtn){
   saveProgressBtn.addEventListener('click', (ev)=>{
     // tapping the second line (saved ayah) resumes from it instead of saving again
-    if(ev.target && ev.target.id==='progressSubLine'){ loadProgressBtn.click(); return; }
-    if(ev.target && ev.target.id==='progressClearLine'){ clearProgressBtn.click(); return; }
+    const tg = ev.target && ev.target.closest ? ev.target : null;
+    if(tg && tg.closest('#progressClearLine')){ clearProgressBtn.click(); return; }
+    if(tg && tg.closest('#progressSubLine')){ loadProgressBtn.click(); return; }
     const sura = parseInt(suraSelect.value);
     const curAyah = focusedAyah !== null ? focusedAyah : (lastShownAyah !== null ? lastShownAyah : (parseInt(startAyahInput.value)||1));
     // تەنها دوایین ئایەت هەڵبگیرێت - هەموو هەڵگرتنە کۆنەکان بسڕەوە
@@ -4903,7 +4907,12 @@ function snapStarts(starts, sil, win, found){
       } finally { asking=false; }
     }
     // the question appears the moment the button is touched (Yes / Cancel decides)
-    cb.addEventListener('pointerdown',e=>{ e.stopPropagation(); askAndWipe(); });
+    cb.addEventListener('pointerdown',e=>{
+      e.stopPropagation();
+      cb.classList.add('pressFx');
+      setTimeout(()=>cb.classList.remove('pressFx'), 220);
+      setTimeout(askAndWipe, 140);   // a tiny pause so the press animation is seen before the dialog covers it
+    });
     cb.addEventListener('contextmenu',e=>e.preventDefault());
     cb.addEventListener('click',e=>{ e.stopPropagation(); });
   }
