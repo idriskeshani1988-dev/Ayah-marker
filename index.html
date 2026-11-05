@@ -975,7 +975,7 @@ body.hdr-hidden header.menu-open > *:not(#settingsMenu){display:none !important;
 </style>
 
 <style id="no-white-2026-10-10">
-body:not(.dark) .menuAction:not(#saveProgressBtn),
+body:not(.dark) .menuAction,
 body:not(.dark) .menuBox,
 body:not(.dark) .toggleBtn,
 body:not(.dark) .langBtn:not(.active),
@@ -1020,7 +1020,7 @@ body:not(.dark) .mark-row .rowtime{border-color:#000 !important;}
 <style id="menu-paper-2026-10-11">
 .settingsMenu, body.dark .settingsMenu{background:var(--paper) !important;}
 body .settingsMenu .menuBox,
-body .settingsMenu .menuAction:not(#saveProgressBtn),
+body .settingsMenu .menuAction,
 body .settingsMenu .toggleBtn,
 body .settingsMenu .langBtn:not(.active),
 body .settingsMenu .chip:not(.active),
@@ -1304,7 +1304,7 @@ body.dark #pickList button{color:var(--ink) !important;border-bottom-color:rgba(
 
 <style id="dark-whiter-text-2026-10-12">
 body.dark{--ink:#e6eee9;}
-body.dark .menuAction:not(#saveProgressBtn),
+body.dark .menuAction,
 body.dark .menuBox, body.dark .menuBox span, body.dark .settingsRow, body.dark .settingsRow span,
 body.dark .langBtn:not(.active), body.dark .toggleBtn, body.dark .chip:not(.active),
 body.dark .btn2, body.dark .fontBtn, body.dark #stepMsInput, body.dark #fname,
@@ -1498,6 +1498,21 @@ body.theme-sepia .ayah-line-list.active, body.theme-sepia .mark-row.active-row{b
 body.theme-sepia .ayah-line{background:#f6e7c3;}
 body.theme-sepia .mark-row.total-row{background:#efdcb0;}
 </style>
+<style id="menu-press-anim">
+/* very light press animation for the buttons inside the menu */
+.settingsMenu button, .settingsMenu .menuAction, .settingsMenu .themeBtn, .settingsMenu .langBtn, .settingsMenu .toggleBtn, .settingsMenu .fontBtn, .settingsMenu .chip{
+  transition: transform .12s ease, filter .12s ease, box-shadow .12s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.settingsMenu button:active, .settingsMenu .menuAction:active, .settingsMenu .themeBtn:active, .settingsMenu .langBtn:active, .settingsMenu .toggleBtn:active, .settingsMenu .fontBtn:active, .settingsMenu .chip:active{
+  transform: scale(.975);
+  filter: brightness(.94);
+}
+@media (prefers-reduced-motion: reduce){
+  .settingsMenu button, .settingsMenu .menuAction, .settingsMenu .themeBtn, .settingsMenu .langBtn, .settingsMenu .toggleBtn, .settingsMenu .fontBtn, .settingsMenu .chip{transition:none;}
+  .settingsMenu button:active, .settingsMenu .menuAction:active, .settingsMenu .themeBtn:active, .settingsMenu .langBtn:active, .settingsMenu .toggleBtn:active, .settingsMenu .fontBtn:active, .settingsMenu .chip:active{transform:none;}
+}
+</style>
 </head>
 <body>
 <div class="wrap">
@@ -1548,7 +1563,7 @@ body.theme-sepia .mark-row.total-row{background:#efdcb0;}
         <button class="menuAction" id="clearSuraBtn" data-i18n="clearSuraBtn" style="margin-top:0;">سڕینەوەی لیستی نیشانەکراوەکان تەنها بۆ ئەم سورەتە</button>
         <button class="menuAction" id="clearAllBtn" data-i18n="clearAllBtn">سڕینەوەی لیستی نیشانەکراوەکان بۆ هەموو سورەتەکان</button>
         <button class="menuAction" id="clearAudioBtn"><span data-i18n="audioClear">سڕینەوەی دەنگە هەڵگیراوەکان</span><span id="audioSavedInfo" style="display:block;font-size:12px;font-weight:600;opacity:.8;margin-top:3px;line-height:1.5;"></span></button>
-        <button class="menuAction" id="saveProgressBtn" data-i18n="progressSave" style="background:var(--teal);color:#fff; margin-top:0;">🔖 هەڵگرتنی ئایەتی گەیشتوو</button>
+        <button class="menuAction" id="saveProgressBtn" data-i18n="progressSave" style="margin-top:0;">🔖 هەڵگرتنی ئایەتی گەیشتوو</button>
         <button class="menuAction" id="loadProgressBtn" style="display:none;">▶️ دەستپێکردنەوە لە ئایەتی هەڵگیراو</button>
         <button class="menuAction" id="clearProgressBtn" data-i18n="progressClear" style="display:none;">🗑 سڕینەوەی ئایەتی گەیشتوو</button>
         <p class="hint menuHint" id="progressStatus" style="display:none;"></p>
@@ -1922,10 +1937,11 @@ function setQuranFontSize(value){
   quranFontSize = Math.min(44, Math.max(12, Math.round(Number(value) || 16)));
   document.documentElement.style.setProperty('--quran-font-size', quranFontSize + 'px');
   if(fontSizeDisplay) fontSizeDisplay.textContent = String(quranFontSize);
+  try{ localStorage.setItem('app_font_size', String(quranFontSize)); }catch(_){}   // remembered between launches
 }
 document.getElementById('fontMinus')?.addEventListener('click', ()=>setQuranFontSize(quranFontSize-1));
 document.getElementById('fontPlus')?.addEventListener('click', ()=>setQuranFontSize(quranFontSize+1));
-setQuranFontSize(16);
+(function(){ let v=16; try{ v=parseInt(localStorage.getItem('app_font_size'),10)||16; }catch(_){} setQuranFontSize(v); })();
 
 // ---- pinch with two fingers on the Quran text = bigger / smaller text ----
 (function(){
@@ -2584,7 +2600,22 @@ speedrow.addEventListener('click',(e)=>{
   [...speedrow.children].forEach(c=>c.classList.remove('active'));
   chip.classList.add('active');
   player.playbackRate = parseFloat(chip.dataset.r);
+  player.defaultPlaybackRate = player.playbackRate;
+  try{ localStorage.setItem('app_speed', chip.dataset.r); }catch(_){}   // remembered between launches
 });
+// restore the saved speed at launch, and keep it when another surah's audio is loaded
+(function(){
+  let r=1; try{ r=parseFloat(localStorage.getItem('app_speed'))||1; }catch(_){}
+  function apply(){ player.defaultPlaybackRate=r; if(player.playbackRate!==r) player.playbackRate=r; }
+  const chip=speedrow.querySelector('.chip[data-r="'+r+'"]');
+  if(chip){ [...speedrow.children].forEach(c=>c.classList.remove('active')); chip.classList.add('active'); }
+  else r=1;
+  apply();
+  ['loadstart','loadedmetadata','canplay','play'].forEach(ev=>player.addEventListener(ev, ()=>{
+    const cur=speedrow.querySelector('.chip.active'); if(cur) r=parseFloat(cur.dataset.r)||1;
+    apply();
+  }));
+})();
 
 // Previous / next ayah: jump to the start of that ayah and play just that ayah (for reviewing the marks)
 function navList(){ return marks.filter(m=>!m.isTotal).sort((a,b)=>a.ayah-b.ayah); }
@@ -3470,29 +3501,46 @@ function updateProgressButtons(){
   const saveBtn = document.getElementById('saveProgressBtn');
   const loadBtn = document.getElementById('loadProgressBtn');
   const status = document.getElementById('progressStatus');
-  if(saveBtn){
-    saveBtn.textContent = t('progressSave');
-  }
   const lastSura = bms['lastSura'];
   const lastAyah = bms['lastAyah'];
+  // the saved-ayah info now lives inside the save button (second line); tapping it resumes from that ayah
+  function setSaveBtn(sub){
+    if(!saveBtn) return;
+    saveBtn.textContent = '';
+    const top = document.createElement('div'); top.textContent = t('progressSave'); saveBtn.appendChild(top);
+    if(sub){
+      const line = document.createElement('div');
+      line.id = 'progressSubLine';
+      line.textContent = sub;
+      line.style.cssText = 'font-size:0.88em;opacity:.9;margin-top:6px;padding-top:6px;border-top:1px solid var(--line);';
+      saveBtn.appendChild(line);
+      const del = document.createElement('div');
+      del.id = 'progressClearLine';
+      del.textContent = t('progressClear');
+      del.style.cssText = 'margin-top:6px;padding-top:6px;border-top:1px solid var(--line);';
+      saveBtn.appendChild(del);
+    }
+  }
   if(lastSura && lastAyah){
     const sName = getSuraName(parseInt(lastSura));
-    if(loadBtn){ 
-      loadBtn.style.display='block'; 
-      loadBtn.textContent = tf('progressSaved',{s:sName,a:lastAyah});
-    }
+    setSaveBtn(tf('progressSaved',{s:sName,a:lastAyah}));
+    if(loadBtn){ loadBtn.style.display='none'; }
     if(status){ status.style.display='none'; status.textContent = ''; }
   } else {
+    setSaveBtn('');
     if(loadBtn) loadBtn.style.display='none';
     if(status) status.style.display='none';
   }
   const clrBtn = document.getElementById('clearProgressBtn');
-  if(clrBtn) clrBtn.style.display = (lastSura && lastAyah) ? 'block' : 'none';
+  if(clrBtn) clrBtn.style.display = 'none';   // its function now lives inside the save button (third line)
 }
 const saveProgressBtn = document.getElementById('saveProgressBtn');
 const loadProgressBtn = document.getElementById('loadProgressBtn');
 if(saveProgressBtn){
-  saveProgressBtn.addEventListener('click', ()=>{
+  saveProgressBtn.addEventListener('click', (ev)=>{
+    // tapping the second line (saved ayah) resumes from it instead of saving again
+    if(ev.target && ev.target.id==='progressSubLine'){ loadProgressBtn.click(); return; }
+    if(ev.target && ev.target.id==='progressClearLine'){ clearProgressBtn.click(); return; }
     const sura = parseInt(suraSelect.value);
     const curAyah = focusedAyah !== null ? focusedAyah : (lastShownAyah !== null ? lastShownAyah : (parseInt(startAyahInput.value)||1));
     // تەنها دوایین ئایەت هەڵبگیرێت - هەموو هەڵگرتنە کۆنەکان بسڕەوە
