@@ -5169,7 +5169,19 @@ function snapStarts(starts, sil, win, found){
   });
 
   // launch: read the folder; the first time, ask once to turn the permission on and create the folder
+  // the language screen comes first: wait until a language is chosen, so the permission box is in that language
+  function waitForLanguage(){
+    return new Promise(resolve=>{
+      const check=()=>{
+        const ov=document.getElementById('langPickOverlay');
+        if(!ov || ov.classList.contains('hide')) resolve(); else setTimeout(check,150);
+      };
+      check();
+    });
+  }
   async function init(){
+    await waitForLanguage();
+    await new Promise(r=>setTimeout(r,300));      // let the language screen close first
     let st=null; try{ st=await pl.status(); }catch(_){ return; }
     if(!st || !st.supported) return;
     if(st.granted){ try{ await pl.ensureFolder(); }catch(_){} await scan(false); return; }
