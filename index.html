@@ -3088,11 +3088,20 @@ function showAyahText(syncInstant=false){
   const total = currentSurahAyahs.length;
   const nonTotal = marks.filter(m=>!m.isTotal).sort((a,b)=>a.timeMs-b.timeMs);
   const isComplete = marks.some(m=>m.isTotal);
+  // An unfinished surah (no end mark yet) also follows the audio while it plays,
+  // so the marked ayahs can be reviewed from the start: text and list move with the voice.
+  const playingNow = !player.paused && !player.ended;
+  const followMode = isComplete || playingNow;
   let ayahNum;
 
   if(nonTotal.length===0){
     ayahNum = parseInt(startAyahInput.value)||1;
-  } else if(isComplete){
+  } else if(followMode){
+    if(!isComplete){
+      // past the last mark (new, still unmarked ayahs): keep the ayah the person is working on
+      const lastM = nonTotal[nonTotal.length-1];
+      if(player.currentTime*1000 >= lastM.timeMs && lastShownAyah !== null && lastShownAyah !== undefined && lastShownAyah >= lastM.ayah) return;
+    }
     // Use the actual media clock. At 3x, every millisecond of currentTime
     // represents 3 ms of audio, so there is no fixed-delay correction here.
     const curMs = player.currentTime * 1000;
@@ -3114,7 +3123,7 @@ function showAyahText(syncInstant=false){
   // Update Quran text and marked list together on the same playback tick.
   renderAyahText(ayahNum, syncInstant);
 
-  if(isComplete){
+  if(followMode){
     window._followOnly = true;
     try{ renderMarksList(); }finally{ window._followOnly = false; }
     const activeMark = marks.find(m=>!m.isTotal && m.ayah===ayahNum);
@@ -3187,6 +3196,8 @@ function checkPlaybackSync(){
     // scrolling because its animation can trail the 3x audio by hundreds
     // of milliseconds.
     showAyahText(!player.paused && !player.ended);
+  } else if(!player.paused && !player.ended && marks.some(m=>!m.isTotal)){
+    showAyahText(true);          // unfinished surah: follow the audio over the ayahs marked so far
   }
 }
 player.addEventListener('play', startSyncLoop);
