@@ -17,7 +17,10 @@ import com.getcapacitor.PluginMethod;
 import com.getcapacitor.annotation.ActivityCallback;
 import com.getcapacitor.annotation.CapacitorPlugin;
 
+import android.util.Base64;
+
 import java.io.File;
+import java.io.FileOutputStream;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Locale;
@@ -29,6 +32,7 @@ import java.util.Locale;
  *  - requestAccess(): opens the Settings page for this app, resolves { granted }
  *  - ensureFolder():  creates Ayah-marker when it is missing
  *  - listAudio():     { granted, files:[{name, path, size}] }
+ *  - saveFile():      saves a base64 file (the db) into Ayah-marker
  */
 @CapacitorPlugin(name = "AudioFolder")
 public class AudioFolderPlugin extends Plugin {
@@ -97,6 +101,43 @@ public class AudioFolderPlugin extends Plugin {
         File f = folder();
         boolean ok = f.exists() || f.mkdirs();
         ret.put("created", ok);
+        call.resolve(ret);
+    }
+
+    // saveFile({name, data(base64)}): writes /storage/emulated/0/Ayah-marker/<name> (replaces the file)
+    @PluginMethod
+    public void saveFile(PluginCall call) {
+        String name = call.getString("name");
+        String data = call.getString("data");
+        if (name == null || data == null) {
+            call.reject("name and data are needed");
+            return;
+        }
+        if (!granted()) {
+            call.reject("All files access is not allowed");
+            return;
+        }
+        name = name.replaceAll("[\\/:*?\"<>|]", "_");
+        File dir = folder();
+        if (!dir.exists() && !dir.mkdirs()) {
+            call.reject("Could not create " + dir.getAbsolutePath());
+            return;
+        }
+        File out = new File(dir, name);
+        FileOutputStream fos = null;
+        try {
+            fos = new FileOutputStream(out, false);
+            fos.write(Base64.decode(data, Base64.DEFAULT));
+            fos.flush();
+        } catch (Exception e) {
+            call.reject("Could not save: " + e.getMessage());
+            return;
+        } finally {
+            try { if (fos != null) fos.close(); } catch (Exception ignore) {}
+        }
+        JSObject ret = new JSObject();
+        ret.put("saved", true);
+        ret.put("path", out.getAbsolutePath());
         call.resolve(ret);
     }
 

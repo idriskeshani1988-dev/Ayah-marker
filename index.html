@@ -2980,10 +2980,10 @@ async function exportAllSurahs(){
   flushSuraToMaster(masterLoadedSura);
   const data = masterDb.export();
   const blob = new Blob([data], {type:'application/x-sqlite3'});
-  if(IS_NATIVE && window.AndroidSave && typeof window.AndroidSave.saveToDownloadsOverwrite === 'function'){
-    const b64 = await blobToBase64(blob);
-    const r = saveIntoAppFolder(AUTO_DB_NAME, b64);
-    if(r === 'ok'){ appAlert(t('savedOk') + AUTO_DB_NAME); return; }
+  if(IS_NATIVE){
+    let folderPath = null;
+    try{ folderPath = await saveDbToAyahFolder(AUTO_DB_NAME, blob); }catch(_){ folderPath = null; }
+    if(folderPath){ appAlert(savedFolderMsg(folderPath)); return; }
   }
   await saveBlob(blob, AUTO_DB_NAME);
 }
@@ -3433,7 +3433,10 @@ exportDb.addEventListener('click', async ()=>{
     flushSuraToMaster(currentMarksSura());
     const data = masterDb.export();
     const blob = new Blob([data], {type:'application/x-sqlite3'});
-    await saveBlob(blob, filename);
+    let folderPath = null;
+    if(IS_NATIVE){ try{ folderPath = await saveDbToAyahFolder(filename, blob); }catch(_){ folderPath = null; } }
+    if(folderPath) appAlert(savedFolderMsg(folderPath));
+    else await saveBlob(blob, filename);        // fallback: Downloads
   }catch(err){
     appAlert(t('errSaveDb') + (err && err.message ? err.message : err));
   }finally{
@@ -3468,6 +3471,22 @@ function saveIntoAppFolder(name, b64){
   if(!(A && typeof A.saveToDownloadsOverwrite === 'function')) return 'no-bridge';
   try{ return String(A.saveToDownloadsOverwrite(name, b64, 'application/octet-stream')); }catch(e){ return 'error'; }
 }
+// Save a db file into /storage/emulated/0/Ayah-marker (main storage). Returns the full path, or null when it could not.
+async function saveDbToAyahFolder(filename, blob){
+  let pl; try{ pl=nativePlugin('AudioFolder'); }catch(_){ return null; }
+  const st=await pl.status();
+  if(!st || !st.supported) return null;
+  if(!st.granted){
+    const yes=await appConfirm(t('audioFolderAsk'), t('audioFolderChoose'), t('audioFolderLater'));
+    if(!yes) return null;
+    const r=await pl.requestAccess();
+    if(!r || !r.granted) return null;
+  }
+  const data=await blobToBase64(blob);
+  const r=await pl.saveFile({name:filename, data:data});
+  return (r && r.saved) ? r.path : null;
+}
+function savedFolderMsg(path){ return t('savedFolderOk') + '\n\u2066' + path + '\u2069'; }
 // (the README / sub-folder creation was removed: only Quran-timing.db is written to Downloads)
 let lastDownloadSig = null;
 function savePartialProgress(){
@@ -5039,19 +5058,19 @@ function snapStarts(starts, sil, win, found){
     audioFolderAsk:"بۆ ئەوەی فۆڵدەری «Ayah-marker» لە ناو مەلەفاتی سەرەکی مۆبایلەکەت دروست بکرێت و دەنگەکانی خۆکار بخوێنرێنەوە، دەبێت «ڕێگەدان بە بەڕێوەبردنی هەموو فایلەکان» بۆ ئەم ئەپە چالاک بکەیت.\nدوای ئەوە دەنگی سورەتەکان (وەک 002.mp3) لەو فۆڵدەرەدا دابنێ.",
     audioFolderChoose:"چالاککردن", audioFolderLater:"دواتر",
     audioFolderFound:"{n} دەنگ لە فۆڵدەری Ayah-marker دۆزرایەوە", audioFolderEmpty:"هیچ دەنگێک لە فۆڵدەری Ayah-marker نییە",
-    audioFolderFail:"نەتوانرا فۆڵدەرەکە بخوێنرێتەوە"});
+    audioFolderFail:"نەتوانرا فۆڵدەرەکە بخوێنرێتەوە", audioFolderNoAccess:"ڕێگەدان چالاک نەکرا — فۆڵدەری Ayah-marker بەکارناهێنرێت", savedFolderOk:"هەڵگیرا ✅\nفۆڵدەری Ayah-marker:"});
   Object.assign(TRANSLATIONS.en, {
     audioFolderBtn:"📁 Audio folder (Ayah-marker)",
     audioFolderAsk:"To create the folder \"Ayah-marker\" in your phone's main storage and load its audio automatically, turn on \"Allow management of all files\" for this app.\nThen put the surah audio files (for example 002.mp3) in that folder.",
     audioFolderChoose:"Turn on", audioFolderLater:"Later",
     audioFolderFound:"{n} audio files found in the Ayah-marker folder", audioFolderEmpty:"No audio files in the Ayah-marker folder",
-    audioFolderFail:"Could not read the folder"});
+    audioFolderFail:"Could not read the folder", audioFolderNoAccess:"Access was not turned on — the Ayah-marker folder cannot be used", savedFolderOk:"Saved ✅\nAyah-marker folder:"});
   Object.assign(TRANSLATIONS.ar, {
     audioFolderBtn:"📁 مجلد الصوتيات (Ayah-marker)",
     audioFolderAsk:"لإنشاء المجلد «Ayah-marker» في التخزين الرئيسي للهاتف وتحميل الصوتيات منه تلقائيًا، فعّل «السماح بإدارة جميع الملفات» لهذا التطبيق.\nثم ضع ملفات السور (مثل 002.mp3) داخل هذا المجلد.",
     audioFolderChoose:"تفعيل", audioFolderLater:"لاحقًا",
     audioFolderFound:"تم العثور على {n} ملف صوتي في المجلد Ayah-marker", audioFolderEmpty:"لا توجد ملفات صوتية في المجلد Ayah-marker",
-    audioFolderFail:"تعذّرت قراءة المجلد"});
+    audioFolderFail:"تعذّرت قراءة المجلد", audioFolderNoAccess:"لم يتم تفعيل الإذن — لا يمكن استخدام المجلد Ayah-marker", savedFolderOk:"تم الحفظ ✅\nمجلد Ayah-marker:"});
 
   let pl=null;
   try{ pl=nativePlugin('AudioFolder'); }catch(_){ return; }
@@ -5081,17 +5100,17 @@ function snapStarts(starts, sil, win, found){
         if(!old || old.name!==f.name || !old.fromFolder) audioBySura.set(n,{url:srcOf(f.path), name:f.name, fromFolder:true});
       });
       [...audioBySura.keys()].forEach(n=>{ const v=audioBySura.get(n); if(v && v.fromFolder && !seen.has(n)) audioBySura.delete(n); });
-      if(announce) showToast(found ? tf('audioFolderFound',{n:found}) : t('audioFolderEmpty'));
+      if(announce) appAlert((found ? tf('audioFolderFound',{n:found}) : t('audioFolderEmpty')) + '\n\u2066' + (r.path||'') + '\u2069');
       const cur=parseInt(suraSelect.value)||1;
       if(audioBySura.has(cur)){
         const a=audioBySura.get(cur);
-        if(!player.getAttribute('src')) loadAudioIntoPlayer(a.url, a.name);
+        if(!player.getAttribute('src') || (announce && player.getAttribute('src')!==a.url)) loadAudioIntoPlayer(a.url, a.name);
       } else if(player.getAttribute('src') && !audioBySura.size){
         unloadPlayer();
       }
       return {granted:true, found:found};
     }catch(e){
-      if(announce) showToast(t('audioFolderFail'));
+      if(announce) appAlert(t('audioFolderFail') + '\n\u2066' + (e && e.message ? e.message : e) + '\u2069');
       return {granted:false, error:true};
     }finally{ scanning=false; }
   }
@@ -5113,15 +5132,15 @@ function snapStarts(starts, sil, win, found){
   });
 
   async function enable(){
-    let r; try{ r=await pl.requestAccess(); }catch(e){ showToast(t('audioFolderFail')); return false; }
-    if(!r || !r.granted) return false;
+    let r; try{ r=await pl.requestAccess(); }catch(e){ appAlert(t('audioFolderFail') + '\n\u2066' + (e && e.message ? e.message : e) + '\u2069'); return false; }
+    if(!r || !r.granted){ appAlert(t('audioFolderNoAccess')); return false; }
     try{ await pl.ensureFolder(); }catch(_){}
     await scan(true);
     return true;
   }
   if(btn) btn.addEventListener('click',async()=>{
     settingsMenu.classList.remove('open');
-    let st=null; try{ st=await pl.status(); }catch(_){}
+    let st=null; try{ st=await pl.status(); }catch(e){ appAlert(t('audioFolderFail') + '\n\u2066' + (e && e.message ? e.message : e) + '\u2069'); return; }
     if(st && st.granted){ try{ await pl.ensureFolder(); }catch(_){} await scan(true); }
     else await enable();
   });
