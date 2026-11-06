@@ -2334,6 +2334,7 @@ Object.assign(TRANSLATIONS.ar, {"dlgOk": "موافق", "dlgCancel": "إلغاء"
   }
   window.appConfirm=(msg,okText,cancelText)=>dlg(msg,true,okText,cancelText);
   window.appAlert=msg=>{ dlg(msg,false); };
+  window.appChoose=(msg,okText)=>dlg(msg,false,okText);   // one button only
   // a question with a text box; resolves to the text, or null when cancelled
   window.appPrompt=function(msg, def, okText, cancelText){
     return new Promise(resolve=>{
@@ -5058,19 +5059,19 @@ function snapStarts(starts, sil, win, found){
     audioFolderAsk:"بۆ ئەوەی فۆڵدەری «Ayah-marker» لە ناو مەلەفاتی سەرەکی مۆبایلەکەت دروست بکرێت و دەنگەکانی خۆکار بخوێنرێنەوە، دەبێت «ڕێگەدان بە بەڕێوەبردنی هەموو فایلەکان» بۆ ئەم ئەپە چالاک بکەیت.\nدوای ئەوە دەنگی سورەتەکان (وەک 002.mp3) لەو فۆڵدەرەدا دابنێ.",
     audioFolderChoose:"چالاککردن", audioFolderLater:"دواتر",
     audioFolderFound:"{n} دەنگ لە فۆڵدەری Ayah-marker دۆزرایەوە", audioFolderEmpty:"هیچ دەنگێک لە فۆڵدەری Ayah-marker نییە",
-    audioFolderFail:"نەتوانرا فۆڵدەرەکە بخوێنرێتەوە", audioFolderNoAccess:"ڕێگەدان چالاک نەکرا — فۆڵدەری Ayah-marker بەکارناهێنرێت", savedFolderOk:"هەڵگیرا ✅\nفۆڵدەری Ayah-marker:", audioFolderCurrent:"فۆڵدەری ئێستا:", audioFolderPick:"هەڵبژاردنی فۆڵدەر", audioFolderRescan:"خوێندنەوەی دووبارە"});
+    audioFolderFail:"نەتوانرا فۆڵدەرەکە بخوێنرێتەوە", audioFolderNoAccess:"ڕێگەدان چالاک نەکرا — فۆڵدەری Ayah-marker بەکارناهێنرێت", savedFolderOk:"هەڵگیرا ✅\nفۆڵدەری Ayah-marker:", audioFolderCurrent:"فۆڵدەری ئێستا:", audioFolderPick:"هەڵبژاردنی فۆڵدەر"});
   Object.assign(TRANSLATIONS.en, {
     audioFolderBtn:"📁 Audio folder (Ayah-marker)",
     audioFolderAsk:"To create the folder \"Ayah-marker\" in your phone's main storage and load its audio automatically, turn on \"Allow management of all files\" for this app.\nThen put the surah audio files (for example 002.mp3) in that folder.",
     audioFolderChoose:"Turn on", audioFolderLater:"Later",
     audioFolderFound:"{n} audio files found in the Ayah-marker folder", audioFolderEmpty:"No audio files in the Ayah-marker folder",
-    audioFolderFail:"Could not read the folder", audioFolderNoAccess:"Access was not turned on — the Ayah-marker folder cannot be used", savedFolderOk:"Saved ✅\nAyah-marker folder:", audioFolderCurrent:"Current folder:", audioFolderPick:"Choose folder", audioFolderRescan:"Read again"});
+    audioFolderFail:"Could not read the folder", audioFolderNoAccess:"Access was not turned on — the Ayah-marker folder cannot be used", savedFolderOk:"Saved ✅\nAyah-marker folder:", audioFolderCurrent:"Current folder:", audioFolderPick:"Choose folder"});
   Object.assign(TRANSLATIONS.ar, {
     audioFolderBtn:"📁 مجلد الصوتيات (Ayah-marker)",
     audioFolderAsk:"لإنشاء المجلد «Ayah-marker» في التخزين الرئيسي للهاتف وتحميل الصوتيات منه تلقائيًا، فعّل «السماح بإدارة جميع الملفات» لهذا التطبيق.\nثم ضع ملفات السور (مثل 002.mp3) داخل هذا المجلد.",
     audioFolderChoose:"تفعيل", audioFolderLater:"لاحقًا",
     audioFolderFound:"تم العثور على {n} ملف صوتي في المجلد Ayah-marker", audioFolderEmpty:"لا توجد ملفات صوتية في المجلد Ayah-marker",
-    audioFolderFail:"تعذّرت قراءة المجلد", audioFolderNoAccess:"لم يتم تفعيل الإذن — لا يمكن استخدام المجلد Ayah-marker", savedFolderOk:"تم الحفظ ✅\nمجلد Ayah-marker:", audioFolderCurrent:"المجلد الحالي:", audioFolderPick:"اختيار مجلد", audioFolderRescan:"إعادة القراءة"});
+    audioFolderFail:"تعذّرت قراءة المجلد", audioFolderNoAccess:"لم يتم تفعيل الإذن — لا يمكن استخدام المجلد Ayah-marker", savedFolderOk:"تم الحفظ ✅\nمجلد Ayah-marker:", audioFolderCurrent:"المجلد الحالي:", audioFolderPick:"اختيار مجلد"});
 
   let pl=null;
   try{ pl=nativePlugin('AudioFolder'); }catch(_){ return; }
@@ -5154,7 +5155,7 @@ function snapStarts(starts, sil, win, found){
     let st=null; try{ st=await pl.status(); }catch(e){ appAlert(t('audioFolderFail') + '\n\u2066' + (e && e.message ? e.message : e) + '\u2069'); return; }
     if(!(st && st.granted)){ await enable(); return; }
     const shownPath = curPath || st.path || '';
-    const pick = await appConfirm(t('audioFolderCurrent') + '\n\u2066' + shownPath + '\u2069', t('audioFolderPick'), t('audioFolderRescan'));
+    const pick = await appChoose(t('audioFolderCurrent') + '\n\u2066' + shownPath + '\u2069', t('audioFolderPick'));
     if(pick){
       let fr=null;
       try{ fr=await pl.pickFolder(); }
