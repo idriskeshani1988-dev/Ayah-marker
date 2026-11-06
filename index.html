@@ -1550,9 +1550,12 @@ body.dark .settingsMenu #progressRow #clearProgressBtn{background:#4a3f1a !impor
 </style>
 <style id="navbtn-icons">
 /* prev / next ayah icons sit at the outer edges of their buttons */
-#back1Btn, #fwd1Btn{position:relative;padding-left:46px !important;padding-right:46px !important;text-align:center !important;white-space:nowrap;}
-#back1Btn::before{content:'⏪';position:absolute;left:8px;top:50%;transform:translateY(-50%);font-size:1.15em;line-height:1;pointer-events:none;}
-#fwd1Btn::after{content:'⏩';position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:1.15em;line-height:1;pointer-events:none;}
+#back1Btn, #fwd1Btn{position:relative;text-align:center !important;white-space:nowrap;}
+/* same specificity as the #wide-seek-buttons rule (that one forced padding:0 3px), so these win by coming later */
+#markCard > #back1Btn{padding-left:32px !important;padding-right:4px !important;}
+#markCard > #fwd1Btn{padding-right:32px !important;padding-left:4px !important;}
+#back1Btn::before{content:'⏪';position:absolute;left:5px;top:50%;transform:translateY(-50%);font-size:1.15em;line-height:1;pointer-events:none;}
+#fwd1Btn::after{content:'⏩';position:absolute;right:5px;top:50%;transform:translateY(-50%);font-size:1.15em;line-height:1;pointer-events:none;}
 </style>
 </head>
 <body>
