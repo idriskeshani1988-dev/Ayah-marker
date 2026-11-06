@@ -30,6 +30,13 @@ PKG_DIR=android/app/src/main/java/com/idris/ayahmarker
 mkdir -p "$PKG_DIR"
 cp MainActivity.java SaveFilePlugin.java AudioFolderPlugin.java "$PKG_DIR/"
 
+echo "== Allow the audio folder in the main storage (All files access)"
+MANIFEST=android/app/src/main/AndroidManifest.xml
+if ! grep -q "MANAGE_EXTERNAL_STORAGE" "$MANIFEST"; then
+  sed -i 's#<application#<uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />\n    <application#' "$MANIFEST"
+fi
+grep -n "MANAGE_EXTERNAL_STORAGE" "$MANIFEST" || { echo "!! permission was not added"; exit 1; }
+
 echo "== Launcher icons"
 python3 -m pip install --quiet pillow --break-system-packages 2>/dev/null || python3 -m pip install --quiet pillow || sudo apt-get install -y python3-pil
 python3 make-icons.py

@@ -1600,7 +1600,7 @@ body.dark .settingsMenu #progressRow #clearProgressBtn{background:#4a3f1a !impor
       </div>
       </div>
       <div class="menuDivider"></div>
-      <button class="menuAction" id="audioFolderBtn" data-i18n="audioFolderBtn" style="display:none;margin-bottom:6px;">📁 فۆڵدەری دەنگەکان (Ayahmarker)</button>
+      <button class="menuAction" id="audioFolderBtn" data-i18n="audioFolderBtn" style="display:none;margin-bottom:6px;">📁 فۆڵدەری دەنگەکان (Ayah-marker)</button>
       <!-- گروپی 1: هەڵگرتن و بارکردنی داتابەیس (db) - دوو دوو لە ناو بۆردەرێک -->
       <div class="menuBox" style="border:1.5px solid var(--teal); border-radius:10px; padding:6px; margin-top:6px; background:#fff;">
         <button class="menuAction" id="exportDb" data-i18n="saveDb" style="margin-top:0;">هەڵگرتنی داتابەیس (db)</button>
@@ -5031,26 +5031,26 @@ function snapStarts(starts, sil, win, found){
 (function(){ const st=document.createElement('style'); st.textContent='#clearAudioBtn{display:none !important;}'; document.head.appendChild(st); })();
 
 
-// ================= Audio folder: Documents/Ayahmarker (Android app only) =================
+// ================= Audio folder: Ayah-marker in the main storage (Android app only) =================
 (function(){
   if(typeof IS_NATIVE==='undefined' || !IS_NATIVE) return;
   Object.assign(TRANSLATIONS.ku, {
-    audioFolderBtn:"📁 فۆڵدەری دەنگەکان (Ayahmarker)",
-    audioFolderAsk:"فۆڵدەری «Ayahmarker» لە ناو Documents دروست کرا.\nدەنگی سورەتەکان (وەک 002.mp3) تێیدا دابنێ، پاشان ئەو فۆڵدەرە یەکجار هەڵبژێرە. دوای ئەوە هەر جارێک ئەپەکە دەکەیتەوە دەنگەکان خۆکار دەخوێنرێنەوە.",
-    audioFolderChoose:"هەڵبژاردنی فۆڵدەر", audioFolderLater:"دواتر",
-    audioFolderFound:"{n} دەنگ لە فۆڵدەری Ayahmarker دۆزرایەوە", audioFolderEmpty:"هیچ دەنگێک لە فۆڵدەرەکەدا نییە",
+    audioFolderBtn:"📁 فۆڵدەری دەنگەکان (Ayah-marker)",
+    audioFolderAsk:"بۆ ئەوەی فۆڵدەری «Ayah-marker» لە ناو مەلەفاتی سەرەکی مۆبایلەکەت دروست بکرێت و دەنگەکانی خۆکار بخوێنرێنەوە، دەبێت «ڕێگەدان بە بەڕێوەبردنی هەموو فایلەکان» بۆ ئەم ئەپە چالاک بکەیت.\nدوای ئەوە دەنگی سورەتەکان (وەک 002.mp3) لەو فۆڵدەرەدا دابنێ.",
+    audioFolderChoose:"چالاککردن", audioFolderLater:"دواتر",
+    audioFolderFound:"{n} دەنگ لە فۆڵدەری Ayah-marker دۆزرایەوە", audioFolderEmpty:"هیچ دەنگێک لە فۆڵدەری Ayah-marker نییە",
     audioFolderFail:"نەتوانرا فۆڵدەرەکە بخوێنرێتەوە"});
   Object.assign(TRANSLATIONS.en, {
-    audioFolderBtn:"📁 Audio folder (Ayahmarker)",
-    audioFolderAsk:"The folder \"Ayahmarker\" was created inside Documents.\nPut the surah audio files in it (for example 002.mp3), then choose that folder once. After that the audio is loaded automatically every time you open the app.",
-    audioFolderChoose:"Choose folder", audioFolderLater:"Later",
-    audioFolderFound:"{n} audio files found in the Ayahmarker folder", audioFolderEmpty:"No audio files in the folder",
+    audioFolderBtn:"📁 Audio folder (Ayah-marker)",
+    audioFolderAsk:"To create the folder \"Ayah-marker\" in your phone's main storage and load its audio automatically, turn on \"Allow management of all files\" for this app.\nThen put the surah audio files (for example 002.mp3) in that folder.",
+    audioFolderChoose:"Turn on", audioFolderLater:"Later",
+    audioFolderFound:"{n} audio files found in the Ayah-marker folder", audioFolderEmpty:"No audio files in the Ayah-marker folder",
     audioFolderFail:"Could not read the folder"});
   Object.assign(TRANSLATIONS.ar, {
-    audioFolderBtn:"📁 مجلد الصوتيات (Ayahmarker)",
-    audioFolderAsk:"تم إنشاء المجلد «Ayahmarker» داخل Documents.\nضع فيه ملفات السور (مثل 002.mp3) ثم اختر المجلد مرة واحدة. بعد ذلك تُحمَّل الصوتيات تلقائيًا في كل مرة تفتح فيها التطبيق.",
-    audioFolderChoose:"اختيار المجلد", audioFolderLater:"لاحقًا",
-    audioFolderFound:"تم العثور على {n} ملف صوتي في المجلد Ayahmarker", audioFolderEmpty:"لا توجد ملفات صوتية في المجلد",
+    audioFolderBtn:"📁 مجلد الصوتيات (Ayah-marker)",
+    audioFolderAsk:"لإنشاء المجلد «Ayah-marker» في التخزين الرئيسي للهاتف وتحميل الصوتيات منه تلقائيًا، فعّل «السماح بإدارة جميع الملفات» لهذا التطبيق.\nثم ضع ملفات السور (مثل 002.mp3) داخل هذا المجلد.",
+    audioFolderChoose:"تفعيل", audioFolderLater:"لاحقًا",
+    audioFolderFound:"تم العثور على {n} ملف صوتي في المجلد Ayah-marker", audioFolderEmpty:"لا توجد ملفات صوتية في المجلد Ayah-marker",
     audioFolderFail:"تعذّرت قراءة المجلد"});
 
   let pl=null;
@@ -5059,64 +5059,86 @@ function snapStarts(starts, sil, win, found){
   if(btn) btn.style.display='block';
   try{ applyLanguage(currentLang); }catch(_){}
 
-  function srcOf(uri){
-    const C=window.Capacitor;
-    return (C && typeof C.convertFileSrc==='function') ? C.convertFileSrc(uri) : uri;
+  function srcOf(path){
+    const C=window.Capacitor, p=encodeURI(path);
+    return (C && typeof C.convertFileSrc==='function') ? C.convertFileSrc(p) : 'file://'+p;
   }
+  let folderOn=false;          // the folder is readable: then ONLY its audio is used
   let scanning=false;
-  // read the folder, register every file by its surah number (002.mp3 -> surah 2) and load the right one
+  // read the folder: file 002.mp3 belongs to surah 2; files that disappeared are forgotten
   async function scan(announce){
-    if(scanning) return {hasFolder:true};
+    if(scanning) return {granted:folderOn};
     scanning=true;
     try{
       const r=await pl.listAudio();
-      if(!r || !r.hasFolder) return {hasFolder:false};
-      let found=0;
+      if(!r || !r.granted){ folderOn=false; return {granted:false}; }
+      folderOn=true;
+      const seen=new Set(); let found=0;
       (r.files||[]).forEach(f=>{
         const n=extractSuraNumber(f.name); if(!n) return;
-        found++;
+        found++; seen.add(n);
         const old=audioBySura.get(n);
-        if(!old || old.name!==f.name) audioBySura.set(n,{url:srcOf(f.uri), name:f.name});
+        if(!old || old.name!==f.name || !old.fromFolder) audioBySura.set(n,{url:srcOf(f.path), name:f.name, fromFolder:true});
       });
+      [...audioBySura.keys()].forEach(n=>{ const v=audioBySura.get(n); if(v && v.fromFolder && !seen.has(n)) audioBySura.delete(n); });
       if(announce) showToast(found ? tf('audioFolderFound',{n:found}) : t('audioFolderEmpty'));
-      if(found){
-        const cur=parseInt(suraSelect.value)||1;
-        if(audioBySura.has(cur)){
-          if(!player.getAttribute('src')) loadAudioIntoPlayer(audioBySura.get(cur).url, audioBySura.get(cur).name);
-        } else if(!player.getAttribute('src')){
-          const first=Math.min.apply(null,[...audioBySura.keys()]);       // the current surah has no file: open the first one
-          suraSelect.value=String(first);
-          suraSelect.dispatchEvent(new Event('change'));
-        }
+      const cur=parseInt(suraSelect.value)||1;
+      if(audioBySura.has(cur)){
+        const a=audioBySura.get(cur);
+        if(!player.getAttribute('src')) loadAudioIntoPlayer(a.url, a.name);
+      } else if(player.getAttribute('src') && !audioBySura.size){
+        unloadPlayer();
       }
-      return {hasFolder:true, found:found};
+      return {granted:true, found:found};
     }catch(e){
       if(announce) showToast(t('audioFolderFail'));
-      return {hasFolder:false, error:true};
+      return {granted:false, error:true};
     }finally{ scanning=false; }
   }
-  async function choose(){
-    try{ await pl.pickFolder(); }catch(e){ return false; }      // cancelled
+  function unloadPlayer(){
+    try{ player.pause(); }catch(_){}
+    try{ player.removeAttribute('src'); player.load(); }catch(_){}
+    try{
+      player.style.display='none'; speedrow.style.display='none'; seekRow.style.display='none';
+      fname.textContent=''; markBtn.disabled=true; window.__audioName=null;
+    }catch(_){}
+  }
+  // a surah that has no file in the folder plays NOTHING (the previous surah's audio is taken out)
+  suraSelect.addEventListener('change',()=>{
+    setTimeout(()=>{
+      if(!folderOn) return;
+      const s=parseInt(suraSelect.value)||0;
+      if(!audioBySura.has(s) && player.getAttribute('src')) unloadPlayer();
+    }, 400);
+  });
+
+  async function enable(){
+    let r; try{ r=await pl.requestAccess(); }catch(e){ showToast(t('audioFolderFail')); return false; }
+    if(!r || !r.granted) return false;
+    try{ await pl.ensureFolder(); }catch(_){}
     await scan(true);
     return true;
   }
-  if(btn) btn.addEventListener('click',()=>{ settingsMenu.classList.remove('open'); choose(); });
+  if(btn) btn.addEventListener('click',async()=>{
+    settingsMenu.classList.remove('open');
+    let st=null; try{ st=await pl.status(); }catch(_){}
+    if(st && st.granted){ try{ await pl.ensureFolder(); }catch(_){} await scan(true); }
+    else await enable();
+  });
 
-  // first launch: create the folder and ask once to choose it; later launches: just read it
+  // launch: read the folder; the first time, ask once to turn the permission on and create the folder
   async function init(){
-    const r=await scan(false);
-    if(r.hasFolder) return;
-    try{
-      if(!localStorage.getItem('ayahfolder_made')){ await pl.ensureFolder(); localStorage.setItem('ayahfolder_made','1'); }
-    }catch(_){}
-    let asked=false; try{ asked=!!localStorage.getItem('ayahfolder_asked'); }catch(_){}
+    let st=null; try{ st=await pl.status(); }catch(_){ return; }
+    if(!st || !st.supported) return;
+    if(st.granted){ try{ await pl.ensureFolder(); }catch(_){} await scan(false); return; }
+    let asked=false; try{ asked=!!localStorage.getItem('ayahfolder_asked2'); }catch(_){}
     if(asked) return;
-    try{ localStorage.setItem('ayahfolder_asked','1'); }catch(_){}
+    try{ localStorage.setItem('ayahfolder_asked2','1'); }catch(_){}
     const yes=await appConfirm(t('audioFolderAsk'), t('audioFolderChoose'), t('audioFolderLater'));
-    if(yes) await choose();
+    if(yes) await enable();
   }
   window.addEventListener('load',()=>{ setTimeout(init, 1200); });
-  // coming back to the app: pick up files that were added to the folder meanwhile
+  // coming back to the app (also after the permission screen): read the folder again
   let lastScan=0;
   document.addEventListener('visibilitychange',()=>{
     if(document.visibilityState==='visible' && Date.now()-lastScan>3000){ lastScan=Date.now(); scan(false); }
