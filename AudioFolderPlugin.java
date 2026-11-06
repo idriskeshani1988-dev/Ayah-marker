@@ -1,10 +1,12 @@
 package com.idris.ayahmarker;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
+import android.provider.DocumentsContract;
 import android.provider.Settings;
 
 import androidx.activity.result.ActivityResult;
@@ -141,6 +143,55 @@ public class AudioFolderPlugin extends Plugin {
         call.resolve(ret);
     }
 
+    // pickFolder(): the person chooses ANY folder; it is turned into a real path (All files access reads it)
+    @PluginMethod
+    public void pickFolder(PluginCall call) {
+        if (!granted()) {
+            call.reject("All files access is not allowed");
+            return;
+        }
+        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
+        startActivityForResult(call, intent, "pickFolderResult");
+    }
+
+    @ActivityCallback
+    private void pickFolderResult(PluginCall call, ActivityResult result) {
+        if (call == null) return;
+        JSObject ret = new JSObject();
+        Intent data = result.getData();
+        if (result.getResultCode() != Activity.RESULT_OK || data == null || data.getData() == null) {
+            ret.put("cancelled", true);
+            call.resolve(ret);
+            return;
+        }
+        String id;
+        try {
+            id = DocumentsContract.getTreeDocumentId(data.getData());
+        } catch (Exception e) {
+            call.reject("Could not read the chosen folder");
+            return;
+        }
+        int i = id.indexOf(':');
+        String vol = i >= 0 ? id.substring(0, i) : id;
+        String rel = i >= 0 ? id.substring(i + 1) : "";
+        File dir;
+        if ("primary".equalsIgnoreCase(vol)) {
+            dir = rel.isEmpty() ? Environment.getExternalStorageDirectory()
+                : new File(Environment.getExternalStorageDirectory(), rel);
+        } else if ("raw".equalsIgnoreCase(vol)) {
+            dir = new File(rel);
+        } else {
+            dir = rel.isEmpty() ? new File("/storage/" + vol) : new File("/storage/" + vol, rel);
+        }
+        if (!dir.isDirectory()) {
+            call.reject("Folder not found: " + dir.getAbsolutePath());
+            return;
+        }
+        ret.put("path", dir.getAbsolutePath());
+        ret.put("name", dir.getName());
+        call.resolve(ret);
+    }
+
     @PluginMethod
     public void listAudio(PluginCall call) {
         JSObject ret = new JSObject();
@@ -152,7 +203,9 @@ public class AudioFolderPlugin extends Plugin {
             return;
         }
         ret.put("granted", true);
-        File dir = folder();
+        String p = call.getString("path");
+        File dir = (p != null && !p.isEmpty()) ? new File(p) : folder();
+        ret.put("path", dir.getAbsolutePath());
         File[] list = dir.listFiles();
         if (list != null) {
             Arrays.sort(list, new Comparator<File>() {
