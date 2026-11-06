@@ -1512,7 +1512,47 @@ body.theme-sepia .mark-row.total-row{background:#efdcb0;}
   .settingsMenu button, .settingsMenu .menuAction, .settingsMenu .themeBtn, .settingsMenu .langBtn, .settingsMenu .toggleBtn, .settingsMenu .fontBtn, .settingsMenu .chip{transition:none;}
   .settingsMenu button:active, .settingsMenu .menuAction:active, .settingsMenu .themeBtn:active, .settingsMenu .langBtn:active, .settingsMenu .toggleBtn:active, .settingsMenu .fontBtn:active, .settingsMenu .chip:active{transform:none;}
 }
+.settingsMenu .menuAction{text-align:right !important;}
+.settingsMenu #clearSuraBtn, .settingsMenu #clearAllBtn, .settingsMenu #clearAudioBtn{position:relative;padding-left:52px !important;padding-right:14px !important;}
+.settingsMenu #clearSuraBtn::after, .settingsMenu #clearAllBtn::after, .settingsMenu #clearAudioBtn::after{
+  content:'🗑';position:absolute;left:10px;top:50%;transform:translateY(-50%);
+  display:flex;align-items:center;justify-content:center;width:30px;height:30px;
+  border:none;font-size:20px;line-height:1;pointer-events:none;
+}
+.settingsMenu #clearAudioBtn span{text-align:right !important;}
+.settingsMenu #exportDb, .settingsMenu #loadMasterBtn{position:relative;padding-left:52px !important;padding-right:14px !important;}
+.settingsMenu #exportDb::after, .settingsMenu #loadMasterBtn::after{
+  position:absolute;left:10px;top:50%;transform:translateY(-50%);
+  display:flex;align-items:center;justify-content:center;width:30px;height:30px;
+  border:1px solid var(--line);border-radius:8px;font-size:15px;line-height:1;pointer-events:none;
+}
+.settingsMenu #exportDb::after, .settingsMenu #loadMasterBtn::after{border:none !important;background:none !important;font-size:26px;font-weight:700;color:inherit;font-family:Arial,sans-serif;}
+.settingsMenu #exportDb::after{content:'\2191\FE0E';}
+.settingsMenu #loadMasterBtn::after{content:'\2193\FE0E';}
+/* saved-ayah row: the ayah box + a separate small trash box, same colours as the bookmarked ayah in the text */
+#progressRow #saveProgressBtn{flex:1 1 auto;min-width:0;}
+.settingsMenu #progressRow #clearProgressBtn{flex:none;width:58px;padding:0 !important;align-items:center;justify-content:center;font-size:22px;line-height:1;text-align:center !important;background:#fef3c7 !important;border:1px solid var(--gold) !important;border-radius:10px;}
+body.dark .settingsMenu #progressRow #clearProgressBtn{background:#4a3f1a !important;}
 .settingsMenu .pressFx{transform:scale(.975);filter:brightness(.94);}
+</style>
+<style id="step-in-header">
+/* time-step box now lives in the marked-list header (where the title was) */
+.section-title-row #stepMsInput{
+  width:72px !important;height:28px !important;min-height:0 !important;padding:0 6px !important;
+  border:1px solid var(--line) !important;border-radius:8px !important;
+  background:transparent !important;box-shadow:none !important;
+  direction:ltr;text-align:center;font-size:15px !important;font-weight:700;color:inherit;
+}
+</style>
+<style id="rowbtn-left-shift">
+/* play / + / − buttons of each mark row: a little further to the left (layout of the rest is unchanged) */
+.mark-row .rowbtn[data-act="play"], .mark-row .rowbtn[data-act="plus"], .mark-row .rowbtn[data-act="minus"]{transform:translateX(-12px);}
+</style>
+<style id="navbtn-icons">
+/* prev / next ayah icons sit at the outer edges of their buttons */
+#back1Btn, #fwd1Btn{position:relative;padding-left:46px !important;padding-right:46px !important;text-align:center !important;white-space:nowrap;}
+#back1Btn::before{content:'⏪';position:absolute;left:8px;top:50%;transform:translateY(-50%);font-size:1.15em;line-height:1;pointer-events:none;}
+#fwd1Btn::after{content:'⏩';position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:1.15em;line-height:1;pointer-events:none;}
 </style>
 </head>
 <body>
@@ -1564,9 +1604,11 @@ body.theme-sepia .mark-row.total-row{background:#efdcb0;}
         <button class="menuAction" id="clearSuraBtn" data-i18n="clearSuraBtn" style="margin-top:0;">سڕینەوەی لیستی نیشانەکراوەکان تەنها بۆ ئەم سورەتە</button>
         <button class="menuAction" id="clearAllBtn" data-i18n="clearAllBtn">سڕینەوەی لیستی نیشانەکراوەکان بۆ هەموو سورەتەکان</button>
         <button class="menuAction" id="clearAudioBtn"><span data-i18n="audioClear">سڕینەوەی دەنگە هەڵگیراوەکان</span><span id="audioSavedInfo" style="display:block;font-size:12px;font-weight:600;opacity:.8;margin-top:3px;line-height:1.5;"></span></button>
-        <button class="menuAction" id="saveProgressBtn" data-i18n="progressSave" style="margin-top:0;">🔖 هەڵگرتنی ئایەتی گەیشتوو</button>
+        <div id="progressRow" style="display:flex;gap:10px;align-items:stretch;">
+          <button class="menuAction" id="saveProgressBtn" data-i18n="progressSave" style="margin-top:0;">🔖 هەڵگرتنی ئایەتی گەیشتوو</button>
+          <button class="menuAction" id="clearProgressBtn" type="button" aria-label="Delete saved ayah" style="display:none;">🗑</button>
+        </div>
         <button class="menuAction" id="loadProgressBtn" style="display:none;">▶️ دەستپێکردنەوە لە ئایەتی هەڵگیراو</button>
-        <button class="menuAction" id="clearProgressBtn" data-i18n="progressClear" style="display:none;">🗑 سڕینەوەی ئایەتی گەیشتوو</button>
         <p class="hint menuHint" id="progressStatus" style="display:none;"></p>
         <div class="menuBox" id="whisperOptsBox">
         <button class="menuAction" id="onlineMarkBtn" data-i18n="onlineMark" style="margin-top:0;">🌐 دیاریکردنی ئۆنڵاین (Whisper — بێبەرامبەر بە Groq)</button>
@@ -1580,7 +1622,6 @@ body.theme-sepia .mark-row.total-row{background:#efdcb0;}
         <button class="menuAction" id="exportMasterBtn" style="display:none;" data-i18n="exportMaster">دەرهێنانی هەموو داتابەیسەکە (.db)</button>
       </div>
       <div class="menuDivider"></div>
-      <div class="menuBox"><div class="settingsRow"><label for="stepMsInput" data-i18n="stepLabel" style="font-size:12px;">هەنگاوی گۆڕینی کات (1–1000 ms)</label><input id="stepMsInput" type="text" inputmode="numeric" pattern="[0-9]*" lang="en" maxlength="4" value="50" style="width:92px;padding:6px;border:1px solid var(--line);border-radius:8px;direction:ltr;"></div></div>
       <div class="menuBox" id="bulkBox">
         <div data-i18n="bulkTitle" style="font-size:12px;font-weight:700;margin-bottom:6px;">جووڵاندنی کۆمەڵێک نیشانە بە یەکجار</div>
         <div class="settingsRow"><label for="bulkFrom" data-i18n="bulkFrom" style="font-size:12px;">لە ئایەتی</label><input id="bulkFrom" type="text" inputmode="numeric" pattern="[0-9]*" lang="en" maxlength="3" value="1" style="width:92px;padding:6px;border:1px solid var(--line);border-radius:8px;direction:ltr;"></div>
@@ -1605,8 +1646,8 @@ body.theme-sepia .mark-row.total-row{background:#efdcb0;}
       <div class="chip" data-r="3">3x</div>
     </div>
     <div class="subactions" id="seekRow" style="display:none; margin-top:6px;">
-      <button class="btn2" id="fwd1Btn" data-i18n="fwd1">ئایەتی دواتر ⏩</button>
-      <button class="btn2" id="back1Btn" data-i18n="back1">⏪ ئایەتی پێشوو</button>
+      <button class="btn2" id="fwd1Btn" data-i18n="fwd1">ئایەتی دواتر</button>
+      <button class="btn2" id="back1Btn" data-i18n="back1">ئایەتی پێشوو</button>
     </div>
     <input type="file" id="fileInput" accept="audio/*" multiple>
   </header>
@@ -1625,7 +1666,7 @@ body.theme-sepia .mark-row.total-row{background:#efdcb0;}
     <div class="section-title-row">
       <span id="showAllLabel" style="display:none;">پیشاندانی هەموو</span>
       <button id="showAllBtn" class="resetSmallBtn" style="display:none;border-color:var(--teal);color:var(--teal);">▼</button>
-      <p class="section-title" data-i18n="marksListTitle">لیستی نیشانەکراوەکان</p>
+      <input id="stepMsInput" type="text" inputmode="numeric" pattern="[0-9]*" lang="en" maxlength="4" value="50" aria-label="ms (1–1000)" title="ms (1–1000)">
     </div>
     <button class="btn2" id="addTotalBtn" style="width:100%;margin-bottom:8px;display:none;" data-i18n="addTotal">+ زیادکردنی کۆتایی سورە (999)</button>
     <div id="marksList"></div>
@@ -1680,7 +1721,7 @@ const TRANSLATIONS = {
   ku: {
     darkMode:"دۆخی تاریک", language:"زمان",
     audioPick:"🎧 دەنگ", labelSura:"سورە", labelAyah:"ئایەت",
-    fwd1:"ئایەتی دواتر ⏩", back1:"⏪ ئایەتی پێشوو",
+    fwd1:"ئایەتی دواتر", back1:"ئایەتی پێشوو",
     loadingText:"داواکردنی دەقی سورە...",
     
     markStart:"دیاریکردنی کۆتایی ئایەت", markTotal:"دیاریکردنی کۆتایی ئایەت",
@@ -1704,7 +1745,7 @@ const TRANSLATIONS = {
   en: {
     darkMode:"Dark Mode", language:"Language",
     audioPick:"🎧 Audio", labelSura:"Surah", labelAyah:"Ayah",
-    fwd1:"Next ayah ⏩", back1:"⏪ Previous ayah",
+    fwd1:"Next ayah", back1:"Previous ayah",
     loadingText:"Loading surah text...",
     
     markStart:"Mark End of Ayah", markTotal:"Mark End of Ayah",
@@ -1728,7 +1769,7 @@ const TRANSLATIONS = {
   ar: {
     darkMode:"الوضع الداكن", language:"اللغة",
     audioPick:"🎧 الصوت", labelSura:"السورة", labelAyah:"الآية",
-    fwd1:"الآية التالية ⏩", back1:"⏪ الآية السابقة",
+    fwd1:"الآية التالية", back1:"الآية السابقة",
     loadingText:"جارٍ تحميل نص السورة...",
     
     markStart:"تحديد نهاية الآية", markTotal:"تحديد نهاية الآية",
@@ -3172,7 +3213,9 @@ async function askNextSura(){
   finally{ nextSuraAsking = false; }
   if(!yes) return false;
   try{ if(masterDb && masterLoadedSura===current) flushSuraToMaster(current); }catch(_){}
-  autoPlayNextSura = false;
+  // after "Yes": open the next surah and start its audio by itself (only if its audio is already in the app)
+  autoPlayNextSura = audioBySura.has(next);
+  if(autoPlayNextSura) setTimeout(()=>{ autoPlayNextSura = false; }, 8000);   // safety: never leave the flag on
   suraSelect.value = String(next);
   suraSelect.dispatchEvent(new Event('change'));
   return true;
@@ -3508,25 +3551,31 @@ function updateProgressButtons(){
   function setSaveBtn(sub){
     if(!saveBtn) return;
     saveBtn.textContent = '';
-    const top = document.createElement('div'); top.textContent = t('progressSave'); saveBtn.appendChild(top);
-    if(sub){
-      const line = document.createElement('div');
-      line.id = 'progressSubLine';
-      line.style.cssText = 'position:relative;display:flex;align-items:center;justify-content:center;min-height:30px;font-size:0.88em;opacity:.95;margin-top:6px;padding-top:6px;border-top:1px solid var(--line);';
-      const txt = document.createElement('span'); txt.textContent = sub; line.appendChild(txt);
-      // small square trash button beside the text: deletes the saved ayah
-      const del = document.createElement('span');
-      del.id = 'progressClearLine';
-      del.setAttribute('role','button');
-      del.textContent = '🗑';
-      del.style.cssText = 'position:absolute;left:0;top:calc(50% + 5px);transform:translateY(-50%);display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border:1px solid var(--line);border-radius:8px;font-size:15px;line-height:1;';
-      line.appendChild(del);
-      saveBtn.appendChild(line);
+    saveBtn.style.position = 'relative';
+    if(!sub){
+      saveBtn.textContent = t('progressSave');   // nothing saved yet: tap to save the ayah reached
+      return;
     }
+    // one single box: "🔖 reached ayah - surah X - ayah N" with the small trash square beside it
+    const txt = document.createElement('div');
+    txt.id = 'progressSubLine';
+    txt.textContent = sub;
+    txt.style.cssText = 'min-height:30px;display:flex;align-items:center;justify-content:flex-start;text-align:right;';
+    saveBtn.appendChild(txt);
   }
+  const PL = {
+    ku:{reached:'ئایەتی گەیشتوو', sura:'سورەتی', ayah:'ئایەتی'},
+    en:{reached:'Reached ayah', sura:'Surah', ayah:'Ayah'},
+    ar:{reached:'الآية التي وصلت إليها', sura:'سورة', ayah:'آية'}
+  };
+  function savedLine(sName, a){
+    const L = PL[currentLang] || PL.ku;
+    return '🔖 ' + L.reached + ' - ' + L.sura + ' ' + sName + ' - ' + L.ayah + ' ' + a;
+  }
+
   if(lastSura && lastAyah){
     const sName = getSuraName(parseInt(lastSura));
-    setSaveBtn(tf('progressSaved',{s:sName,a:lastAyah}));
+    setSaveBtn(savedLine(sName, lastAyah));
     if(loadBtn){ loadBtn.style.display='none'; }
     if(status){ status.style.display='none'; status.textContent = ''; }
   } else {
@@ -3535,7 +3584,7 @@ function updateProgressButtons(){
     if(status) status.style.display='none';
   }
   const clrBtn = document.getElementById('clearProgressBtn');
-  if(clrBtn) clrBtn.style.display = 'none';   // its function now lives inside the save button (third line)
+  if(clrBtn) clrBtn.style.display = (lastSura && lastAyah) ? 'flex' : 'none';   // separate small box beside the saved-ayah box
 }
 const saveProgressBtn = document.getElementById('saveProgressBtn');
 const loadProgressBtn = document.getElementById('loadProgressBtn');
@@ -3544,7 +3593,7 @@ if(saveProgressBtn){
     // tapping the second line (saved ayah) resumes from it instead of saving again
     const tg = ev.target && ev.target.closest ? ev.target : null;
     if(tg && tg.closest('#progressClearLine')){ clearProgressBtn.click(); return; }
-    if(tg && tg.closest('#progressSubLine')){ loadProgressBtn.click(); return; }
+    { const bm = getBookmarks(); if(bm['lastSura'] && bm['lastAyah']){ loadProgressBtn.click(); return; } }   // already saved: tapping the text resumes from it
     const sura = parseInt(suraSelect.value);
     const curAyah = focusedAyah !== null ? focusedAyah : (lastShownAyah !== null ? lastShownAyah : (parseInt(startAyahInput.value)||1));
     // تەنها دوایین ئایەت هەڵبگیرێت - هەموو هەڵگرتنە کۆنەکان بسڕەوە
@@ -4764,9 +4813,9 @@ function snapStarts(starts, sil, win, found){
 
 // ================= Audio files stay inside the app (IndexedDB) =================
 (function(){
-  Object.assign(TRANSLATIONS.ku, {"audioClear": "🗑 سڕینەوەی دەنگە هەڵگیراوەکان لە ناو ئەپەکە", "audioClearAsk": "دڵنیایت لە سڕینەوەی دەنگەکان لە ناو ئەپەکەدا؟\n(تەنها لە ناو ئەپەکە دەسڕدرێنەوە، نەک لە زاکیرەی مۆبایلەکەت)", "dlgYes": "بەڵێ", });
-  Object.assign(TRANSLATIONS.en, {"audioClear": "🗑 Delete audio saved inside the app", "audioClearAsk": "Delete the audio from inside the app?\n(Only the copy inside the app is deleted, not the files in your phone storage.)", "dlgYes": "Yes", });
-  Object.assign(TRANSLATIONS.ar, {"audioClear": "🗑 حذف الصوتيات المحفوظة داخل التطبيق", "audioClearAsk": "هل أنت متأكد من حذف الصوتيات من داخل التطبيق؟\n(يُحذف ما داخل التطبيق فقط، وليس من ذاكرة هاتفك)", "dlgYes": "نعم", });
+  Object.assign(TRANSLATIONS.ku, {"audioClear": "سڕینەوەی دەنگە هەڵگیراوەکان لە ناو ئەپەکە", "audioClearAsk": "دڵنیایت لە سڕینەوەی دەنگەکان لە ناو ئەپەکەدا؟\n(تەنها لە ناو ئەپەکە دەسڕدرێنەوە، نەک لە زاکیرەی مۆبایلەکەت)", "dlgYes": "بەڵێ", });
+  Object.assign(TRANSLATIONS.en, {"audioClear": "Delete audio saved inside the app", "audioClearAsk": "Delete the audio from inside the app?\n(Only the copy inside the app is deleted, not the files in your phone storage.)", "dlgYes": "Yes", });
+  Object.assign(TRANSLATIONS.ar, {"audioClear": "حذف الصوتيات المحفوظة داخل التطبيق", "audioClearAsk": "هل أنت متأكد من حذف الصوتيات من داخل التطبيق؟\n(يُحذف ما داخل التطبيق فقط، وليس من ذاكرة هاتفك)", "dlgYes": "نعم", });
   Object.assign(TRANSLATIONS.ku, {"audioSavedCount":"{n} سورەت هەڵگیراوە","audioSavedNone":"هیچ سورەتێک هەڵنەگیراوە"});
   Object.assign(TRANSLATIONS.en, {"audioSavedCount":"{n} surahs saved","audioSavedNone":"No surah saved"});
   Object.assign(TRANSLATIONS.ar, {"audioSavedCount":"{n} سورة محفوظة","audioSavedNone":"لا توجد سور محفوظة"});
@@ -4907,14 +4956,15 @@ function snapStarts(starts, sil, win, found){
       } finally { asking=false; }
     }
     // the question appears the moment the button is touched (Yes / Cancel decides)
-    cb.addEventListener('pointerdown',e=>{
+    // the question opens only on a real tap (finger lifted on the button); scrolling the menu with a finger on it no longer triggers it
+    cb.addEventListener('pointerdown',e=>{ e.stopPropagation(); });
+    cb.addEventListener('contextmenu',e=>e.preventDefault());
+    cb.addEventListener('click',e=>{
       e.stopPropagation();
       cb.classList.add('pressFx');
       setTimeout(()=>cb.classList.remove('pressFx'), 220);
-      setTimeout(askAndWipe, 140);   // a tiny pause so the press animation is seen before the dialog covers it
+      setTimeout(askAndWipe, 140);
     });
-    cb.addEventListener('contextmenu',e=>e.preventDefault());
-    cb.addEventListener('click',e=>{ e.stopPropagation(); });
   }
 
   // all texts follow the chosen language (also the buttons added later)
