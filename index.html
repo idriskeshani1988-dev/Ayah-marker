@@ -1600,6 +1600,7 @@ body.dark .settingsMenu #progressRow #clearProgressBtn{background:#4a3f1a !impor
       </div>
       </div>
       <div class="menuDivider"></div>
+      <button class="menuAction" id="audioFolderBtn" data-i18n="audioFolderBtn" style="display:none;margin-bottom:6px;">📁 فۆڵدەری دەنگەکان (Ayahmarker)</button>
       <!-- گروپی 1: هەڵگرتن و بارکردنی داتابەیس (db) - دوو دوو لە ناو بۆردەرێک -->
       <div class="menuBox" style="border:1.5px solid var(--teal); border-radius:10px; padding:6px; margin-top:6px; background:#fff;">
         <button class="menuAction" id="exportDb" data-i18n="saveDb" style="margin-top:0;">هەڵگرتنی داتابەیس (db)</button>
@@ -3219,8 +3220,33 @@ async function askNextSura(){
   // after "Yes": open the next surah and start its audio by itself (only if its audio is already in the app)
   autoPlayNextSura = audioBySura.has(next);
   if(autoPlayNextSura) setTimeout(()=>{ autoPlayNextSura = false; }, 8000);   // safety: never leave the flag on
+  const hadAudio = audioBySura.has(next);
+  try{ if(window.__clearResume) window.__clearResume(next); }catch(_){}   // the next surah always starts from its first ayah
   suraSelect.value = String(next);
   suraSelect.dispatchEvent(new Event('change'));
+  // whether its audio is loaded or not: show ayah 1, and (with audio) start playing from it
+  (async function(){
+    for(let i=0; i<80 && !(currentSurahAyahs && textLoadedForSura===next && activeSura===next); i++){
+      await new Promise(r=>setTimeout(r,100));
+    }
+    if(parseInt(suraSelect.value)!==next) return;                // the person moved elsewhere meanwhile
+    startAyahInput.value = '1';
+    playbackStopMs = null;
+    lastShownAyah = 1;
+    focusedAyah = 1;
+    try{ renderAyahText(1, true); renderMarksList(); }catch(_){}
+    setTimeout(()=>{ try{ scrollInsideToTop(textPanel, textPanel.querySelector('.ayah-line-list.active'), false); keepTextPanelOnScreen(); }catch(_){} }, 100);
+    if(hadAudio){
+      for(let i=0; i<40 && !(player.getAttribute('src') && player.readyState>=1); i++){
+        await new Promise(r=>setTimeout(r,100));
+      }
+      if(player.getAttribute('src') && player.readyState>=1 && parseInt(suraSelect.value)===next){
+        const m1 = marks.find(m=>!m.isTotal && m.ayah===1);
+        try{ player.currentTime = m1 ? m1.timeMs/1000 : 0; }catch(_){}
+        player.play().catch(()=>{});
+      }
+    }
+  })();
   return true;
 }
 function advanceToNextSura(){ askNextSura(); return true; }
@@ -4886,21 +4912,8 @@ function snapStarts(starts, sil, win, found){
   window.__refreshAudioSaved=refreshSavedInfo;
   let rsT=null;                                           // refresh after any tap (only while the menu line is visible), so it follows the language too
   document.addEventListener('click',()=>{ clearTimeout(rsT); rsT=setTimeout(()=>{ const el=document.getElementById('audioSavedInfo'); if(el && el.offsetParent!==null) refreshSavedInfo(); },350); }, true);
-  window.__persistAudioList=function(list){
-    queue=queue.then(async ()=>{
-      let db=null;
-      try{
-        db=await openDb();
-        for(let i=0;i<list.length;i++){
-          await putOne(db,list[i]);
-        }
-      }catch(e){
-        try{ console.warn('audio save failed', e); }catch(_){}
-      }finally{ if(db) db.close(); }
-      refreshSavedInfo();
-    });
-    return queue;
-  };
+  // audio files are NOT kept inside the app any more (they made the app very large); only the position is remembered
+  window.__persistAudioList=function(list){ return Promise.resolve(); };
   try{ if(navigator.storage && navigator.storage.persist) navigator.storage.persist(); }catch(e){}
 
   // restore the saved audio when the app starts
@@ -4908,13 +4921,8 @@ function snapStarts(starts, sil, win, found){
     let db=null;
     try{
       db=await openDb();
-      const all=await new Promise((res,rej)=>{ const r=db.transaction(STORE,'readonly').objectStore(STORE).getAll(); r.onsuccess=()=>res(r.result||[]); r.onerror=()=>rej(r.error); });
-      all.forEach(rec=>{ if(rec && rec.blob && !audioBySura.has(rec.sura)) audioBySura.set(rec.sura,{url:URL.createObjectURL(rec.blob),name:rec.name}); });
-      const cur=parseInt(document.getElementById('suraSelect').value);
-      const pl=document.getElementById('player');
-      if(audioBySura.has(cur) && pl && !pl.getAttribute('src')){
-        loadAudioIntoPlayer(audioBySura.get(cur).url, audioBySura.get(cur).name);
-      }
+      // one-time cleanup: free the space used by audio saved by older versions
+      await new Promise(res=>{ const tx=db.transaction(STORE,'readwrite'); tx.objectStore(STORE).clear(); tx.oncomplete=res; tx.onerror=res; tx.onabort=res; });
     }catch(e){ /* storage not available: the app works as before */ }
     finally{ if(db) db.close(); }
     refreshSavedInfo();
@@ -4972,6 +4980,147 @@ function snapStarts(starts, sil, win, found){
 
   // all texts follow the chosen language (also the buttons added later)
   try{ applyLanguage(currentLang); }catch(e){}
+})();
+
+
+// ================= Resume where you stopped (audio itself is not stored) =================
+(function(){
+  const KEY='app_resume_v1';
+  let st={sura:0,pos:{}};
+  try{ const o=JSON.parse(localStorage.getItem(KEY)||'{}'); if(o&&typeof o==='object'){ st.sura=parseInt(o.sura)||0; st.pos=(o.pos&&typeof o.pos==='object')?o.pos:{}; } }catch(_){}
+  function save(){ try{ localStorage.setItem(KEY, JSON.stringify(st)); }catch(_){} }
+  function curSura(){ return parseInt(suraSelect.value)||0; }
+  let audioSura=0;                       // the surah the audio currently in the player belongs to
+  function remember(){
+    const s=audioSura; if(!s || !player.getAttribute('src')) return;
+    const t=player.currentTime, d=player.duration;
+    if(!isFinite(t) || player.readyState<1) return;
+    if(player.ended || (isFinite(d) && t>=d-2)){ delete st.pos[s]; save(); return; }
+    if(t>1){ st.pos[s]=Math.round(t*10)/10; }
+    st.sura=curSura()||st.sura;
+    save();
+  }
+  let lastWrite=0;
+  player.addEventListener('timeupdate',()=>{ const n=Date.now(); if(n-lastWrite>2000){ lastWrite=n; remember(); } });
+  player.addEventListener('pause',remember);
+  player.addEventListener('ended',()=>{ if(audioSura){ delete st.pos[audioSura]; save(); } });
+  player.addEventListener('loadstart',()=>{ audioSura=0; });
+  player.addEventListener('loadedmetadata',()=>{
+    const s=curSura(); audioSura=s;
+    const p=parseFloat(st.pos[s]);
+    if(p>1 && isFinite(player.duration) && p<player.duration-3 && player.currentTime<1){
+      try{ player.currentTime=p; }catch(_){}
+    }
+  });
+  suraSelect.addEventListener('change',()=>{ st.sura=curSura(); save(); });
+  window.__clearResume=function(n){ delete st.pos[n]; save(); };
+  document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='hidden') remember(); });
+  window.addEventListener('pagehide',remember);
+  // reopen the surah you were on
+  window.addEventListener('load',()=>{
+    setTimeout(()=>{
+      if(st.sura>=1 && st.sura<=114 && curSura()!==st.sura){
+        suraSelect.value=String(st.sura);
+        suraSelect.dispatchEvent(new Event('change'));
+      }
+    },500);
+  });
+})();
+
+// the "delete audio inside the app" button is not needed any more: nothing is stored
+(function(){ const st=document.createElement('style'); st.textContent='#clearAudioBtn{display:none !important;}'; document.head.appendChild(st); })();
+
+
+// ================= Audio folder: Documents/Ayahmarker (Android app only) =================
+(function(){
+  if(typeof IS_NATIVE==='undefined' || !IS_NATIVE) return;
+  Object.assign(TRANSLATIONS.ku, {
+    audioFolderBtn:"📁 فۆڵدەری دەنگەکان (Ayahmarker)",
+    audioFolderAsk:"فۆڵدەری «Ayahmarker» لە ناو Documents دروست کرا.\nدەنگی سورەتەکان (وەک 002.mp3) تێیدا دابنێ، پاشان ئەو فۆڵدەرە یەکجار هەڵبژێرە. دوای ئەوە هەر جارێک ئەپەکە دەکەیتەوە دەنگەکان خۆکار دەخوێنرێنەوە.",
+    audioFolderChoose:"هەڵبژاردنی فۆڵدەر", audioFolderLater:"دواتر",
+    audioFolderFound:"{n} دەنگ لە فۆڵدەری Ayahmarker دۆزرایەوە", audioFolderEmpty:"هیچ دەنگێک لە فۆڵدەرەکەدا نییە",
+    audioFolderFail:"نەتوانرا فۆڵدەرەکە بخوێنرێتەوە"});
+  Object.assign(TRANSLATIONS.en, {
+    audioFolderBtn:"📁 Audio folder (Ayahmarker)",
+    audioFolderAsk:"The folder \"Ayahmarker\" was created inside Documents.\nPut the surah audio files in it (for example 002.mp3), then choose that folder once. After that the audio is loaded automatically every time you open the app.",
+    audioFolderChoose:"Choose folder", audioFolderLater:"Later",
+    audioFolderFound:"{n} audio files found in the Ayahmarker folder", audioFolderEmpty:"No audio files in the folder",
+    audioFolderFail:"Could not read the folder"});
+  Object.assign(TRANSLATIONS.ar, {
+    audioFolderBtn:"📁 مجلد الصوتيات (Ayahmarker)",
+    audioFolderAsk:"تم إنشاء المجلد «Ayahmarker» داخل Documents.\nضع فيه ملفات السور (مثل 002.mp3) ثم اختر المجلد مرة واحدة. بعد ذلك تُحمَّل الصوتيات تلقائيًا في كل مرة تفتح فيها التطبيق.",
+    audioFolderChoose:"اختيار المجلد", audioFolderLater:"لاحقًا",
+    audioFolderFound:"تم العثور على {n} ملف صوتي في المجلد Ayahmarker", audioFolderEmpty:"لا توجد ملفات صوتية في المجلد",
+    audioFolderFail:"تعذّرت قراءة المجلد"});
+
+  let pl=null;
+  try{ pl=nativePlugin('AudioFolder'); }catch(_){ return; }
+  const btn=document.getElementById('audioFolderBtn');
+  if(btn) btn.style.display='block';
+  try{ applyLanguage(currentLang); }catch(_){}
+
+  function srcOf(uri){
+    const C=window.Capacitor;
+    return (C && typeof C.convertFileSrc==='function') ? C.convertFileSrc(uri) : uri;
+  }
+  let scanning=false;
+  // read the folder, register every file by its surah number (002.mp3 -> surah 2) and load the right one
+  async function scan(announce){
+    if(scanning) return {hasFolder:true};
+    scanning=true;
+    try{
+      const r=await pl.listAudio();
+      if(!r || !r.hasFolder) return {hasFolder:false};
+      let found=0;
+      (r.files||[]).forEach(f=>{
+        const n=extractSuraNumber(f.name); if(!n) return;
+        found++;
+        const old=audioBySura.get(n);
+        if(!old || old.name!==f.name) audioBySura.set(n,{url:srcOf(f.uri), name:f.name});
+      });
+      if(announce) showToast(found ? tf('audioFolderFound',{n:found}) : t('audioFolderEmpty'));
+      if(found){
+        const cur=parseInt(suraSelect.value)||1;
+        if(audioBySura.has(cur)){
+          if(!player.getAttribute('src')) loadAudioIntoPlayer(audioBySura.get(cur).url, audioBySura.get(cur).name);
+        } else if(!player.getAttribute('src')){
+          const first=Math.min.apply(null,[...audioBySura.keys()]);       // the current surah has no file: open the first one
+          suraSelect.value=String(first);
+          suraSelect.dispatchEvent(new Event('change'));
+        }
+      }
+      return {hasFolder:true, found:found};
+    }catch(e){
+      if(announce) showToast(t('audioFolderFail'));
+      return {hasFolder:false, error:true};
+    }finally{ scanning=false; }
+  }
+  async function choose(){
+    try{ await pl.pickFolder(); }catch(e){ return false; }      // cancelled
+    await scan(true);
+    return true;
+  }
+  if(btn) btn.addEventListener('click',()=>{ settingsMenu.classList.remove('open'); choose(); });
+
+  // first launch: create the folder and ask once to choose it; later launches: just read it
+  async function init(){
+    const r=await scan(false);
+    if(r.hasFolder) return;
+    try{
+      if(!localStorage.getItem('ayahfolder_made')){ await pl.ensureFolder(); localStorage.setItem('ayahfolder_made','1'); }
+    }catch(_){}
+    let asked=false; try{ asked=!!localStorage.getItem('ayahfolder_asked'); }catch(_){}
+    if(asked) return;
+    try{ localStorage.setItem('ayahfolder_asked','1'); }catch(_){}
+    const yes=await appConfirm(t('audioFolderAsk'), t('audioFolderChoose'), t('audioFolderLater'));
+    if(yes) await choose();
+  }
+  window.addEventListener('load',()=>{ setTimeout(init, 1200); });
+  // coming back to the app: pick up files that were added to the folder meanwhile
+  let lastScan=0;
+  document.addEventListener('visibilitychange',()=>{
+    if(document.visibilityState==='visible' && Date.now()-lastScan>3000){ lastScan=Date.now(); scan(false); }
+  });
 })();
 
 </script>
