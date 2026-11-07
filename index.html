@@ -1557,6 +1557,34 @@ body.dark .settingsMenu #progressRow #clearProgressBtn{background:#4a3f1a !impor
 #back1Btn::before{content:'⏪';position:absolute;left:5px;top:50%;transform:translateY(-50%);font-size:1.15em;line-height:1;pointer-events:none;}
 #fwd1Btn::after{content:'⏩';position:absolute;right:5px;top:50%;transform:translateY(-50%);font-size:1.15em;line-height:1;pointer-events:none;}
 </style>
+<style id="menu-text-and-press-2026-11-07">
+/* ---- Menu texts: black in the light colours (light, sepia), white in dark / blue / green ---- */
+#settingsMenu, #settingsMenu *:not(.chip.active):not(.themeBtn){color:#fff !important;}
+body:not(.dark) #settingsMenu, body:not(.dark) #settingsMenu *:not(.chip.active):not(.themeBtn){color:#000 !important;}
+#settingsMenu input::placeholder{color:inherit !important;opacity:.55;}
+
+/* ---- Very small press animation for the buttons of the main screen (the menu is left as it is) ---- */
+button:not(#settingsMenu button):not(#langPickOverlay button),
+.chip:not(#settingsMenu .chip){
+  transition: scale .09s ease-out !important;
+}
+button:not(#settingsMenu button):not(#langPickOverlay button):not(:disabled):active,
+.chip:not(#settingsMenu .chip):active{
+  scale: .95;
+}
+@media (prefers-reduced-motion: reduce){
+  button:not(#settingsMenu button), .chip:not(#settingsMenu .chip){transition:none !important;}
+}
+
+/* ---- Pop-up boxes (file name, questions, messages): clear text in every colour ---- */
+#appDlgBox, #appDlgMsg, #appDlgBox input, #appDlgBtns button:not(.primary){color:#fff !important;-webkit-text-fill-color:#fff !important;}
+#appDlgBox input{background:var(--paper) !important;opacity:1 !important;}
+body:not(.dark) #appDlgBox, body:not(.dark) #appDlgMsg, body:not(.dark) #appDlgBox input, body:not(.dark) #appDlgBtns button:not(.primary){color:#000 !important;-webkit-text-fill-color:#000 !important;}
+body:not(.dark) #appDlgBox input{background:#fff !important;}
+#appDlgBox input::selection{background:#d9a53f;color:#000;}
+body:not(.dark) #appDlgBtns button.primary{color:#fff !important;-webkit-text-fill-color:#fff !important;}
+body.dark #appDlgBtns button.primary{color:#17120a !important;-webkit-text-fill-color:#17120a !important;}
+</style>
 </head>
 <body>
 <div class="wrap">
