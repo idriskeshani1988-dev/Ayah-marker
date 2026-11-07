@@ -5248,16 +5248,41 @@ function snapStarts(starts, sil, win, found){
     let st=null; try{ st=await pl.status(); }catch(_){ return; }
     if(!st || !st.supported) return;
     if(st.granted){ try{ await pl.ensureFolder(); }catch(_){} await scan(false); return; }
-    let asked=false; try{ asked=!!localStorage.getItem('ayahfolder_asked2'); }catch(_){}
-    if(asked) return;
-    try{ localStorage.setItem('ayahfolder_asked2','1'); }catch(_){}
-    const yes=await appConfirm(t('audioFolderAsk'), t('audioFolderChoose'), t('audioFolderLater'));
-    if(yes) await enable();
+    showGate();                                       // no permission: the app stays closed behind this screen
+  }
+  // Full-screen gate: the app cannot be used until "All files access" is turned on
+  function showGate(){
+    if(document.getElementById('permGateOv')) return;
+    const dark=document.body.classList.contains('dark');
+    const ov=document.createElement('div'); ov.id='permGateOv'; ov.setAttribute('dir', document.documentElement.dir||'rtl');
+    ov.style.cssText='position:fixed;inset:0;z-index:2147483600;display:flex;align-items:center;justify-content:center;padding:24px;box-sizing:border-box;background:'+(dark?'#171f2b':'#f6f1e4')+';';
+    const box=document.createElement('div'); box.style.cssText='max-width:420px;width:100%;';
+    const m=document.createElement('p'); m.textContent=t('audioFolderAsk');
+    m.style.cssText='font-size:17px;line-height:1.7;margin:0 0 20px;white-space:pre-wrap;text-align:start;color:'+(dark?'#fff':'#000')+';';
+    const b=document.createElement('button'); b.type='button'; b.textContent=t('audioFolderChoose');
+    b.style.cssText='width:100%;font:inherit;font-size:17px;font-weight:700;padding:13px 12px;border-radius:12px;border:none;cursor:pointer;background:'+(dark?'#d9b85f':'#0f3d3a')+';color:'+(dark?'#17120a':'#fff')+';';
+    b.addEventListener('click',async()=>{
+      b.disabled=true;
+      try{ await pl.requestAccess(); }catch(_){}
+      b.disabled=false;
+      await checkGate();
+    });
+    box.append(m,b); ov.appendChild(box); document.body.appendChild(ov);
+  }
+  async function checkGate(){
+    const ov=document.getElementById('permGateOv'); if(!ov) return;
+    let st=null; try{ st=await pl.status(); }catch(_){ return; }
+    if(st && st.granted){
+      ov.remove();
+      try{ await pl.ensureFolder(); }catch(_){}
+      await scan(false);
+    }
   }
   window.addEventListener('load',()=>{ setTimeout(init, 1200); });
   // coming back to the app (also after the permission screen): read the folder again
   let lastScan=0;
   document.addEventListener('visibilitychange',()=>{
+    if(document.visibilityState==='visible'){ checkGate(); }
     if(document.visibilityState==='visible' && Date.now()-lastScan>3000){ lastScan=Date.now(); scan(false); }
   });
 })();
