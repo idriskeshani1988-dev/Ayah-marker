@@ -1584,6 +1584,11 @@ body:not(.dark) #appDlgBox input{background:#fff !important;}
 #appDlgBox input::selection{background:#d9a53f;color:#000;}
 body:not(.dark) #appDlgBtns button.primary{color:#fff !important;-webkit-text-fill-color:#fff !important;}
 body.dark #appDlgBtns button.primary{color:#17120a !important;-webkit-text-fill-color:#17120a !important;}
+
+/* ---- Marked list: the rows must fit the card, so the list never slides sideways under the finger ---- */
+#marksList{overflow-x:hidden !important;touch-action:pan-y;}
+#marksList .mark-row{box-sizing:border-box !important;max-width:100% !important;}
+#marksList .mark-row .rowtime{flex:0 1 auto !important;min-width:60px !important;}
 </style>
 </head>
 <body>
