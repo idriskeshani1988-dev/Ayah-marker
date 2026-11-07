@@ -2240,7 +2240,11 @@ marksList.addEventListener('click', (e)=>{
   const css = document.createElement('style');
   css.textContent = '.mark-row .rowbtn[data-act="plus"], .mark-row .rowbtn[data-act="minus"]{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;}';
   document.head.appendChild(css);
-  function showTime(){ const inp = st.row.querySelector('.rowtime'); if(inp) inp.value = st.mark.timeMs; }   // update in place: the buttons stay under the finger
+  function showTime(){
+    let row = st.row;
+    if(!row || !row.isConnected){ row = marksList.querySelector(`.mark-row[data-seq="${st.mark.seq}"]`); st.row = row; }
+    const inp = row && row.querySelector('.rowtime'); if(inp) inp.value = st.mark.timeMs;
+  }   // update in place: the buttons stay under the finger
   function step(){
     st.count++;
     st.mark.timeMs = Math.max(0, st.mark.timeMs + st.dir * getStepMs() * mult(st.count));
@@ -2254,6 +2258,7 @@ marksList.addEventListener('click', (e)=>{
   function stop(){
     if(!st) return;
     const s0 = st; st = null;
+    window.__pmEditAyah = null;
     clearTimeout(s0.timer);
     window.__pmIgnoreClickUntil = Date.now() + 700;      // the click that follows this touch is already handled here
     // finishing steps: save, refresh the text, play from the new time
@@ -2272,6 +2277,7 @@ marksList.addEventListener('click', (e)=>{
     st.mark.timeMs = st.orig;
     showTime();
     st = null;
+    window.__pmEditAyah = null;
   }
   marksList.addEventListener('pointerdown', e=>{
     const btn = e.target.closest('.rowbtn');
@@ -2283,6 +2289,10 @@ marksList.addEventListener('click', (e)=>{
     if(!mark) return;
     if(st) stop();
     st = {mark, row, dir: act==='plus' ? 1 : -1, count:0, repeating:false, orig:mark.timeMs, x:e.clientX, y:e.clientY, timer:null};
+    // the ayah being edited stays shown (text + highlight) while the finger is on + / −; the audio keeps its own clock until release
+    window.__pmEditAyah = mark.ayah;
+    lastShownAyah = mark.ayah; focusedAyah = mark.ayah;
+    try{ renderAyahText(mark.ayah, true); }catch(_){}
     step();                                              // 50 at once
     st.timer = setTimeout(()=>{ if(!st) return; st.repeating = true; tick(); }, DELAY);   // still held: 100, 150 ...
   });
@@ -2298,6 +2308,12 @@ marksList.addEventListener('click', (e)=>{
   ['touchend','touchcancel','pointerup','blur'].forEach(ev=>window.addEventListener(ev, stop, true));
   document.addEventListener('visibilitychange', ()=>{ if(document.hidden) stop(); });
 })();
+// While a finger is on a list button (and for a moment after) the list is not rebuilt or scrolled by the audio follow
+function rowTouchBusy(){ return !!window.__rowTouchDown || Date.now() < (window.__rowTouchUntil||0); }
+marksList.addEventListener('pointerdown', e=>{ if(e.target.closest('.rowbtn')){ window.__rowTouchDown = true; } }, true);
+['pointerup','pointercancel','touchend','touchcancel'].forEach(ev=>window.addEventListener(ev, ()=>{
+  if(window.__rowTouchDown){ window.__rowTouchDown = false; window.__rowTouchUntil = Date.now() + 700; }
+}, true));
 marksList.addEventListener('change', (e)=>{
   if(e.target.dataset.act==='edit'){
     const row = e.target.closest('.mark-row');
@@ -3113,6 +3129,7 @@ function scrollMarkRowToTop(seq, syncInstant=false){
 }
 function showAyahText(syncInstant=false){
   if(!currentSurahAyahs) return;
+  if(window.__pmEditAyah != null) return;      // a + / − is being held on this ayah: the display stays on it, whatever the audio clock says
   const total = currentSurahAyahs.length;
   const nonTotal = marks.filter(m=>!m.isTotal).sort((a,b)=>a.timeMs-b.timeMs);
   const isComplete = marks.some(m=>m.isTotal);
@@ -3128,14 +3145,14 @@ function showAyahText(syncInstant=false){
     if(!isComplete){
       // past the last mark (new, still unmarked ayahs): keep the ayah the person is working on
       const lastM = nonTotal[nonTotal.length-1];
-      if(player.currentTime*1000 >= lastM.timeMs && lastShownAyah !== null && lastShownAyah !== undefined && lastShownAyah >= lastM.ayah) return;
+      if(player.currentTime*1000 + 25 >= lastM.timeMs && lastShownAyah !== null && lastShownAyah !== undefined && lastShownAyah >= lastM.ayah) return;
     }
     // Use the actual media clock. At 3x, every millisecond of currentTime
     // represents 3 ms of audio, so there is no fixed-delay correction here.
     const curMs = player.currentTime * 1000;
     ayahNum = nonTotal[0].ayah;
     for(const m of nonTotal){
-      if(m.timeMs <= curMs) ayahNum = m.ayah;
+      if(m.timeMs <= curMs + 25) ayahNum = m.ayah;
       else break;
     }
   } else {
@@ -3143,7 +3160,8 @@ function showAyahText(syncInstant=false){
   }
 
   ayahNum = Math.min(ayahNum, total);
-  if(ayahNum === lastShownAyah) return;
+  const touchBusy = rowTouchBusy();      // a finger is on (or just left) a list button: the rows must not move or be rebuilt
+  if(ayahNum === lastShownAyah && !(window.__listStale && !touchBusy)) return;
 
   lastShownAyah = ayahNum;
   focusedAyah = ayahNum;
@@ -3152,12 +3170,18 @@ function showAyahText(syncInstant=false){
   renderAyahText(ayahNum, syncInstant);
 
   if(followMode){
-    window._followOnly = true;
-    try{ renderMarksList(); }finally{ window._followOnly = false; }
-    const activeMark = marks.find(m=>!m.isTotal && m.ayah===ayahNum);
-    if(activeMark) scrollMarkRowToTop(activeMark.seq, syncInstant);
+    if(touchBusy){ window.__listStale = true; }       // the list catches up as soon as the finger is away
+    else{
+      window.__listStale = false;
+      if(!showAllMarks){                               // the full list keeps its rows: only the highlight moves
+        window._followOnly = true;
+        try{ renderMarksList(); }finally{ window._followOnly = false; }
+      }
+      const activeMark = marks.find(m=>!m.isTotal && m.ayah===ayahNum);
+      if(activeMark) scrollMarkRowToTop(activeMark.seq, syncInstant);
+    }
   }
-  if(showAllMarks) followCurrentRow(true);
+  if(showAllMarks && !touchBusy) followCurrentRow(true);
 }
 startAyahInput.addEventListener('change', ()=>{
   const num = parseInt(startAyahInput.value)||1;
