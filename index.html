@@ -1706,7 +1706,7 @@ body.dark #appDlgBtns button.primary{color:#17120a !important;-webkit-text-fill-
   </div>
 </div>
 
-<input type="file" id="masterDbInput">
+<input type="file" id="masterDbInput" accept="application/x-sqlite3,application/vnd.sqlite3,application/x-sqlite,application/octet-stream">
 
 <script id="base-timings-db">
 // Base database (output.db): 114 surahs, every ayah + 999 (end of surah) row (Quran-timing.db).
@@ -2992,10 +2992,22 @@ function importMasterIntoSavedMarks(){
     localStorage.setItem(LS_KEY, JSON.stringify(all));
   }catch(e){ /* ignore */ }
 }
-loadMasterBtn.addEventListener('click', ()=>masterDbInput.click());
+// Android app: a small list with only the .db files of Ayah-marker; anywhere else (or no .db there) the system file picker opens
+loadMasterBtn.addEventListener('click', async ()=>{
+  if(typeof window.__pickDbFromFolder === 'function'){
+    let handled = false;
+    try{ handled = await window.__pickDbFromFolder(); }catch(_){ handled = false; }
+    if(handled) return;
+  }
+  masterDbInput.click();
+});
 masterDbInput.addEventListener('change', ()=>{
   const file = masterDbInput.files[0];
   if(!file) return;
+  loadMasterFile(file);
+  masterDbInput.value = '';
+});
+function loadMasterFile(file){
   const reader = new FileReader();
   reader.onload = async ()=>{
     try{
@@ -3018,8 +3030,7 @@ masterDbInput.addEventListener('change', ()=>{
   };
   reader.onerror = ()=>appAlert(t('errReadFile'));
   reader.readAsArrayBuffer(file);
-  masterDbInput.value = '';
-});
+}
 async function exportAllSurahs(){
   await ensureWorkingDb();
   flushSuraToMaster(masterLoadedSura);
@@ -5122,19 +5133,19 @@ function snapStarts(starts, sil, win, found){
     audioFolderAsk:"بۆ ئەوەی فۆڵدەری «Ayah-marker» لە ناو مەلەفاتی سەرەکی مۆبایلەکەت دروست بکرێت و دەنگەکانی خۆکار بخوێنرێنەوە، دەبێت «ڕێگەدان بە بەڕێوەبردنی هەموو فایلەکان» بۆ ئەم ئەپە چالاک بکەیت.\nدوای ئەوە دەنگی سورەتەکان (وەک 002.mp3) لەو فۆڵدەرەدا دابنێ.",
     audioFolderChoose:"چالاککردن", audioFolderLater:"دواتر",
     audioFolderFound:"{n} دەنگ لە فۆڵدەری Ayah-marker دۆزرایەوە", audioFolderEmpty:"هیچ دەنگێک لە فۆڵدەری Ayah-marker نییە",
-    audioFolderFail:"نەتوانرا فۆڵدەرەکە بخوێنرێتەوە", audioFolderNoAccess:"ڕێگەدان چالاک نەکرا — فۆڵدەری Ayah-marker بەکارناهێنرێت", savedFolderOk:"هەڵگیرا ✅\nفۆڵدەری Ayah-marker:", audioFolderCurrent:"فۆڵدەری ئێستا:", audioFolderPick:"هەڵبژاردنی فۆڵدەر"});
+    audioFolderFail:"نەتوانرا فۆڵدەرەکە بخوێنرێتەوە", audioFolderNoAccess:"ڕێگەدان چالاک نەکرا — فۆڵدەری Ayah-marker بەکارناهێنرێت", savedFolderOk:"هەڵگیرا ✅\nفۆڵدەری Ayah-marker:", audioFolderCurrent:"فۆڵدەری ئێستا:", audioFolderPick:"هەڵبژاردنی فۆڵدەر", dbPickTitle:"فایلی داتابەیس هەڵبژێرە", dbPickOther:"هەڵبژاردنی فایل لە شوێنێکی تر"});
   Object.assign(TRANSLATIONS.en, {
     audioFolderBtn:"📁 Audio folder (Ayah-marker)",
     audioFolderAsk:"To create the folder \"Ayah-marker\" in your phone's main storage and load its audio automatically, turn on \"Allow management of all files\" for this app.\nThen put the surah audio files (for example 002.mp3) in that folder.",
     audioFolderChoose:"Turn on", audioFolderLater:"Later",
     audioFolderFound:"{n} audio files found in the Ayah-marker folder", audioFolderEmpty:"No audio files in the Ayah-marker folder",
-    audioFolderFail:"Could not read the folder", audioFolderNoAccess:"Access was not turned on — the Ayah-marker folder cannot be used", savedFolderOk:"Saved ✅\nAyah-marker folder:", audioFolderCurrent:"Current folder:", audioFolderPick:"Choose folder"});
+    audioFolderFail:"Could not read the folder", audioFolderNoAccess:"Access was not turned on — the Ayah-marker folder cannot be used", savedFolderOk:"Saved ✅\nAyah-marker folder:", audioFolderCurrent:"Current folder:", audioFolderPick:"Choose folder", dbPickTitle:"Choose a database file", dbPickOther:"Choose a file from another place"});
   Object.assign(TRANSLATIONS.ar, {
     audioFolderBtn:"📁 مجلد الصوتيات (Ayah-marker)",
     audioFolderAsk:"لإنشاء المجلد «Ayah-marker» في التخزين الرئيسي للهاتف وتحميل الصوتيات منه تلقائيًا، فعّل «السماح بإدارة جميع الملفات» لهذا التطبيق.\nثم ضع ملفات السور (مثل 002.mp3) داخل هذا المجلد.",
     audioFolderChoose:"تفعيل", audioFolderLater:"لاحقًا",
     audioFolderFound:"تم العثور على {n} ملف صوتي في المجلد Ayah-marker", audioFolderEmpty:"لا توجد ملفات صوتية في المجلد Ayah-marker",
-    audioFolderFail:"تعذّرت قراءة المجلد", audioFolderNoAccess:"لم يتم تفعيل الإذن — لا يمكن استخدام المجلد Ayah-marker", savedFolderOk:"تم الحفظ ✅\nمجلد Ayah-marker:", audioFolderCurrent:"المجلد الحالي:", audioFolderPick:"اختيار مجلد"});
+    audioFolderFail:"تعذّرت قراءة المجلد", audioFolderNoAccess:"لم يتم تفعيل الإذن — لا يمكن استخدام المجلد Ayah-marker", savedFolderOk:"تم الحفظ ✅\nمجلد Ayah-marker:", audioFolderCurrent:"المجلد الحالي:", audioFolderPick:"اختيار مجلد", dbPickTitle:"اختر ملف قاعدة البيانات", dbPickOther:"اختيار ملف من مكان آخر"});
 
   let pl=null;
   try{ pl=nativePlugin('AudioFolder'); }catch(_){ return; }
@@ -5232,6 +5243,52 @@ function snapStarts(starts, sil, win, found){
   });
 
   // launch: read the folder; the first time, ask once to turn the permission on and create the folder
+  // ---- load-db button: a list with only the .db files of Ayah-marker ----
+  function fmtSize(n){ return n>=1048576 ? (n/1048576).toFixed(1)+' MB' : Math.max(1,Math.round(n/1024))+' KB'; }
+  function chooseDbDialog(files){
+    return new Promise(resolve=>{
+      const old=document.getElementById('dbPickOv'); if(old) old.remove();
+      const dark=document.body.classList.contains('dark');
+      const fg=dark?'#fff':'#000';
+      const ov=document.createElement('div'); ov.id='dbPickOv'; ov.setAttribute('dir', document.documentElement.dir||'rtl');
+      ov.style.cssText='position:fixed;inset:0;z-index:2147483300;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:24px;box-sizing:border-box;';
+      const box=document.createElement('div');
+      box.style.cssText='max-width:420px;width:100%;max-height:80vh;display:flex;flex-direction:column;border-radius:16px;padding:18px 16px 14px;box-sizing:border-box;box-shadow:0 10px 40px rgba(0,0,0,.45);background:'+(dark?'#202d3d':'#ece4d1')+';color:'+fg+';';
+      const h=document.createElement('p'); h.textContent=t('dbPickTitle'); h.style.cssText='font-size:17px;font-weight:700;margin:0 0 12px;color:'+fg+';';
+      const list=document.createElement('div'); list.style.cssText='overflow-y:auto;flex:1 1 auto;display:flex;flex-direction:column;gap:8px;margin-bottom:12px;';
+      const btnCss='font:inherit;font-size:16px;padding:10px 12px;border-radius:12px;border:1px solid '+(dark?'#b8d8c5':'#0f3d3a')+';background:transparent;color:'+fg+';cursor:pointer;';
+      const done=v=>{ ov.remove(); resolve(v); };
+      files.forEach(f=>{
+        const b=document.createElement('button'); b.type='button'; b.style.cssText=btnCss+'text-align:start;';
+        const nm=document.createElement('div'); nm.textContent=f.name; nm.style.cssText='direction:ltr;text-align:left;font-weight:700;word-break:break-all;';
+        const meta=document.createElement('div'); meta.textContent=fmtSize(f.size||0); meta.style.cssText='direction:ltr;text-align:left;font-size:13px;opacity:.75;margin-top:2px;';
+        b.append(nm,meta); b.addEventListener('click',e=>{ e.stopPropagation(); done(f); }); list.appendChild(b);
+      });
+      const other=document.createElement('button'); other.type='button'; other.textContent=t('dbPickOther'); other.style.cssText=btnCss+'margin-bottom:8px;';
+      other.addEventListener('click',e=>{ e.stopPropagation(); done('other'); });
+      const cancel=document.createElement('button'); cancel.type='button'; cancel.textContent=t('dlgCancel'); cancel.style.cssText=btnCss;
+      cancel.addEventListener('click',e=>{ e.stopPropagation(); done(null); });
+      box.append(h,list,other,cancel); ov.appendChild(box);
+      ov.addEventListener('click',e=>e.stopPropagation());
+      document.body.appendChild(ov);
+    });
+  }
+  window.__pickDbFromFolder = async function(){
+    let st=null; try{ st=await pl.status(); }catch(_){ return false; }
+    if(!st || !st.supported || !st.granted) return false;
+    let r=null; try{ r=await pl.listDb(); }catch(_){ return false; }
+    if(!r || !r.files || !r.files.length) return false;          // no .db in Ayah-marker: the system picker opens
+    settingsMenu.classList.remove('open');
+    const chosen=await chooseDbDialog(r.files);
+    if(chosen==='other') return false;
+    if(!chosen) return true;                                     // cancelled
+    try{
+      const resp=await fetch(srcOf(chosen.path));
+      const blob=await resp.blob();
+      loadMasterFile(new File([blob], chosen.name, {type:'application/x-sqlite3'}));
+    }catch(e){ appAlert(t('errReadFile')); }
+    return true;
+  };
   // the language screen comes first: wait until a language is chosen, so the permission box is in that language
   function waitForLanguage(){
     return new Promise(resolve=>{

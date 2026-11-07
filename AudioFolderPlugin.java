@@ -35,6 +35,7 @@ import java.util.Locale;
  *  - ensureFolder():  creates Ayah-marker when it is missing
  *  - listAudio():     { granted, files:[{name, path, size}] }
  *  - saveFile():      saves a base64 file (the db) into Ayah-marker
+ *  - listDb():        only the .db files of Ayah-marker, newest first
  */
 @CapacitorPlugin(name = "AudioFolder")
 public class AudioFolderPlugin extends Plugin {
@@ -189,6 +190,43 @@ public class AudioFolderPlugin extends Plugin {
         }
         ret.put("path", dir.getAbsolutePath());
         ret.put("name", dir.getName());
+        call.resolve(ret);
+    }
+
+    // listDb({path?}): only the files ending in .db (newest first) from Ayah-marker or from the given folder
+    @PluginMethod
+    public void listDb(PluginCall call) {
+        JSObject ret = new JSObject();
+        JSArray arr = new JSArray();
+        ret.put("files", arr);
+        if (!granted()) {
+            ret.put("granted", false);
+            call.resolve(ret);
+            return;
+        }
+        ret.put("granted", true);
+        String p = call.getString("path");
+        File dir = (p != null && !p.isEmpty()) ? new File(p) : folder();
+        ret.put("path", dir.getAbsolutePath());
+        File[] list = dir.listFiles();
+        if (list != null) {
+            Arrays.sort(list, new Comparator<File>() {
+                @Override
+                public int compare(File a, File b) {
+                    return Long.compare(b.lastModified(), a.lastModified());
+                }
+            });
+            for (File f : list) {
+                if (!f.isFile()) continue;
+                if (!f.getName().toLowerCase(Locale.ROOT).endsWith(".db")) continue;
+                JSObject o = new JSObject();
+                o.put("name", f.getName());
+                o.put("path", f.getAbsolutePath());
+                o.put("size", f.length());
+                o.put("modified", f.lastModified());
+                arr.put(o);
+            }
+        }
         call.resolve(ret);
     }
 
