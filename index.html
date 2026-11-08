@@ -1379,6 +1379,7 @@ body #settingsMenu #onlineMarkBtn#onlineMarkBtn{background:linear-gradient(135de
 body.dark #settingsMenu #onlineMarkBtn#onlineMarkBtn{background:linear-gradient(135deg,#7a5a17 0%,#523b0c 100%) !important;color:#fff6dc !important;-webkit-text-fill-color:#fff6dc !important;border-color:#b8892b !important;box-shadow:none;}
 #onlineMarkBtn:active{filter:brightness(1.12);}
 body #markMoreBtn#markMoreBtn{border:none !important;border-width:0 !important;box-shadow:none !important;}
+#autoProg,#onlineProg,#whisperProg{white-space:pre-line;}
 </style>
 <style id="auto-mark-2026-10-12">
 #autoProg{display:none;position:fixed;left:8px;right:8px;top:calc(env(safe-area-inset-top,0px) + 6px);z-index:9000;
@@ -1720,8 +1721,12 @@ body .settingsMenu #exportDb::after, body .settingsMenu #loadMasterBtn::after{
       <div class="menuDivider"></div>
       <div class="menuBox" id="bulkBox">
         <div data-i18n="bulkTitle" style="font-size:12px;font-weight:700;margin-bottom:6px;">جووڵاندنی کۆمەڵێک نیشانە بە یەکجار</div>
-        <div class="settingsRow"><label for="bulkFrom" data-i18n="bulkFrom" style="font-size:12px;">لە ئایەتی</label><input id="bulkFrom" type="text" inputmode="numeric" pattern="[0-9]*" lang="en" maxlength="3" value="1" style="width:92px;padding:6px;border:1px solid var(--line);border-radius:8px;direction:ltr;"></div>
-        <div class="settingsRow"><label for="bulkTo" data-i18n="bulkTo" style="font-size:12px;">تا ئایەتی</label><input id="bulkTo" type="text" inputmode="numeric" pattern="[0-9]*" lang="en" maxlength="3" value="" style="width:92px;padding:6px;border:1px solid var(--line);border-radius:8px;direction:ltr;"></div>
+        <div id="bulkRange" style="display:flex;align-items:center;gap:6px;margin:6px 0;">
+          <label for="bulkFrom" data-i18n="bulkFrom" style="font-size:12px;white-space:nowrap;">لە ئایەتی</label>
+          <input id="bulkFrom" type="text" inputmode="numeric" pattern="[0-9]*" lang="en" maxlength="3" value="1" style="flex:1 1 0;min-width:0;width:auto;padding:6px;border:1px solid var(--line);border-radius:8px;direction:ltr;text-align:center;">
+          <label for="bulkTo" data-i18n="bulkTo" style="font-size:12px;white-space:nowrap;margin-inline-start:4px;">تا ئایەتی</label>
+          <input id="bulkTo" type="text" inputmode="numeric" pattern="[0-9]*" lang="en" maxlength="3" value="" style="flex:1 1 0;min-width:0;width:auto;padding:6px;border:1px solid var(--line);border-radius:8px;direction:ltr;text-align:center;">
+        </div>
         <div class="settingsRow"><label for="bulkMs" data-i18n="bulkMs" style="font-size:12px;">بڕی کات (ms)</label><input id="bulkMs" type="text" inputmode="numeric" pattern="[0-9]*" lang="en" maxlength="6" value="200" style="width:92px;padding:6px;border:1px solid var(--line);border-radius:8px;direction:ltr;"></div>
         <div style="display:flex;gap:8px;">
           <button class="menuAction" id="bulkPlus" type="button" data-i18n="bulkPlus" style="flex:1;">➕ زیاد بکە</button>
@@ -4766,10 +4771,17 @@ function snapStarts(starts, sil, win, found){
     say(tf('undoDone',{a:u.a,b:u.b}));
   });
 
+  Object.assign(TRANSLATIONS.ku,{groqTotal24L:"⏱ کاتی گشتی: {n} خولەک",groqRem24L:"کاتی ماوە: {n} خولەک"});
+  Object.assign(TRANSLATIONS.en,{groqTotal24L:"⏱ Total time: {n} min",groqRem24L:"Time left: {n} min"});
+  Object.assign(TRANSLATIONS.ar,{groqTotal24L:"⏱ الوقت الكلي: {n} دقيقة",groqRem24L:"الوقت المتبقي: {n} دقيقة"});
+  Object.assign(TRANSLATIONS.ku,{groqAfterL:"⏱ کاتی ماوە: ≈ {d} خولەک لە ٤٨٠"});
+  Object.assign(TRANSLATIONS.en,{groqAfterL:"⏱ Time left: ≈ {d} of 480 min"});
+  Object.assign(TRANSLATIONS.ar,{groqAfterL:"⏱ الوقت المتبقي: ≈ {d} من 480 دقيقة"});
   // ---- Groq free-tier budget (~7200 audio seconds per hour): estimate, count, and wait if needed ----
   const USAGE_KEY='groq_usage', LIMIT_SEC=7000;
-  function usageLoad(){ try{ const arr=JSON.parse(localStorage.getItem(USAGE_KEY)||'[]'); const now=Date.now(); return arr.filter(x=>now-x[0]<3600000); }catch(_){ return []; } }
-  function usageAdd(sec){ const arr=usageLoad(); arr.push([Date.now(),sec]); try{ localStorage.setItem(USAGE_KEY,JSON.stringify(arr)); }catch(_){} }
+  function usageLoadDay(){ try{ const arr=JSON.parse(localStorage.getItem(USAGE_KEY)||'[]'); const now=Date.now(); return arr.filter(x=>now-x[0]<86400000); }catch(_){ return []; } }
+  function usageLoad(){ const now=Date.now(); return usageLoadDay().filter(x=>now-x[0]<3600000); }
+  function usageAdd(sec){ const arr=usageLoadDay(); arr.push([Date.now(),sec]); try{ localStorage.setItem(USAGE_KEY,JSON.stringify(arr)); }catch(_){} }
   async function waitBudget(est){
     if(est>=LIMIT_SEC) return;
     for(;;){
@@ -4791,27 +4803,15 @@ function snapStarts(starts, sil, win, found){
   window.__updateGroqLeft=function(){
     if(!gl) return;
     gl.style.display='';
-    const arr=usageLoad(), used=arr.reduce((q,x)=>q+x[1],0);
-    const usedMin=Math.min(120,Math.round(used/60));
-    const leftMin=120-usedMin;
-    let txt=tf('groqTotalL',{n:120})+'\n'+tf('groqUsedL',{n:usedMin})+'\n'+tf('groqRemL',{n:leftMin});
-    if(arr.length){
-      const newest=arr.reduce((q,x)=>Math.max(q,x[0]),0);
-      txt+='\n'+tf('groqRefillL',{n:Math.max(1,Math.ceil((newest+3600000-Date.now())/60000))});
-    }
-    let needMin=0;
-    try{
-      const pl=document.getElementById('player');
-      if(pl && isFinite(pl.duration) && pl.duration>0 && currentSurahAyahs && currentSurahAyahs.length && !marks.some(mk=>mk.isTotal)){
-        const lastMk=marks.filter(mk=>!mk.isTotal).sort((x,y)=>y.ayah-x.ayah)[0];
-        const startSec=(lastMk && lastMk.ayah>1)?lastMk.timeMs/1000:0;
-        needMin=Math.max(0,pl.duration-startSec)*1.08/60;
-        txt+='\n'+tf('groqNeedL',{n:Math.ceil(needMin)})+(Math.ceil(needMin)>leftMin ? ' ⚠️' : '');
-      }
-    }catch(_){}
+    const day=usageLoadDay(), usedDay=Math.min(480,Math.round(day.reduce((q,x)=>q+x[1],0)/60));
     gl.style.whiteSpace='pre-line';
-    gl.style.color=(needMin>leftMin)?'#b3261e':'';
-    gl.textContent=txt;
+    gl.style.color='';
+    gl.textContent=tf('groqTotal24L',{n:480})+'\n'+tf('groqRem24L',{n:480-usedDay});
+  };
+  // remaining free Whisper time (minutes), shown once after a run has finished
+  window.__groqRemain=function(){
+    const h=usageLoad().reduce((q,x)=>q+x[1],0), d=usageLoadDay().reduce((q,x)=>q+x[1],0);
+    return {hour:Math.max(0,120-Math.round(h/60)), day:Math.max(0,480-Math.round(d/60))};
   };
   try{
     const menuEl=document.getElementById('settingsMenu');
@@ -4972,6 +4972,7 @@ function snapStarts(starts, sil, win, found){
     let msg;
     if(final) msg=tf('onlineFinished',{n:N});
     else { const nextFrom=from+commit; msg=tf('onlinePart',{a:from,b:nextFrom-1,n:N,c:nextFrom}); }
+    try{ if(isGroq && window.__groqRemain){ const rm=window.__groqRemain(); msg+='\n'+tf('groqAfterL',{h:rm.hour,d:rm.day}); } }catch(_){}
     say(msg, auto && !final);
     return {final:final};
   }
