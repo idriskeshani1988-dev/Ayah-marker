@@ -1713,6 +1713,7 @@ body .settingsMenu #exportDb::after, body .settingsMenu #loadMasterBtn::after{
         <div class="settingsRow"><label for="autoContinue" data-i18n="onlineAuto" style="font-size:12px;">بەردەوامبوونی خۆکار بۆ پارچەی دواتر</label><input id="autoContinue" type="checkbox" style="width:20px;height:20px;"></div>
         <button class="menuAction" id="undoChunkBtn" type="button" style="display:none;"></button>
         <div id="groqLeft" style="font-size:12px;line-height:1.7;text-align:start;padding:4px 8px;"></div>
+        <div id="groqNotice" style="display:none;white-space:pre-line;font-size:12px;line-height:1.7;text-align:start;margin:6px 0;padding:8px 10px;border:1.5px solid #d9a53f;border-radius:10px;"></div>
         <input style="margin-top:6px;" id="openaiKey" type="password" autocomplete="off" placeholder="کلیل: gsk_... (Groq بێبەرامبەر) یان sk-... (OpenAI)">
         </div>
         <p class="hint menuHint" id="masterStatus" data-i18n="masterStatusDefault" style="margin-top:4px;">هیچ داتابەیسێکی سەرجەم بارنەکراوە — ئەم بەشە ئیختیارییە</p>
@@ -4720,7 +4721,29 @@ function snapStarts(starts, sil, win, found){
         if(r.status===429 && waits<8){            // free-tier limit reached: wait, then try again
           waits++;
           let sec=parseInt(r.headers.get('retry-after')||'',10); if(!(sec>0)) sec=60; sec=Math.min(sec+2,300);
-          for(let q=sec;q>0;q--){ if(cancelled) throw new Error('cancelled'); say(tf('onlineWait',{s:q}),true); await new Promise(res=>setTimeout(res,1000)); }
+          // read Groq's own explanation: which limit was hit, and its numbers
+          let why='';
+          try{
+            const body=await r.clone().json(); const em=String((body&&body.error&&body.error.message)||'');
+            const kind=(em.match(/\((RPM|RPD|ASH|ASD|TPM|TPD)\)/)||[])[1];
+            const lim=(em.match(/Limit\s+(\d+)/)||[])[1], used=(em.match(/Used\s+(\d+)/)||[])[1], reqd=(em.match(/Requested\s+(\d+)/)||[])[1];
+            if(kind){
+              const isAudio=(kind==='ASH'||kind==='ASD');
+              const f=v=>isAudio?(Math.round(v/60)+' '+tf('minUnit',{})):v;
+              why=tf('groqLim_'+kind,{});
+              if(lim&&used!=null) why+='\n'+tf('groqLimNums',{used:f(+used),lim:f(+lim)});
+              if(isAudio&&reqd) why+=' · '+tf('groqLimReq',{n:f(+reqd)});
+            } else if(em){ why=em.slice(0,140); }
+          }catch(_){}
+          const gn=document.getElementById('groqNotice');
+          try{
+            for(let q=sec;q>0;q--){
+              if(cancelled) throw new Error('cancelled');
+              const t=why?tf('onlineWaitWhy',{why:why,s:q}):tf('onlineWait',{s:q});
+              if(gn){ gn.textContent=t; gn.style.display='block'; } else say(t,true);   // shown inside the menu (online-marking box)
+              await new Promise(res=>setTimeout(res,1000));
+            }
+          } finally { if(gn){ gn.style.display='none'; gn.textContent=''; } }
           continue;
         }
         if(!r.ok){ let m=''; try{ m=(await r.json()).error.message; }catch(_){} throw new Error('HTTP '+r.status+(m?': '+m:'')); }
@@ -4777,6 +4800,9 @@ function snapStarts(starts, sil, win, found){
   Object.assign(TRANSLATIONS.ku,{groqAfterL:"⏱ کاتی ماوە: ≈ {d} خولەک لە ٤٨٠"});
   Object.assign(TRANSLATIONS.en,{groqAfterL:"⏱ Time left: ≈ {d} of 480 min"});
   Object.assign(TRANSLATIONS.ar,{groqAfterL:"⏱ الوقت المتبقي: ≈ {d} من 480 دقيقة"});
+  Object.assign(TRANSLATIONS.ku,{minUnit:"خولەک",onlineWaitWhy:"⏳ Groq ڕایگەیاند سنوور پڕ بووە:\n{why}\nچاوەڕوانی {s} چرکە...",groqLim_RPM:"ژمارەی داواکاری لە خولەکێکدا (RPM)",groqLim_RPD:"ژمارەی داواکاری لە ڕۆژێکدا (RPD)",groqLim_ASH:"دەنگی نێردراو لە کاتژمێرێکدا (ASH)",groqLim_ASD:"دەنگی نێردراو لە ڕۆژێکدا (ASD)",groqLim_TPM:"تۆکن لە خولەکێکدا (TPM)",groqLim_TPD:"تۆکن لە ڕۆژێکدا (TPD)",groqLimNums:"Groq دەڵێت: بەکارهاتوو {used} لە {lim}",groqLimReq:"داواکراو {n}"});
+  Object.assign(TRANSLATIONS.en,{minUnit:"min",onlineWaitWhy:"⏳ Groq says the limit is reached:\n{why}\nWaiting {s} s...",groqLim_RPM:"requests per minute (RPM)",groqLim_RPD:"requests per day (RPD)",groqLim_ASH:"audio sent per hour (ASH)",groqLim_ASD:"audio sent per day (ASD)",groqLim_TPM:"tokens per minute (TPM)",groqLim_TPD:"tokens per day (TPD)",groqLimNums:"Groq reports: used {used} of {lim}",groqLimReq:"requested {n}"});
+  Object.assign(TRANSLATIONS.ar,{minUnit:"دقيقة",onlineWaitWhy:"⏳ أفاد Groq ببلوغ الحد:\n{why}\nالانتظار {s} ث...",groqLim_RPM:"الطلبات في الدقيقة (RPM)",groqLim_RPD:"الطلبات في اليوم (RPD)",groqLim_ASH:"الصوت المرسل في الساعة (ASH)",groqLim_ASD:"الصوت المرسل في اليوم (ASD)",groqLim_TPM:"الرموز في الدقيقة (TPM)",groqLim_TPD:"الرموز في اليوم (TPD)",groqLimNums:"يفيد Groq: المستخدم {used} من {lim}",groqLimReq:"المطلوب {n}"});
   // ---- Groq free-tier budget (~7200 audio seconds per hour): estimate, count, and wait if needed ----
   const USAGE_KEY='groq_usage', LIMIT_SEC=7000;
   function usageLoadDay(){ try{ const arr=JSON.parse(localStorage.getItem(USAGE_KEY)||'[]'); const now=Date.now(); return arr.filter(x=>now-x[0]<86400000); }catch(_){ return []; } }
