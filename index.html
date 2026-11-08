@@ -1034,7 +1034,7 @@ body .settingsMenu .minifield{background:var(--paper) !important;}
 /* only the buttons keep their black border; the outer rectangle of the three groups is removed */
 .menuBox:has(#loadMasterBtn),
 .menuBox:has(#saveProgressBtn),
-.menuBox:has(#clearSuraBtn){
+.menuBox:has(#clearAudioBtn){
   border:none !important;background:transparent !important;box-shadow:none !important;padding:0 !important;
 }
 </style>
@@ -1045,7 +1045,7 @@ body .settingsMenu .minifield{background:var(--paper) !important;}
 .settingsMenu.open > *{margin-top:0 !important;margin-bottom:0 !important;}
 .settingsMenu .menuBox:has(#loadMasterBtn),
 .settingsMenu .menuBox:has(#saveProgressBtn),
-.settingsMenu .menuBox:has(#clearSuraBtn){display:flex;flex-direction:column;gap:10px;}
+.settingsMenu .menuBox:has(#clearAudioBtn){display:flex;flex-direction:column;gap:10px;}
 .settingsMenu .menuBox .menuAction{margin-top:0 !important;margin-bottom:0 !important;}
 /* slimmer speed / time-step / font-size boxes */
 #speedMenuBox{padding:4px 8px !important;}
@@ -1350,6 +1350,36 @@ body.dark #showAllLabel{color:var(--ink);}
 #showAllBtn{left:calc(50% + 14px) !important;}
 </style>
 
+<style id="header-clear-btns-2026-11-08">
+.section-title-row #showAllBtn{border:none !important;background:transparent !important;box-shadow:none !important;font-size:17px !important;padding:2px 8px !important;position:static !important;transform:none !important;left:auto !important;top:auto !important;margin:0 6px 0 0;}
+#stepWrap{position:relative;display:inline-flex;align-items:center;margin-inline:auto 4px !important;}
+#stepWrap::before,#stepWrap::after{position:absolute;top:50%;transform:translateY(-50%);font-size:16px;font-weight:700;line-height:1;opacity:.75;pointer-events:none;}
+#stepWrap::before{content:'+';left:8px;}
+#stepWrap::after{content:'\2212';right:8px;}
+.section-title-row #stepWrap #stepMsInput{margin:0 !important;width:88px !important;height:22px !important;box-sizing:border-box !important;padding:0 24px !important;font-size:14px !important;line-height:1 !important;}
+body:not(.dark) .section-title-row #stepMsInput{border-color:#000 !important;}
+#markMoreBtn{height:30px;width:32px;padding:0;border:none;border-radius:8px;background:transparent;color:inherit;font-size:22px;font-weight:700;line-height:1;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;}
+
+#markMoreBtn:active{filter:brightness(.8);}
+#markMoreMenu{display:none;position:fixed;z-index:9500;min-width:230px;max-width:calc(100vw - 16px);flex-direction:column;gap:6px;padding:8px;
+  background:var(--paper,#fff);border:1.5px solid var(--line,#000);border-radius:12px;box-shadow:0 8px 22px rgba(0,0,0,.35);}
+#markMoreMenu.open{display:flex;}
+#markMoreMenu button{width:100%;text-align:right;padding:10px 12px;border:1px solid var(--line,#000);border-radius:10px;background:transparent;color:inherit;font-size:14px;font-weight:700;cursor:pointer;}
+#markMoreMenu button:active{filter:brightness(.9);}
+body:not(.dark) #markMoreMenu,body:not(.dark) #markMoreMenu button{border-color:#000 !important;}
+body #showAllBtn.resetSmallBtn{border:none !important;border-width:0 !important;background:transparent !important;}
+</style>
+
+<style id="header-fix-2026-11-08b">
+.section-title-row #showAllBtn{order:1;margin:0 !important;min-width:0 !important;width:auto !important;padding:2px 4px !important;}
+.section-title-row #showAllLabel{order:2;margin:0 !important;padding:0 !important;line-height:1.6 !important;overflow:visible;}
+.section-title-row #stepWrap{order:3;margin-inline:auto 2px !important;}
+.section-title-row #markMoreBtn{order:4;margin:0 !important;}
+body #settingsMenu #onlineMarkBtn#onlineMarkBtn{background:linear-gradient(135deg,#03171a 0%,#07302b 100%) !important;color:#fff6dc !important;-webkit-text-fill-color:#fff6dc !important;border:1.5px solid #000 !important;font-weight:700;text-shadow:0 1px 2px rgba(0,0,0,.6);box-shadow:inset 0 0 0 1px rgba(138,104,28,.85);}
+body.dark #settingsMenu #onlineMarkBtn#onlineMarkBtn{background:linear-gradient(135deg,#7a5a17 0%,#523b0c 100%) !important;color:#fff6dc !important;-webkit-text-fill-color:#fff6dc !important;border-color:#b8892b !important;box-shadow:none;}
+#onlineMarkBtn:active{filter:brightness(1.12);}
+body #markMoreBtn#markMoreBtn{border:none !important;border-width:0 !important;box-shadow:none !important;}
+</style>
 <style id="auto-mark-2026-10-12">
 #autoProg{display:none;position:fixed;left:8px;right:8px;top:calc(env(safe-area-inset-top,0px) + 6px);z-index:9000;
   background:#0f3d3a;color:#fff;border:1.5px solid #000;border-radius:12px;padding:6px 10px;font-size:12.5px;line-height:1.45;font-weight:700;text-align:center;
@@ -1589,6 +1619,37 @@ body.dark #appDlgBtns button.primary{color:#17120a !important;-webkit-text-fill-
 #marksList{overflow-x:hidden !important;touch-action:pan-y;}
 #marksList .mark-row{box-sizing:border-box !important;max-width:100% !important;}
 #marksList .mark-row .rowtime{flex:0 1 auto !important;min-width:60px !important;}
+
+/* ---- Dark / light button: a round button the same size as the colour circles ---- */
+body .settingsMenu #darkToggle, body .topPrefs #darkToggle{
+  width:30px !important;height:30px !important;min-width:30px !important;max-width:30px !important;min-height:30px !important;max-height:30px !important;
+  padding:0 !important;border-radius:50% !important;flex:0 0 auto !important;
+  display:inline-flex !important;align-items:center !important;justify-content:center !important;
+  font-size:16px !important;line-height:1 !important;
+}
+
+/* ---- Round buttons (language, colours, dark/light): all exactly the same size; the chosen colour is marked inside its circle ---- */
+body .settingsMenu .themeBtn, body .settingsMenu .langRound, body .settingsMenu #darkToggle, body .topPrefs #darkToggle{
+  box-sizing:border-box !important;
+  width:32px !important;height:32px !important;min-width:32px !important;max-width:32px !important;min-height:32px !important;max-height:32px !important;
+  border-radius:50% !important;border:2px solid rgba(128,128,128,.55) !important;padding:0 !important;flex:0 0 auto !important;
+}
+body .settingsMenu .themeBtn.sel{outline:none !important;border-color:var(--gold-bright) !important;box-shadow:inset 0 0 0 2px var(--gold-bright) !important;}
+
+/* ---- Save-db and load-db buttons side by side: the arrow next to the text, one line ---- */
+body .settingsMenu .menuBox:has(#exportDb){display:grid !important;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;}
+body .settingsMenu .menuBox:has(#exportDb) > *{grid-column:1 / -1;}
+body .settingsMenu .menuBox:has(#exportDb) > #exportDb,
+body .settingsMenu .menuBox:has(#exportDb) > #loadMasterBtn{
+  grid-column:auto;min-width:0;
+  display:flex !important;flex-direction:row;align-items:center;justify-content:center;gap:5px;
+  padding:0 4px !important;min-height:46px;text-align:center !important;
+  font-size:12px;line-height:1.2;white-space:nowrap;overflow:hidden;
+}
+body .settingsMenu #exportDb::after, body .settingsMenu #loadMasterBtn::after{
+  position:static !important;transform:none !important;order:-1;flex:0 0 auto;
+  width:auto !important;height:auto !important;font-size:20px;line-height:1;
+}
 </style>
 </head>
 <body>
@@ -1638,8 +1699,6 @@ body.dark #appDlgBtns button.primary{color:#17120a !important;-webkit-text-fill-
       <div class="menuBox" style="border:1.5px solid var(--teal); border-radius:10px; padding:6px; margin-top:6px; background:#fff;">
         <button class="menuAction" id="exportDb" data-i18n="saveDb" style="margin-top:0;">هەڵگرتنی داتابەیس (db)</button>
         <button class="menuAction" id="loadMasterBtn" data-i18n="loadMaster">بارکردنی داتابەیس (db)</button>
-        <button class="menuAction" id="clearSuraBtn" data-i18n="clearSuraBtn" style="margin-top:0;">سڕینەوەی لیستی نیشانەکراوەکان تەنها بۆ ئەم سورەتە</button>
-        <button class="menuAction" id="clearAllBtn" data-i18n="clearAllBtn">سڕینەوەی لیستی نیشانەکراوەکان بۆ هەموو سورەتەکان</button>
         <button class="menuAction" id="clearAudioBtn"><span data-i18n="audioClear">سڕینەوەی دەنگە هەڵگیراوەکان</span><span id="audioSavedInfo" style="display:block;font-size:12px;font-weight:600;opacity:.8;margin-top:3px;line-height:1.5;"></span></button>
         <div id="progressRow" style="display:flex;gap:10px;align-items:stretch;">
           <button class="menuAction" id="saveProgressBtn" data-i18n="progressSave" style="margin-top:0;">🔖 هەڵگرتنی ئایەتی گەیشتوو</button>
@@ -1649,11 +1708,11 @@ body.dark #appDlgBtns button.primary{color:#17120a !important;-webkit-text-fill-
         <p class="hint menuHint" id="progressStatus" style="display:none;"></p>
         <div class="menuBox" id="whisperOptsBox">
         <button class="menuAction" id="onlineMarkBtn" data-i18n="onlineMark" style="margin-top:0;">🌐 دیاریکردنی ئۆنڵاین (Whisper — بێبەرامبەر بە Groq)</button>
-        <input id="openaiKey" type="password" autocomplete="off" placeholder="کلیل: gsk_... (Groq بێبەرامبەر) یان sk-... (OpenAI)">
         <div class="settingsRow" ><label for="batchAyahs" data-i18n="onlineBatch" style="font-size:12px;">ژمارەی ئایەت لە هەر جارێک</label><input id="batchAyahs" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" value="10" style="width:92px;padding:6px;border:1px solid var(--line);border-radius:8px;direction:ltr;text-align:center;background:var(--paper);color:var(--ink);"></div>
         <div class="settingsRow"><label for="autoContinue" data-i18n="onlineAuto" style="font-size:12px;">بەردەوامبوونی خۆکار بۆ پارچەی دواتر</label><input id="autoContinue" type="checkbox" style="width:20px;height:20px;"></div>
         <button class="menuAction" id="undoChunkBtn" type="button" style="display:none;"></button>
-        <div id="groqLeft" style="font-size:12px;line-height:1.7;text-align:center;padding:4px 8px;"></div>
+        <div id="groqLeft" style="font-size:12px;line-height:1.7;text-align:start;padding:4px 8px;"></div>
+        <input style="margin-top:6px;" id="openaiKey" type="password" autocomplete="off" placeholder="کلیل: gsk_... (Groq بێبەرامبەر) یان sk-... (OpenAI)">
         </div>
         <p class="hint menuHint" id="masterStatus" data-i18n="masterStatusDefault" style="margin-top:4px;">هیچ داتابەیسێکی سەرجەم بارنەکراوە — ئەم بەشە ئیختیارییە</p>
         <button class="menuAction" id="exportMasterBtn" style="display:none;" data-i18n="exportMaster">دەرهێنانی هەموو داتابەیسەکە (.db)</button>
@@ -1703,7 +1762,12 @@ body.dark #appDlgBtns button.primary{color:#17120a !important;-webkit-text-fill-
     <div class="section-title-row">
       <span id="showAllLabel" style="display:none;">پیشاندانی هەموو</span>
       <button id="showAllBtn" class="resetSmallBtn" style="display:none;border-color:var(--teal);color:var(--teal);">▼</button>
-      <input id="stepMsInput" type="text" inputmode="numeric" pattern="[0-9]*" lang="en" maxlength="4" value="50" aria-label="ms (1–1000)" title="ms (1–1000)">
+      <span id="stepWrap"><input id="stepMsInput" type="text" inputmode="numeric" pattern="[0-9]*" lang="en" maxlength="4" value="50" aria-label="ms (1–1000)" title="ms (1–1000)"></span>
+      <button type="button" id="markMoreBtn" aria-label="⋮" aria-haspopup="true">⋮</button>
+      <div id="markMoreMenu" role="menu">
+        <button type="button" id="clearSuraBtn" role="menuitem" data-i18n="clearSuraMenu">سڕینەوەی نیشانەکانی ئەم سورەتە</button>
+        <button type="button" id="clearAllBtn" role="menuitem" data-i18n="clearAllMenu">سڕینەوەی نیشانەکانی هەموو سورەتەکان</button>
+      </div>
     </div>
     <button class="btn2" id="addTotalBtn" style="width:100%;margin-bottom:8px;display:none;" data-i18n="addTotal">+ زیادکردنی کۆتایی سورە (999)</button>
     <div id="marksList"></div>
@@ -2260,8 +2324,18 @@ marksList.addEventListener('click', (e)=>{
     step();
     st.timer = setTimeout(tick, interval(st.count));
   }
+  function begin(){                                      // the press is confirmed (finger stayed put): first step + show the ayah
+    if(!st || st.started) return;
+    st.started = true;
+    window.__pmEditAyah = st.mark.ayah;
+    lastShownAyah = st.mark.ayah; focusedAyah = st.mark.ayah;
+    try{ renderAyahText(st.mark.ayah, true); }catch(_){}
+    step();
+  }
   function stop(){
     if(!st) return;
+    clearTimeout(st.timer);
+    if(!st.started) begin();                             // quick tap: one step now
     const s0 = st; st = null;
     window.__pmEditAyah = null;
     clearTimeout(s0.timer);
@@ -2279,8 +2353,7 @@ marksList.addEventListener('click', (e)=>{
   function abort(){                                      // the finger turned out to be scrolling: undo the first step
     if(!st) return;
     clearTimeout(st.timer);
-    st.mark.timeMs = st.orig;
-    showTime();
+    if(st.started){ st.mark.timeMs = st.orig; showTime(); }
     st = null;
     window.__pmEditAyah = null;
   }
@@ -2293,13 +2366,14 @@ marksList.addEventListener('click', (e)=>{
     const mark = marks.find(m=>m.seq===parseInt(row.dataset.seq));
     if(!mark) return;
     if(st) stop();
-    st = {mark, row, dir: act==='plus' ? 1 : -1, count:0, repeating:false, orig:mark.timeMs, x:e.clientX, y:e.clientY, timer:null};
-    // the ayah being edited stays shown (text + highlight) while the finger is on + / −; the audio keeps its own clock until release
-    window.__pmEditAyah = mark.ayah;
-    lastShownAyah = mark.ayah; focusedAyah = mark.ayah;
-    try{ renderAyahText(mark.ayah, true); }catch(_){}
-    step();                                              // 50 at once
-    st.timer = setTimeout(()=>{ if(!st) return; st.repeating = true; tick(); }, DELAY);   // still held: 100, 150 ...
+    st = {mark, row, dir: act==='plus' ? 1 : -1, count:0, repeating:false, started:false, orig:mark.timeMs, x:e.clientX, y:e.clientY, timer:null};
+    // nothing changes on touch: a scrolling finger must leave numbers and text alone.
+    // after a short moment without movement the press counts: first step (50), then the hold repeats
+    st.timer = setTimeout(()=>{
+      if(!st) return;
+      begin();
+      st.timer = setTimeout(()=>{ if(!st) return; st.repeating = true; tick(); }, DELAY);
+    }, 140);
   });
   marksList.addEventListener('pointermove', e=>{
     if(!st) return;
@@ -2308,7 +2382,17 @@ marksList.addEventListener('click', (e)=>{
     else if(d>60) stop();                                // dragged far away while repeating
   });
   marksList.addEventListener('pointerup', stop);
-  marksList.addEventListener('pointercancel', ()=>{ if(st && !st.repeating) abort(); });   // a started repeat ends only when the finger lifts
+  // the browser takes the touch over to scroll the list (pointercancel): nothing may change — undo every step, even a started repeat
+  marksList.addEventListener('pointercancel', ()=>{ if(st) abort(); });
+  // touch events keep coming while the list scrolls: a finger that travels is scrolling, not pressing
+  marksList.addEventListener('touchmove', e=>{
+    if(!st) return;
+    const tc = e.touches && e.touches[0]; if(!tc) return;
+    const dx = Math.abs(tc.clientX - st.x), dy = Math.abs(tc.clientY - st.y);
+    if(st.repeating ? dy > 14 : Math.max(dx,dy) > 10) abort();
+  }, {passive:true});
+  // scrolling the list while a button is pressed cancels the press
+  marksList.addEventListener('scroll', ()=>{ if(st) abort(); }, {passive:true});
   marksList.addEventListener('contextmenu', e=>{ if(e.target.closest('.rowbtn')) e.preventDefault(); });
   ['touchend','touchcancel','pointerup','blur'].forEach(ev=>window.addEventListener(ev, stop, true));
   document.addEventListener('visibilitychange', ()=>{ if(document.hidden) stop(); });
@@ -4186,6 +4270,30 @@ if('serviceWorker' in navigator && location.protocol.startsWith('http') && !(win
   document.addEventListener('click',close);
 })();
 
+
+// ---- header "⋮" menu: clear marks of this surah / all surahs ----
+(function(){
+  Object.assign(TRANSLATIONS.ku,{clearSuraMenu:"سڕینەوەی نیشانەکانی ئەم سورەتە",clearAllMenu:"سڕینەوەی نیشانەکانی هەموو سورەتەکان"});
+  Object.assign(TRANSLATIONS.en,{clearSuraMenu:"Clear marks of this surah",clearAllMenu:"Clear marks of all surahs"});
+  Object.assign(TRANSLATIONS.ar,{clearSuraMenu:"حذف علامات هذه السورة",clearAllMenu:"حذف علامات جميع السور"});
+  try{ applyLanguage(currentLang); }catch(e){}
+  const btn=document.getElementById('markMoreBtn'), menu=document.getElementById('markMoreMenu');
+  if(!btn||!menu) return;
+  const close=()=>menu.classList.remove('open');
+  btn.addEventListener('click',e=>{
+    e.stopPropagation();
+    if(menu.classList.contains('open')){ close(); return; }
+    menu.classList.add('open');
+    const r=btn.getBoundingClientRect(), w=menu.offsetWidth, h=menu.offsetHeight;
+    let left=Math.max(8, Math.min(r.left, window.innerWidth-w-8));
+    let top=r.top-h-6; if(top<8) top=r.bottom+6;       // open upwards (button is near the bottom), else downwards
+    menu.style.left=left+'px'; menu.style.top=top+'px';
+  });
+  menu.addEventListener('click',()=>setTimeout(close,0));
+  document.addEventListener('click',close);
+  window.addEventListener('resize',close);
+})();
+
 // ---- "show all": plain text on the right, arrow button in the centre ----
 (function(){
   const btn=document.getElementById('showAllBtn'), lab=document.getElementById('showAllLabel');
@@ -4402,6 +4510,9 @@ function autoBoundaries(env, frameSec, lens){
   Object.assign(TRANSLATIONS.en, {"onlineAuto": "Auto-continue with the next part", "onlineEst": "Sending about {m} min of audio to Whisper (last hour: {h} of ≈120 min)", "onlineBudgetWait": "Groq hourly limit would be exceeded — waiting {m}:{s} before the next part (tap to cancel)"});
   Object.assign(TRANSLATIONS.ar, {"onlineAuto": "المتابعة تلقائيًا إلى الجزء التالي", "onlineEst": "إرسال نحو {m} دقيقة صوت إلى Whisper (الساعة الماضية: {h} من ≈120)", "onlineBudgetWait": "سيُتجاوز حد Groq الساعي — انتظار {m}:{s} قبل الجزء التالي (اضغط للإلغاء)"});
 
+  Object.assign(TRANSLATIONS.ku, {"groqTotalL":"⏱ کاتی گشتی Whisper: {n} خولەک","groqUsedL":"کاتی بەکارهاتوو: {n} خولەک","groqRemL":"کاتی ماوە: {n} خولەک","groqRefillL":"کاتەکە پڕدەبێتەوە دوای: {n} خولەک","groqNeedL":"سورەتەکە تەواو دەبێت دوای: {n} خولەک"});
+  Object.assign(TRANSLATIONS.en, {"groqTotalL":"⏱ Total Whisper time: {n} min","groqUsedL":"Time used: {n} min","groqRemL":"Time left: {n} min","groqRefillL":"Time refills in: {n} min","groqNeedL":"This surah will finish after: {n} min"});
+  Object.assign(TRANSLATIONS.ar, {"groqTotalL":"⏱ الوقت الكلي لـ Whisper: {n} دقيقة","groqUsedL":"الوقت المستخدم: {n} دقيقة","groqRemL":"الوقت المتبقي: {n} دقيقة","groqRefillL":"يتجدد الوقت بعد: {n} دقيقة","groqNeedL":"تنتهي السورة بعد: {n} دقيقة"});
   Object.assign(TRANSLATIONS.ku, {"groqLeft": "⏱ کاتی ماوەی Whisper: ≈ {left} خولەک لە {total}", "groqRefill": "پڕ دەبێتەوە دوای {r} خولەک", "groqNeed": "بۆ تەواوکردنی ئەم سورەتە نزیکەی {need} خولەک دەنگ ماوە"});
   Object.assign(TRANSLATIONS.en, {"groqLeft": "⏱ Whisper time left: ≈ {left} of {total} min", "groqRefill": "refilled in {r} min", "groqNeed": "About {need} min of audio left to finish this surah"});
   Object.assign(TRANSLATIONS.ar, {"groqLeft": "⏱ وقت Whisper المتبقي: ≈ {left} من {total} دقيقة", "groqRefill": "يتجدد بعد {r} دقيقة", "groqNeed": "يتبقى نحو {need} دقيقة صوت لإكمال هذه السورة"});
@@ -4681,11 +4792,12 @@ function snapStarts(starts, sil, win, found){
     if(!gl) return;
     gl.style.display='';
     const arr=usageLoad(), used=arr.reduce((q,x)=>q+x[1],0);
-    const leftMin=Math.max(0,7200-used)/60;
-    let txt=tf('groqLeft',{left:Math.round(leftMin),total:120});
+    const usedMin=Math.min(120,Math.round(used/60));
+    const leftMin=120-usedMin;
+    let txt=tf('groqTotalL',{n:120})+'\n'+tf('groqUsedL',{n:usedMin})+'\n'+tf('groqRemL',{n:leftMin});
     if(arr.length){
       const newest=arr.reduce((q,x)=>Math.max(q,x[0]),0);
-      txt+=' — '+tf('groqRefill',{r:Math.max(1,Math.ceil((newest+3600000-Date.now())/60000))});
+      txt+='\n'+tf('groqRefillL',{n:Math.max(1,Math.ceil((newest+3600000-Date.now())/60000))});
     }
     let needMin=0;
     try{
@@ -4694,7 +4806,7 @@ function snapStarts(starts, sil, win, found){
         const lastMk=marks.filter(mk=>!mk.isTotal).sort((x,y)=>y.ayah-x.ayah)[0];
         const startSec=(lastMk && lastMk.ayah>1)?lastMk.timeMs/1000:0;
         needMin=Math.max(0,pl.duration-startSec)*1.08/60;
-        txt+='\n'+tf('groqNeed',{need:Math.ceil(needMin)});
+        txt+='\n'+tf('groqNeedL',{n:Math.ceil(needMin)})+(Math.ceil(needMin)>leftMin ? ' ⚠️' : '');
       }
     }catch(_){}
     gl.style.whiteSpace='pre-line';
