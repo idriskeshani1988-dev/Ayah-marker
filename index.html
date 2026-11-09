@@ -1475,6 +1475,14 @@ body .settingsMenu .menuBox:has(#whisperOptsBox) + .menuDivider{display:none !im
 body .settingsMenu #whisperOptsBox .settingsRow{padding:0 !important;min-height:0 !important;margin:0 !important;}
 body .settingsMenu #whisperOptsBox #groqLeft{border-top:1px dashed var(--line);padding-top:8px !important;}
 </style>
+<style id="gemini-opts-box">
+body .settingsMenu #geminiOptsBox{
+  padding:10px 12px !important;margin-top:0 !important;margin-bottom:0 !important;
+  display:flex !important;flex-direction:column !important;gap:10px !important;
+}
+body .settingsMenu #geminiOptsBox > *{margin-top:0 !important;margin-bottom:0 !important;}
+body .settingsMenu #geminiOptsBox .settingsRow{padding:0 !important;min-height:0 !important;margin:0 !important;}
+</style>
 <style id="noAnim">
 /* no animation or press effect on any button, ayah, +/− or other control */
 *,*::before,*::after{transition:none !important;animation:none !important;scroll-behavior:auto !important;-webkit-tap-highlight-color:transparent !important;}
@@ -1715,6 +1723,12 @@ body .settingsMenu #exportDb::after, body .settingsMenu #loadMasterBtn::after{
         <div id="groqLeft" style="font-size:12px;line-height:1.7;text-align:start;padding:4px 8px;"></div>
         <div id="groqNotice" style="display:none;white-space:pre-line;font-size:12px;line-height:1.7;text-align:start;margin:6px 0;padding:8px 10px;border:1.5px solid #d9a53f;border-radius:10px;"></div>
         <input style="margin-top:6px;" id="openaiKey" type="password" autocomplete="off" placeholder="کلیل: gsk_... (Groq بێبەرامبەر) یان sk-... (OpenAI)">
+        </div>
+        <div class="menuBox" id="geminiOptsBox">
+        <button class="menuAction" id="geminiMarkBtn" data-i18n="gemMark" style="margin-top:0;">🤖 دیاریکردن بە AI Studio (Gemini)</button>
+        <div class="settingsRow" ><label for="geminiBatch" data-i18n="onlineBatch" style="font-size:12px;">ژمارەی ئایەت لە هەر جارێک</label><input id="geminiBatch" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" value="10" style="width:92px;padding:6px;border:1px solid var(--line);border-radius:8px;direction:ltr;text-align:center;background:var(--paper);color:var(--ink);"></div>
+        <input id="geminiKey" type="password" autocomplete="off" placeholder="AIza... (Google AI Studio key)" style="direction:ltr;text-align:left;">
+        <input id="geminiModel" type="text" autocomplete="off" value="gemini-3.8-flash" aria-label="Gemini model" style="direction:ltr;text-align:left;">
         </div>
         <p class="hint menuHint" id="masterStatus" data-i18n="masterStatusDefault" style="margin-top:4px;">هیچ داتابەیسێکی سەرجەم بارنەکراوە — ئەم بەشە ئیختیارییە</p>
         <button class="menuAction" id="exportMasterBtn" style="display:none;" data-i18n="exportMaster">دەرهێنانی هەموو داتابەیسەکە (.db)</button>
@@ -4702,7 +4716,7 @@ function snapStarts(starts, sil, win, found){
   keyInp.addEventListener('click',e=>e.stopPropagation());
   let cancelled=false, running=false, hideTimer=null;
   function say(msg,sticky){ prog.textContent=msg; prog.style.display='block'; clearTimeout(hideTimer); if(!sticky) hideTimer=setTimeout(()=>{prog.style.display='none';},8000); }
-  prog.addEventListener('click',()=>{ if(running) cancelled=true; });
+  prog.addEventListener('click',()=>{ if(running){ cancelled=true; try{ if(window.__gemAbort) window.__gemAbort.abort(); }catch(_){} } });
 
   async function transcribe(key, bytes, idx){
     const groq=/^gsk_/.test(key);   // Groq keys (free tier) start with gsk_, OpenAI keys with sk-
@@ -4752,6 +4766,80 @@ function snapStarts(starts, sil, win, found){
         if(e && e.message==='cancelled') throw e;
         lastErr=e;
         if(/^HTTP 4/.test(String(e.message))) break;
+        await new Promise(res=>setTimeout(res,1500));
+      }
+    }
+    throw lastErr||new Error('request failed');
+  }
+
+  // ---- Google AI Studio (Gemini) ----
+  const gKeyInp=document.getElementById('geminiKey'), modelInp=document.getElementById('geminiModel'), gBtn=document.getElementById('geminiMarkBtn');
+  Object.assign(TRANSLATIONS.ku,{gemMark:"🤖 دیاریکردن بە AI Studio (Gemini)", gemNoKey:"سەرەتا کلیلی AI Studio بنووسە (AIza...)", gemSend:"ناردن بۆ Gemini", gemWait:"⏳ Gemini ڕایگەیاند سنوور پڕ بووە، چاوەڕوانی {s} چرکە...", gemBig:"پارچە دەنگەکە زۆر گەورەیە؛ ژمارەی ئایەت لە هەر جارێک کەم بکەرەوە.", gemFew:"Gemini تەنها {a} لە {b} ئایەتی دۆزییەوە؛ دووبارە هەوڵ بدەرەوە یان ژمارەی ئایەت لە هەر جارێک کەم بکەرەوە.", gemTimeout:"Gemini لە ٢ خولەکدا وەڵامی نەدایەوە؛ دووبارە هەوڵ بدەرەوە یان ژمارەی ئایەت کەم بکەرەوە."});
+  Object.assign(TRANSLATIONS.en,{gemMark:"🤖 Mark with AI Studio (Gemini)", gemNoKey:"Enter your AI Studio key first (AIza...)", gemSend:"sending to Gemini", gemWait:"⏳ Gemini says the limit is reached, waiting {s} s...", gemBig:"This audio part is too large; lower the number of ayahs per run.", gemFew:"Gemini returned only {a} of {b} ayahs; try again or lower the number of ayahs per run.", gemTimeout:"Gemini did not answer within 2 minutes; try again or lower the number of ayahs per run."});
+  Object.assign(TRANSLATIONS.ar,{gemMark:"🤖 التحديد عبر AI Studio (Gemini)", gemNoKey:"اكتب مفتاح AI Studio أولًا (AIza...)", gemSend:"الإرسال إلى Gemini", gemWait:"⏳ أفاد Gemini ببلوغ الحد، الانتظار {s} ث...", gemBig:"مقطع الصوت كبير جدًا؛ قلّل عدد الآيات في كل مرة.", gemFew:"أعاد Gemini {a} فقط من {b} آية؛ أعد المحاولة أو قلّل عدد الآيات في كل مرة.", gemTimeout:"لم يرد Gemini خلال دقيقتين؛ أعد المحاولة أو قلّل عدد الآيات."});
+  try{
+    if(gKeyInp) gKeyInp.value=localStorage.getItem('gemini_key')||'';
+    if(modelInp){ const sm=localStorage.getItem('gemini_model'); modelInp.value=(!sm || sm==='gemini-2.5-flash') ? 'gemini-3.8-flash' : sm; }
+  }catch(_){}
+  const gBatchInp=document.getElementById('geminiBatch');
+  if(gBatchInp){
+    try{ gBatchInp.value=localStorage.getItem('gemini_batch')||'10'; }catch(_){ gBatchInp.value='10'; }
+    gBatchInp.addEventListener('change',()=>{ try{ localStorage.setItem('gemini_batch', gBatchInp.value.trim()); }catch(_){} });
+    gBatchInp.addEventListener('click',ev=>ev.stopPropagation());
+  }
+  if(gBtn) gBtn.textContent=t('gemMark');
+  [gKeyInp,modelInp].forEach(el=>{ if(!el) return;
+    el.addEventListener('click',ev=>ev.stopPropagation());
+    el.addEventListener('change',()=>{ try{ localStorage.setItem(el===gKeyInp?'gemini_key':'gemini_model', el.value.trim()); }catch(_){} });
+  });
+
+  async function geminiStarts(key, audioBlob, from, to, label){
+    const model=(modelInp&&modelInp.value.trim())||'gemini-3.8-flash';
+    const b64=await new Promise((res,rej)=>{ const fr=new FileReader(); fr.onload=()=>res(String(fr.result).split(',')[1]||''); fr.onerror=()=>rej(fr.error||new Error('read failed')); fr.readAsDataURL(audioBlob); });
+    const list=currentSurahAyahs.slice(from-1,to).map((ay,i)=>(from+i)+'. '+String(ay.text||'').trim()).join('\n');
+    const prompt='This audio clip is a Quran recitation (Surah '+currentMarksSura()+'). It contains ayat '+from+' to '+to+', whose text is listed below. '
+      +'For EACH of these ayat, give the moment, in milliseconds counted from the very beginning of THIS clip, at which the reciter starts saying its first word. '
+      +'The ayat are recited in order, so the start times must strictly increase. '
+      +'Return only a JSON array of objects {"ayah": number, "start_ms": number}, exactly '+(to-from+1)+' items, ayah numbers '+from+' to '+to+'.\n\nAyat text:\n'+list;
+    const url='https://generativelanguage.googleapis.com/v1beta/models/'+encodeURIComponent(model)+':generateContent';
+    const body=JSON.stringify({
+      contents:[{role:'user',parts:[{text:prompt},{inline_data:{mime_type:'audio/mp3',data:b64}}]}],
+      generationConfig:{thinkingConfig:{thinkingLevel:'low'},responseMimeType:'application/json',
+        responseSchema:{type:'ARRAY',items:{type:'OBJECT',properties:{ayah:{type:'INTEGER'},start_ms:{type:'INTEGER'}},required:['ayah','start_ms']}}}
+    });
+    let lastErr=null, waits=0;
+    for(let attempt=0; attempt<8; attempt++){
+      if(cancelled) throw new Error('cancelled');
+      try{
+        let timedOut=false; const ac=new AbortController(); window.__gemAbort=ac;
+        const tm=setTimeout(()=>{ timedOut=true; ac.abort(); },120000);
+        const t0=Date.now(); const tick=setInterval(()=>say((label||t('gemSend'))+' · '+Math.round((Date.now()-t0)/1000)+' s',true),1000);
+        let r;
+        try{ r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':key},body:body,signal:ac.signal}); }
+        catch(fe){
+          if(cancelled) throw new Error('cancelled');
+          if(timedOut){ const te=new Error(t('gemTimeout')); te.gemFatal=true; throw te; }
+          throw fe;
+        }
+        finally{ clearTimeout(tm); clearInterval(tick); window.__gemAbort=null; }
+        if((r.status===429||r.status===503) && waits<6){          // free-tier limit / busy: wait, then try again
+          waits++; let sec=30;
+          try{ const d=JSON.stringify(await r.clone().json()); const mt=d.match(/retry in ([\d.]+)s/i)||d.match(/"retryDelay":\s*"(\d+)s"/); if(mt) sec=Math.ceil(parseFloat(mt[1])); }catch(_){}
+          sec=Math.min(Math.max(sec,5)+2,120);
+          for(let q=sec;q>0;q--){ if(cancelled) throw new Error('cancelled'); say(tf('gemWait',{s:q}),true); await new Promise(res=>setTimeout(res,1000)); }
+          continue;
+        }
+        if(!r.ok){ let m=''; try{ m=(await r.json()).error.message; }catch(_){} throw new Error('HTTP '+r.status+(m?': '+m.slice(0,200):'')); }
+        const j=await r.json();
+        const txt=((((j.candidates||[])[0]||{}).content||{}).parts||[]).map(pt=>pt.text||'').join('');
+        const arr=JSON.parse(txt.replace(/```json|```/g,'').trim());
+        if(!Array.isArray(arr)) throw new Error('bad answer from Gemini');
+        return arr;
+      }catch(e){
+        if(e && (e.message==='cancelled' || e.gemFatal)) throw e;
+        lastErr=e;
+        if(/^HTTP 4/.test(String(e.message))) break;
+        say('⚠️ '+String(e&&e.message||e).slice(0,140),true);
         await new Promise(res=>setTimeout(res,1500));
       }
     }
@@ -4874,10 +4962,11 @@ function snapStarts(starts, sil, win, found){
   }
 
   // one run = one group of ayahs. returns {final:boolean}
-  async function runOnce(first, key, auto){
+  async function runOnce(first, key, auto, engine){
+    const isGem=(engine==='gemini');
     const pl=document.getElementById('player'), src=pl && (pl.currentSrc||pl.src);
     const N=currentSurahAyahs.length;
-    let B=parseInt(batchInp?batchInp.value:'10',10); if(!(B>=1)) B=10; B=Math.min(B,500);
+    let B=parseInt(isGem ? (gBatchInp?gBatchInp.value:'10') : (batchInp?batchInp.value:'10'),10); if(!(B>=1)) B=10; B=Math.min(B,500);
     const hasTotal=marks.some(mk=>mk.isTotal);
     const mx=marks.filter(mk=>!mk.isTotal).reduce((q,mk)=>Math.max(q,Number(mk.ayah)||0),0);
     let from=1;
@@ -4918,7 +5007,9 @@ function snapStarts(starts, sil, win, found){
     }
 
     // ---- 0) estimate the audio time that will be sent; wait if the free hourly limit would be passed ----
-    const isGroq=(prov()==='whisper') && /^gsk_/.test(key);
+    const isGroq=!isGem && (prov()==='whisper') && /^gsk_/.test(key);
+    let starts, endSec, commit;
+    if(!isGem){
     const estSec=durSec*(b1-b0)/total;
     if(isGroq){
       await waitBudget(estSec);
@@ -4958,15 +5049,40 @@ function snapStarts(starts, sil, win, found){
     const res=ayahStartsFromWords(ayahWords,hyp);
     if(res.matched < Math.max(1,Math.floor(m*0.4))) throw new Error('only '+res.matched+' of '+m+' ayahs recognised');
     let lastOk=-1; for(let k=m-1;k>=0;k--){ if(res.starts[k]!==null){ lastOk=k; break; } }
-    const commit = final ? m-1 : lastOk;       // index of the last mark we write
+    commit = final ? m-1 : lastOk;       // index of the last mark we write
     if(!final && commit<1) throw new Error(t('onlineNoProg'));
     const endsOk=res.ends.filter(x=>x!==null);
     const lastEnd=Math.max.apply(null,endsOk);
     const rel = final ? fillAndOrder(res.starts,lens,lastEnd)
                       : fillAndOrder(res.starts.slice(0,commit+1),lens.slice(0,commit+1),res.ends[commit]!==null?res.ends[commit]:lastEnd);
-    let starts=rel.map(x=>x+fromSec);          // absolute seconds
+    starts=rel.map(x=>x+fromSec);          // absolute seconds
     starts[0]=fromSec;
-    let endSec=Math.min(durSec,lastEnd+fromSec+0.25);
+    endSec=Math.min(durSec,lastEnd+fromSec+0.25);
+    } else {
+      // ---- Gemini (Google AI Studio): send this window once, get the start of every ayah back ----
+      say(tf('onlineRange',{a:from,b:to})+'  ('+t('gemSend')+')',true);
+      if(b1-b0 > 13*1024*1024) throw new Error(t('gemBig'));
+      const g=await geminiStarts(key, blob.slice(b0,b1), from, refEnd, tf('onlineRange',{a:from,b:to})+'  ('+t('gemSend')+')');   // [{ayah,start_ms}], ms counted from the start of the window
+      const mm=refEnd-from+1, rel=new Array(mm).fill(null);
+      g.forEach(o=>{ const k=Number(o&&o.ayah)-from; if(k>=0 && k<mm && isFinite(+(o&&o.start_ms))) rel[k]=(+o.start_ms)/1000; });
+      let prevV=-1; for(let k=0;k<mm;k++){ if(rel[k]!==null){ if(rel[k]<=prevV) rel[k]=null; else prevV=rel[k]; } }   // an ayah never starts before the previous one
+      const got=rel.filter(x=>x!==null).length;
+      if(got < Math.max(2,Math.floor(mm*0.6))) throw new Error(tf('gemFew',{a:got,b:mm}));
+      if(rel[0]===null) rel[0]=0;
+      for(let k=1;k<mm;k++){                                                // fill a missing ayah between two known ones by text length
+        if(rel[k]!==null) continue;
+        let p=k-1; while(p>=0 && rel[p]===null) p--;
+        let nx=k+1; while(nx<mm && rel[nx]===null) nx++;
+        if(p>=0 && nx<mm){ const w=sum(from+p,from+k-1), W=sum(from+p,from+nx-1); rel[k]=rel[p]+(rel[nx]-rel[p])*w/W; }
+      }
+      let lastK=-1; for(let k=mm-1;k>=0;k--){ if(rel[k]!==null){ lastK=k; break; } }
+      if(final && lastK<mm-1) throw new Error(tf('gemFew',{a:got,b:mm}));
+      commit = final ? mm-1 : lastK;
+      if(!final && commit<1) throw new Error(t('onlineNoProg'));
+      starts=rel.slice(0,commit+1).map(x=>x+secStart);                     // absolute seconds
+      starts[0]=fromSec;
+      endSec=durSec;
+    }
 
     // ---- 3) snap every boundary to the real silence in the audio (decode only this window) ----
     try{
@@ -5019,6 +5135,32 @@ function snapStarts(starts, sil, win, found){
       let first=true, guard=0;
       for(;;){
         const r=await runOnce(first,key,auto);
+        first=false;
+        if(r.final || !auto || cancelled || ++guard>200) break;
+        await new Promise(r2=>setTimeout(r2,400));
+      }
+    }catch(err){
+      if(cancelled || (err&&err.message==='cancelled')) say(t('autoMarkCancelled'));
+      else say(t('onlineFail')+(err&&err.message?err.message:err));
+    }finally{ running=false; window.__ayahBusy=false; }
+  });
+
+  if(gBtn) gBtn.addEventListener('click', async (e)=>{
+    e.stopPropagation();
+    if(running || window.__ayahBusy) return;
+    const pl=document.getElementById('player'), src=pl && (pl.currentSrc||pl.src);
+    const key=gKeyInp.value.trim();
+    if(!src){ appAlert(t('autoMarkNoAudio')); return; }
+    if(!currentSurahAyahs || !currentSurahAyahs.length){ appAlert(t('autoMarkNoText')); return; }
+    if(!key){ appAlert(t('gemNoKey')); return; }
+    try{ localStorage.setItem('gemini_key',key); localStorage.setItem('gemini_model',(modelInp.value||'').trim()); }catch(_){}
+    try{ document.getElementById('settingsMenu').classList.remove('open'); document.querySelector('header').classList.remove('menu-open'); }catch(_){}
+    running=true; window.__ayahBusy=true; cancelled=false;
+    try{
+      const auto=!!(autoCb && autoCb.checked);
+      let first=true, guard=0;
+      for(;;){
+        const r=await runOnce(first,key,auto,'gemini');
         first=false;
         if(r.final || !auto || cancelled || ++guard>200) break;
         await new Promise(r2=>setTimeout(r2,400));
