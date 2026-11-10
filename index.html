@@ -5737,7 +5737,7 @@ function snapStarts(starts, sil, win, found){
     if(!r || !r.files || !r.files.length) return false;          // no .db in Ayah-marker: the system picker opens
     settingsMenu.classList.remove('open');
     const files=r.files.slice().sort((a,b)=>(String(b.name).toLowerCase()===AUTO_DB_NAME)-(String(a.name).toLowerCase()===AUTO_DB_NAME));   // output.db first
-    const chosen=(files.length===1 && String(files[0].name).toLowerCase()===AUTO_DB_NAME) ? files[0] : await chooseDbDialog(files);   // only output.db: loaded directly; otherwise pick from the list
+    const chosen=await chooseDbDialog(files);                    // the list box always appears (output.db first), plus the 'other' button
     if(chosen==='other') return false;
     if(!chosen) return true;                                     // cancelled
     try{
