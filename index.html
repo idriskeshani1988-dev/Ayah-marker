@@ -2701,6 +2701,7 @@ Object.assign(TRANSLATIONS.ar, {"dlgOk": "موافق", "dlgCancel": "إلغاء"
         bs.appendChild(no);
       }
       box.append(m,bs); ov.appendChild(box);
+      ov._back=()=>{ ov.remove(); resolve(withCancel?false:null); };      // the Back button: same as cancel
       ov.addEventListener('click',e=>e.stopPropagation());
       document.body.appendChild(ov);
       ok.focus();
@@ -2727,6 +2728,7 @@ Object.assign(TRANSLATIONS.ar, {"dlgOk": "موافق", "dlgCancel": "إلغاء"
       no.addEventListener('click',e=>{ e.stopPropagation(); done(null); });
       inp.addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); done(inp.value); } else if(e.key==='Escape'){ done(null); } });
       bs.append(ok,no); box.append(m,inp,bs); ov.appendChild(box);
+      ov._back=()=>{ ov.remove(); resolve(null); };
       ov.addEventListener('click',e=>e.stopPropagation());
       document.body.appendChild(ov);
       inp.focus();
@@ -2863,6 +2865,7 @@ function pickFilter(options, query, numeric){
     });
     ov.addEventListener('click',e=>{ e.stopPropagation(); if(e.target===ov && Date.now()-t0>400) close(); });
     box.append(inp,list); ov.appendChild(box); document.body.appendChild(ov);
+    ov._back=close;
     // narrow box: only as wide as the widest line (measured on this phone's font once, with the full list), centred under the tapped field
     const field=sel.closest('.minifield')||sel, r=field.getBoundingClientRect();
     box.style.width='max-content'; box.style.minWidth=(numeric?54:96)+'px'; box.style.maxWidth=(window.innerWidth-16)+'px';
@@ -5367,6 +5370,7 @@ function snapStarts(starts, sil, win, found){
     try{
       const ov=document.getElementById('langPickOverlay');
       if(ov && !ov.classList.contains('hide')) return true;                       // language screen: Back does nothing
+      if(window.__idrisCloseOverlay && window.__idrisCloseOverlay()) return true;   // a message box / list is open: close it
       const pop=document.querySelectorAll('#pickList.open, #miniSpeedList.open');
       if(pop.length){ pop.forEach(p=>p.classList.remove('open')); return true; }
       if(isOpen()){ closeMenu(); return true; }
@@ -5380,6 +5384,31 @@ function snapStarts(starts, sil, win, found){
       AppPl.addListener('backButton',()=>{ if(!window.__idrisBack()){ try{ if(AppPl.exitApp) AppPl.exitApp(); }catch(_){} } });
     }
   }catch(_){}
+})();
+
+// ---- boxes (messages, questions, lists): the Back button closes the top one instead of leaving the app ----
+(function(){
+  const IDS=['dbPickOv','pkOv','appDlgOv','suraListOv'];      // the top-most first
+  function top(){ for(const id of IDS){ const el=document.getElementById(id); if(el) return el; } return null; }
+  function closeTop(){
+    const el=top(); if(!el) return false;
+    try{ if(el._back) el._back(); else el.remove(); }catch(_){ try{ el.remove(); }catch(__){} }
+    return true;
+  }
+  window.__idrisCloseOverlay=closeTop;
+  let pushed=false, ignorePop=0;
+  new MutationObserver(()=>{
+    const open=!!top();
+    if(open && !pushed){ try{ history.pushState({idrisOv:true},''); pushed=true; }catch(_){} }
+    else if(!open && pushed){
+      pushed=false;                                    // closed by a button: drop our history entry quietly
+      if(history.state && history.state.idrisOv){ ignorePop++; try{ history.back(); }catch(_){ ignorePop--; } }
+    }
+  }).observe(document.body,{childList:true});
+  window.addEventListener('popstate',()=>{
+    if(ignorePop>0){ ignorePop--; return; }
+    if(pushed){ pushed=false; closeTop(); }            // the Back button was pressed
+  });
 })();
 
 // ---- the header overlay can never stay open when the menu is closed (blank screen fix) ----
@@ -5639,7 +5668,9 @@ function snapStarts(starts, sil, win, found){
         const n=extractSuraNumber(f.name); if(!n) return;
         found++; seen.add(n);
         const old=audioBySura.get(n);
-        if(!old || old.name!==f.name || !old.fromFolder) audioBySura.set(n,{url:srcOf(f.path), name:f.name, fromFolder:true});
+        const url=srcOf(f.path);
+        // same file name in ANOTHER folder (e.g. 002.mp3 of a second khatm) is a different file: compare the address too
+        if(!old || old.name!==f.name || old.url!==url || !old.fromFolder) audioBySura.set(n,{url:url, name:f.name, fromFolder:true});
       });
       [...audioBySura.keys()].forEach(n=>{ const v=audioBySura.get(n); if(v && v.fromFolder && !seen.has(n)) audioBySura.delete(n); });
       if(announce) appAlert((found ? tf('audioFolderFound',{n:found}) : t('audioFolderEmpty')) + '\n\u2066' + (r.path||'') + '\u2069');
@@ -5686,12 +5717,15 @@ function snapStarts(starts, sil, win, found){
     if(!(st && st.granted)){ await enable(); return; }
     const shownPath = curPath || st.path || '';
     const pick = await appChoose(t('audioFolderCurrent') + '\n\u2066' + shownPath + '\u2069', t('audioFolderPick'));
+    if(pick===null) return;                           // closed with the Back button
     if(pick){
       let fr=null;
       try{ fr=await pl.pickFolder(); }
       catch(e){ appAlert(t('audioFolderFail') + '\n\u2066' + (e && e.message ? e.message : e) + '\u2069'); return; }
       if(!fr || !fr.path) return;                       // cancelled
       curPath=fr.path; curName=fr.name || 'folder';
+      // a new folder: forget every audio of the old one, so nothing of it stays in use
+      [...audioBySura.keys()].forEach(k=>{ const v=audioBySura.get(k); if(v && v.fromFolder) audioBySura.delete(k); });
       try{ localStorage.setItem('audio_folder_path',curPath); localStorage.setItem('audio_folder_name',curName); }catch(_){}
       setLabel();
     }else if(!curPath){ try{ await pl.ensureFolder(); }catch(_){} }
@@ -5725,6 +5759,7 @@ function snapStarts(starts, sil, win, found){
       const cancel=document.createElement('button'); cancel.type='button'; cancel.textContent=t('dlgCancel'); cancel.style.cssText=btnCss;
       cancel.addEventListener('click',e=>{ e.stopPropagation(); done(null); });
       box.append(h,list,other,cancel); ov.appendChild(box);
+      ov._back=()=>done(null);
       ov.addEventListener('click',e=>e.stopPropagation());
       document.body.appendChild(ov);
     });
