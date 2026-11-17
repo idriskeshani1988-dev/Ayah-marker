@@ -2835,7 +2835,8 @@ function pickFilter(options, query, numeric){
     function close(){ ov.remove(); isOpen=false; }
     function choose(v){
       close();
-      if(String(sel.value)!==String(v)){ sel.value=v; sel.dispatchEvent(new Event('input',{bubbles:true})); sel.dispatchEvent(new Event('change',{bubbles:true})); }
+      // the ayah list always goes to the chosen ayah, even when the field already shows that number (the field shows the start ayah, not where the text is now)
+      if(numeric || String(sel.value)!==String(v)){ sel.value=v; sel.dispatchEvent(new Event('input',{bubbles:true})); sel.dispatchEvent(new Event('change',{bubbles:true})); }
     }
     function fill(){
       const items=pickFilter(opts, inp.value, numeric);
